@@ -1,0 +1,141 @@
+# nix-config ❄️
+
+Fully declarative, cross-platform environment using Nix flakes, nix-darwin, and home-manager.
+
+## What this does
+
+Everything about your environment — shell, editor, git, CLI tools, system preferences — is defined as code in this repo. Applying the config on a new machine reproduces the entire setup exactly 🏠
+
+- **macOS**: nix-darwin manages system settings + home-manager manages user config
+- **Linux / WSL**: standalone home-manager manages user config
+
+## Profiles 🧩
+
+The config is split into two composable layers:
+
+- **base** (`home/default.nix`) — dev environment essentials: shell, editor, git, CLI tools. Everything you'd want on any dev machine, including a work laptop.
+- **personal** (`home/personal.nix`) — personal additions layered on top of base. Personal aliases, fun tools, personal SSH hosts, etc.
+
+Each platform has two targets:
+
+| Target | What it includes | Use case |
+|--------|-----------------|----------|
+| `darwin` / `linux` | base + personal | Personal machines |
+| `darwin-base` / `linux-base` | base only | Shared or work machines |
+
+## Prerequisites 📋
+
+1. **Install Nix** — we recommend the [Determinate Nix Installer](https://github.com/DeterminateSystems/nix-installer):
+
+   ```sh
+   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+   ```
+
+   This installs Nix with flakes and the `nix` command enabled by default. If you use the [official installer](https://nixos.org/download/) instead, you'll need to enable `experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`.
+
+2. **Clone this repo**:
+
+   ```sh
+   git clone https://github.com/tskovlund/nix-config.git ~/repos/nix-config
+   cd ~/repos/nix-config
+   ```
+
+3. **Personalize** — edit the `username` variable at the top of `flake.nix`:
+
+   ```nix
+   let
+     username = "your-username-here";
+   in
+   ```
+
+   This single variable flows through to all configs (home directory, home-manager user, etc.).
+
+## Deploy 🚀
+
+### macOS (first time)
+
+Bootstrap nix-darwin — build the config, then activate as root:
+
+```sh
+nix build .#darwinConfigurations.darwin.system
+sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin
+```
+
+If `/etc/zshenv` (or other files in `/etc/`) conflict, rename them first:
+
+```sh
+sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin
+```
+
+### Subsequent deploys (macOS or Linux)
+
+The Makefile auto-detects your platform:
+
+```sh
+make switch         # base + personal
+make switch-base    # base only
+```
+
+### Linux / WSL (first time)
+
+If `home-manager` isn't on your PATH yet, bootstrap it:
+
+```sh
+nix run home-manager -- switch --flake .#linux
+```
+
+### Why `--flake .#darwin` instead of just `--flake .`?
+
+nix-darwin auto-detects configs by matching your machine's hostname. We use generic config names (`darwin`, `linux`) so the repo works on any machine without renaming entries per host. The trade-off is one extra flag — the Makefile handles this for you.
+
+## Repo structure 📁
+
+```
+nix-config/
+├── flake.nix                    # Entry point: inputs + all targets
+├── flake.lock                   # Pinned dependency versions
+├── Makefile                     # Convenience targets (make switch, etc.)
+│
+├── hosts/
+│   ├── darwin/default.nix       # macOS system config (nix-darwin)
+│   └── linux/default.nix        # Linux system config (placeholder)
+│
+├── home/
+│   ├── default.nix              # Base dev environment (always imported)
+│   ├── personal.nix             # Personal additions (imported by non-base targets)
+│   ├── shell/                   # Zsh, prompt, aliases
+│   ├── git/                     # Git config, ignores
+│   ├── editor/                  # Neovim (Lua, LSP, treesitter)
+│   ├── tools/                   # CLI toolkit, fzf, ssh
+│   └── claude/                  # Claude Code settings + statusline
+│
+├── files/                       # Raw config files sourced by modules
+└── secrets/                     # agenix encrypted secrets
+```
+
+## Common tasks 🔧
+
+| Task | Command |
+|------|---------|
+| Apply config (base + personal) | `make switch` |
+| Apply config (base only) | `make switch-base` |
+| Validate without applying | `make check` |
+| Update all inputs | `make update` |
+| See what changed | `darwin-rebuild build --flake .#darwin && nix diff-closures /run/current-system ./result` |
+| Rollback | `darwin-rebuild switch --rollback` |
+| List generations | `darwin-rebuild --list-generations` |
+
+## Inputs 📦
+
+| Input | What it does |
+|-------|-------------|
+| [nixpkgs](https://github.com/NixOS/nixpkgs) (unstable) | Package repository. Rolling release, latest packages, CI-tested. |
+| [nix-darwin](https://github.com/LnL7/nix-darwin) | Declarative macOS system configuration. |
+| [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment (dotfiles, packages, programs). |
+| [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets management. |
+
+All inputs follow a single nixpkgs to avoid version drift. If an input ever breaks against nixpkgs-unstable (extremely rare), temporarily pin it to a specific rev — see CLAUDE.md for instructions.
+
+## License 📄
+
+MIT

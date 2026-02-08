@@ -1,0 +1,6 @@
+result
+result-*
+.direnv/
+
+# agenix encrypted secrets will be tracked, but never plaintext
+secrets/*.age.key
