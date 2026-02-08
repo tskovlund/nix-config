@@ -34,10 +34,18 @@ When adding new config, put it in base unless it's obviously personal. When in d
    ```
 3. Test with `make check`, then `make switch`
 
+## Git workflow
+
+- **Direct to main**: config tweaks, bug fixes, small additions within an existing module
+- **Branch + PR**: new modules/phases, structural changes to flake.nix, anything touching multiple modules
+- PRs get automatic Copilot review via the "Protect main" ruleset
+- Repo owner can bypass force-push protection when needed (e.g., amending commits)
+
 ## Style preferences
 
 - **Conventional commits.** All commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): description`. Common types: `feat`, `fix`, `docs`, `chore`, `refactor`. Scope is optional (e.g., `feat(shell): add fzf integration`).
 - **No ambiguous abbreviations.** Use explicit names: `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
+- **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
 
 ## Module conventions
 

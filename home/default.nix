@@ -1,6 +1,10 @@
 { pkgs, ... }:
 
 {
+  imports = [
+    ./shell
+  ];
+
   # Let home-manager manage itself (provides the `home-manager` CLI).
   programs.home-manager.enable = true;
 
