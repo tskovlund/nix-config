@@ -7,8 +7,11 @@
   # Configure Nix settings via Determinate instead.
   nix.enable = false;
 
-  # No system-level packages yet — everything goes through home-manager.
+  # System-level packages (available to all users).
   environment.systemPackages = [ ];
+
+  # System fonts (available to all apps).
+  fonts.packages = [ pkgs.nerd-fonts.fira-code ];
 
   # Platform identifier for this host.
   nixpkgs.hostPlatform = "aarch64-darwin";
