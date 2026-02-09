@@ -6,7 +6,10 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    initExtra = ''
+    initContent = ''
+      # Case-insensitive tab completion
+      zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
       # iTerm2 shell integration (command framing, clickable marks, etc.)
       if [ "$TERM_PROGRAM" = "iTerm.app" ]; then
         if [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]; then
