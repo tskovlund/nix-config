@@ -113,6 +113,34 @@ nix-config/
 └── secrets/                     # agenix encrypted secrets
 ```
 
+## What's included 🧰
+
+### Shell
+- [zsh](https://www.zsh.org/) with [starship](https://starship.rs/) prompt, [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
+- [bat](https://github.com/sharkdp/bat) — syntax-highlighted cat replacement + man pager
+- [FiraCode Nerd Font](https://github.com/tonsky/FiraCode)
+
+### Git
+- [delta](https://github.com/dandavison/delta) — syntax-highlighted diffs
+- [gh](https://cli.github.com/) — GitHub CLI with credential helper
+
+### CLI toolkit
+- [zoxide](https://github.com/ajeetdsouza/zoxide) — smart cd that learns your most-used directories
+- [fzf](https://github.com/junegunn/fzf) — fuzzy finder for files, history, and directories
+- [ripgrep](https://github.com/BurntSushi/ripgrep) — fast recursive grep
+- [fd](https://github.com/sharkdp/fd) — fast file finder that respects .gitignore
+- [eza](https://github.com/eza-community/eza) — modern ls with git status and icons
+- [jq](https://github.com/jqlang/jq) / [yq](https://github.com/kislyuk/yq) — JSON and YAML processors
+- [btop](https://github.com/aristocratos/btop) — system monitor
+- [direnv](https://github.com/direnv/direnv) + [nix-direnv](https://github.com/nix-community/nix-direnv) — per-project dev environments via .envrc
+- [devbox](https://github.com/jetify-com/devbox) — portable dev environments for non-Nix contributors
+- [typst](https://github.com/typst/typst) — modern typesetting (LaTeX alternative)
+- [glow](https://github.com/charmbracelet/glow) — terminal markdown renderer
+- [catimg](https://github.com/posva/catimg) — display images in terminal
+- [tree](https://mama.indstate.edu/users/ice/tree/) — directory tree visualization
+- [wget](https://www.gnu.org/software/wget/) — HTTP file downloads
+- [sl](https://github.com/mtoyoda/sl), [cowsay](https://github.com/tnalpgge/rank-amateur-cowsay), [lolcat](https://github.com/busyloop/lolcat), [fortune](https://github.com/shlomif/fortune-mod), [figlet](http://www.figlet.org/), [ponysay](https://github.com/erkin/ponysay)
+
 ## Common tasks 🔧
 
 | Task | Command |
