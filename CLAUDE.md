@@ -4,15 +4,18 @@ This file documents how this repo is structured and how to extend it.
 
 ## Architecture
 
-- **flake.nix**: Entry point. Declares inputs and wires up four targets:
+- **flake.nix**: Entry point. Declares inputs and wires up:
   - `darwinConfigurations."darwin"` — macOS, base + personal
   - `darwinConfigurations."darwin-base"` — macOS, base only
   - `homeConfigurations."linux"` — Linux, base + personal
   - `homeConfigurations."linux-base"` — Linux, base only
+  - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, not user config)
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **files/**: Raw config files that modules source or symlink (e.g., Neovim Lua files)
+- **.githooks/**: Repo-local git hooks (pre-push runs `nix flake check`)
+- **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
 
 ## Profiles: base vs personal
 
@@ -46,8 +49,15 @@ When adding new config, put it in base unless it's obviously personal. When in d
 3. Commit with conventional commit messages
 4. Push and create a PR linking the relevant phase issue
 5. Copilot auto-reviews the PR via the "Protect main" ruleset — review its comments, reply/resolve as appropriate
-6. Once CI passes (after CI is set up) and comments are resolved, merge
+6. Once CI passes and comments are resolved, merge
 7. Pull main locally, delete the feature branch
+
+Note: the pre-push hook runs `nix flake check` on every push (including direct-to-main). CI also runs on PRs with required status checks for both Linux and macOS.
+
+### Keeping docs current
+
+- **README.md** and **CLAUDE.md** must be updated whenever changes affect them (new modules, new tools, workflow changes, architectural decisions)
+- **GitHub issues** must be updated when decisions are made, work starts, or a phase completes (see below)
 
 ### Issue tracking
 

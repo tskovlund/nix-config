@@ -103,12 +103,12 @@ nix-config/
 ├── home/
 │   ├── default.nix              # Base dev environment (always imported)
 │   ├── personal.nix             # Personal additions (imported by non-base targets)
-│   ├── shell/                   # Zsh, prompt, aliases
-│   ├── git/                     # Git config, ignores
-│   ├── editor/                  # Neovim (Lua, LSP, treesitter)
-│   ├── tools/                   # CLI toolkit, fzf, ssh
-│   └── claude/                  # Claude Code settings + statusline
+│   ├── shell/                   # Zsh, starship prompt, bat
+│   ├── git/                     # Git, delta, gh CLI
+│   └── tools/                   # CLI toolkit, direnv, fzf
 │
+├── .githooks/                   # Repo-local git hooks (pre-push)
+├── .envrc                       # direnv config (auto-enters dev shell)
 ├── files/                       # Raw config files sourced by modules
 └── secrets/                     # agenix encrypted secrets
 ```
@@ -131,6 +131,7 @@ nix-config/
 - [fd](https://github.com/sharkdp/fd) — fast file finder that respects .gitignore
 - [eza](https://github.com/eza-community/eza) — modern ls with git status and icons
 - [jq](https://github.com/jqlang/jq) / [yq](https://github.com/kislyuk/yq) — JSON and YAML processors
+- [tealdeer](https://github.com/dbrgn/tealdeer) — fast tldr client (community-maintained command cheatsheets)
 - [btop](https://github.com/aristocratos/btop) — system monitor
 - [direnv](https://github.com/direnv/direnv) + [nix-direnv](https://github.com/nix-community/nix-direnv) — per-project dev environments via .envrc
 - [devbox](https://github.com/jetify-com/devbox) — portable dev environments for non-Nix contributors
@@ -140,6 +141,23 @@ nix-config/
 - [tree](https://mama.indstate.edu/users/ice/tree/) — directory tree visualization
 - [wget](https://www.gnu.org/software/wget/) — HTTP file downloads
 - [sl](https://github.com/mtoyoda/sl), [cowsay](https://github.com/tnalpgge/rank-amateur-cowsay), [lolcat](https://github.com/busyloop/lolcat), [fortune](https://github.com/shlomif/fortune-mod), [figlet](http://www.figlet.org/), [ponysay](https://github.com/erkin/ponysay)
+
+## Development 🛠️
+
+After deploying the config (which installs direnv), allow direnv to enter the dev shell:
+
+```sh
+cd ~/repos/nix-config
+direnv allow
+```
+
+This automatically sets up commit hooks (pre-push runs `nix flake check`). If direnv isn't available yet (fresh clone before first deploy), you can set up hooks manually:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+CI also validates both Linux and macOS on every PR.
 
 ## Common tasks 🔧
 
