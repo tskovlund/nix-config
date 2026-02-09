@@ -136,6 +136,10 @@ nix-config/
 
 All inputs follow a single nixpkgs to avoid version drift. If an input ever breaks against nixpkgs-unstable (extremely rare), temporarily pin it to a specific rev — see CLAUDE.md for instructions.
 
+## Manual setup 🔧✋
+
+Some things can't be declared in Nix (yet). See [`docs/manual-setup.md`](docs/manual-setup.md) for post-deploy steps on new machines.
+
 ## License 📄
 
 MIT

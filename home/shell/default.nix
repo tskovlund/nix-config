@@ -6,6 +6,16 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
+    initExtra = ''
+      # iTerm2 shell integration (command framing, clickable marks, etc.)
+      if [ "$TERM_PROGRAM" = "iTerm.app" ]; then
+        if [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]; then
+          curl -Ls https://iterm2.com/shell_integration/zsh -o "$HOME/.iterm2_shell_integration.zsh"
+        fi
+        source "$HOME/.iterm2_shell_integration.zsh"
+      fi
+    '';
+
     history = {
       size = 50000;
       save = 50000;
