@@ -75,5 +75,23 @@
       # Linux — base only
       # Apply with: home-manager switch --flake .#linux-base
       homeConfigurations."linux-base" = makeLinux baseModules;
+
+      # Dev shell — enter with `nix develop` or automatically via direnv
+      # Sets up commit hooks on entry
+      devShells."aarch64-darwin".default = let
+        pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      in pkgs.mkShell {
+        shellHook = ''
+          git config core.hooksPath .githooks
+        '';
+      };
+
+      devShells."x86_64-linux".default = let
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      in pkgs.mkShell {
+        shellHook = ''
+          git config core.hooksPath .githooks
+        '';
+      };
     };
 }

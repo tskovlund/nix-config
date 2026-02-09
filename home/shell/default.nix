@@ -76,7 +76,7 @@
 
       nix_shell = {
         format = "via [$symbol$state]($style) ";
-        symbol = "❄️ ";
+        symbol = "󱄅 ";
       };
 
       python.format = "via [$symbol$version]($style) ";

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo "Running nix flake check..."
+nix flake check
