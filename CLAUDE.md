@@ -38,8 +38,23 @@ When adding new config, put it in base unless it's obviously personal. When in d
 
 - **Direct to main**: config tweaks, bug fixes, small additions within an existing module
 - **Branch + PR**: new modules/phases, structural changes to flake.nix, anything touching multiple modules
-- PRs get automatic Copilot review via the "Protect main" ruleset
-- Repo owner can bypass force-push protection when needed (e.g., amending commits)
+
+### PR workflow (branch + PR)
+
+1. Create a feature branch: `git checkout -b feat/<name>`
+2. Make changes, test with `make check` and `make switch`
+3. Commit with conventional commit messages
+4. Push and create a PR linking the relevant phase issue
+5. Copilot auto-reviews the PR via the "Protect main" ruleset — review its comments, reply/resolve as appropriate
+6. Once CI passes (after CI is set up) and comments are resolved, merge
+7. Pull main locally, delete the feature branch
+
+### Issue tracking
+
+- Each implementation phase has a corresponding GitHub issue
+- Keep issues up to date: when decisions are made, work starts, or a phase completes, update the relevant issue
+- Issues are the permanent record of decisions and progress
+- Repo owner can bypass force-push protection when needed (e.g., amending commits on a PR branch)
 
 ## Style preferences
 

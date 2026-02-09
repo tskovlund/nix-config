@@ -3,6 +3,7 @@
 {
   imports = [
     ./shell
+    ./git
   ];
 
   # Let home-manager manage itself (provides the `home-manager` CLI).
