@@ -17,6 +17,25 @@
         fi
         source "$HOME/.iterm2_shell_integration.zsh"
       fi
+
+      # Show alias expansion before execution (for learning)
+      # Inspired by ohare93/nixfiles
+      _alias_expansion_preexec() {
+        local cmd="$1"
+        local first_word="''${cmd%% *}"
+        local rest="''${cmd#"$first_word"}"
+        local alias_def="$(alias "$first_word" 2>/dev/null)"
+
+        if [[ -n "$alias_def" ]]; then
+          local expansion="''${alias_def#*=}"
+          # Strip surrounding quotes from the alias value
+          expansion="''${expansion#\'}"
+          expansion="''${expansion%\'}"
+          printf '\033[2m→ %s%s\033[0m\n' "$expansion" "$rest" >&2
+        fi
+      }
+      autoload -Uz add-zsh-hook
+      add-zsh-hook preexec _alias_expansion_preexec
     '';
 
     history = {
@@ -94,7 +113,10 @@
     };
   };
 
-  programs.zsh.shellAliases.cat = "bat";
+  programs.zsh.shellAliases = {
+    cat = "bat";
+    aliases = "alias | sed 's/=/ → /' | sort | bat --plain --language=sh";
+  };
 
   home.sessionVariables = {
     MANPAGER = "sh -c 'col -bx | bat -l man -p'";
