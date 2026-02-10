@@ -50,10 +50,12 @@ dir_last="${short_dir##*/}"
 [ "$dir_parent" = "${short_dir}/" ] && dir_parent="" && dir_last="$short_dir"
 
 # --- Git status (starship-aligned: ↑↓ +!?$) ---
+# Uses git status --porcelain=v2 --branch to minimize subprocess overhead
 git_info=""
-if git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
-    if [ -z "$branch" ]; then
+if git_status=$(git -C "$cwd" status --porcelain=v2 --branch 2>/dev/null); then
+    # Parse branch name and ahead/behind from header lines
+    branch=$(echo "$git_status" | sed -n 's/^# branch\.head //p')
+    if [ "$branch" = "(detached)" ]; then
         commit=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
         git_info="${c_green}@${commit}"
     else
@@ -63,30 +65,47 @@ if git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         git_info="${c_green}${branch}"
     fi
 
-    behind=$(git -C "$cwd" rev-list --count HEAD..@{upstream} 2>/dev/null || echo 0)
-    ahead=$(git -C "$cwd" rev-list --count @{upstream}..HEAD 2>/dev/null || echo 0)
-    if [ "$ahead" -gt 0 ] && [ "$behind" -gt 0 ]; then
-        git_info+=" ${c_green}↑${ahead}↓${behind}"
-    elif [ "$ahead" -gt 0 ]; then
-        git_info+=" ${c_green}↑${ahead}"
-    elif [ "$behind" -gt 0 ]; then
-        git_info+=" ${c_green}↓${behind}"
+    # ahead/behind: "# branch.ab +<ahead> -<behind>"
+    ab_line=$(echo "$git_status" | grep '^# branch\.ab ')
+    if [ -n "$ab_line" ]; then
+        ahead=$(echo "$ab_line" | sed 's/.*+\([0-9]*\).*/\1/')
+        behind=$(echo "$ab_line" | sed 's/.*-\([0-9]*\).*/\1/')
+        if [ "$ahead" -gt 0 ] && [ "$behind" -gt 0 ]; then
+            git_info+=" ${c_green}↑${ahead}↓${behind}"
+        elif [ "$ahead" -gt 0 ]; then
+            git_info+=" ${c_green}↑${ahead}"
+        elif [ "$behind" -gt 0 ]; then
+            git_info+=" ${c_green}↓${behind}"
+        fi
     fi
 
+    # Stash count (no porcelain equivalent)
     stash_count=$(git -C "$cwd" stash list 2>/dev/null | wc -l | tr -d ' ')
     [ "$stash_count" -gt 0 ] && git_info+=" ${c_green}\$${stash_count}"
 
+    # Merge/rebase state from git dir
     git_dir=$(git -C "$cwd" rev-parse --absolute-git-dir 2>/dev/null)
     [ -f "$git_dir/MERGE_HEAD" ] && git_info+=" ${c_red}merge"
     { [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; } && git_info+=" ${c_red}rebase"
 
-    staged=$(git -C "$cwd" diff --cached --name-only 2>/dev/null | wc -l | tr -d ' ')
+    # Count staged/unstaged/untracked from porcelain output
+    # Ordinary entries: "1 XY ..." where X=staged status, Y=unstaged status
+    # Untracked: "? path"
+    staged=0 unstaged=0 untracked=0
+    while IFS= read -r line; do
+        case "$line" in
+            "1 "?[!.]*)  ((staged++)) ;;   # X is not '.'
+            "2 "?[!.]*)  ((staged++)) ;;   # renamed with staged changes
+        esac
+        case "$line" in
+            "1 ".[!.]*)  ((unstaged++)) ;; # Y is not '.'
+            "2 ".[!.]*)  ((unstaged++)) ;; # renamed with unstaged changes
+        esac
+        [[ "$line" == "? "* ]] && ((untracked++))
+    done <<< "$git_status"
+
     [ "$staged" -gt 0 ] && git_info+=" ${c_green}+${staged}"
-
-    unstaged=$(git -C "$cwd" diff --name-only 2>/dev/null | wc -l | tr -d ' ')
     [ "$unstaged" -gt 0 ] && git_info+=" ${c_yellow}!${unstaged}"
-
-    untracked=$(git -C "$cwd" ls-files --others --exclude-standard 2>/dev/null | wc -l | tr -d ' ')
     [ "$untracked" -gt 0 ] && git_info+=" ${c_blue}?${untracked}"
 fi
 
@@ -96,15 +115,15 @@ claude_parts=""
 [ -n "$model" ] && claude_parts+="${c_magenta}${model}"
 [ -n "$used_pct" ] && claude_parts+="${claude_parts:+${sep}}${c_cyan}ctx ${used_pct}%"
 
-if [ -n "$cost" ] && [ "$cost" != "0" ]; then
+if [ -n "$cost" ] && awk -v c="$cost" 'BEGIN { exit !(c > 0) }'; then
     cost_fmt=$(printf '$%.2f' "$cost")
     claude_parts+="${claude_parts:+${sep}}${c_yellow}${cost_fmt}"
 fi
 
 if [ -n "$lines_add" ] || [ -n "$lines_del" ]; then
     lines=""
-    [ -n "$lines_add" ] && [ "$lines_add" != "0" ] && lines+="${c_green}+${lines_add}"
-    [ -n "$lines_del" ] && [ "$lines_del" != "0" ] && lines+="${lines:+ }${c_red}-${lines_del}"
+    [ -n "$lines_add" ] && awk -v n="$lines_add" 'BEGIN { exit !(n > 0) }' && lines+="${c_green}+${lines_add}"
+    [ -n "$lines_del" ] && awk -v n="$lines_del" 'BEGIN { exit !(n > 0) }' && lines+="${lines:+ }${c_red}-${lines_del}"
     [ -n "$lines" ] && claude_parts+="${claude_parts:+${sep}}${lines}"
 fi
 
