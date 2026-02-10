@@ -29,7 +29,7 @@ endif
 
 # Validate the flake without applying
 check:
-	nix flake check
+	nix flake check --all-systems
 
 # Update all flake inputs to latest
 update:
