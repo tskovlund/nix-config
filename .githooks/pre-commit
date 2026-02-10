@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Format staged .nix files with nixfmt
+staged_nix=$(git diff --cached --name-only --diff-filter=ACM -- '*.nix')
+if [ -n "$staged_nix" ]; then
+  echo "Formatting .nix files..."
+  echo "$staged_nix" | xargs nixfmt
+  echo "$staged_nix" | xargs git add
+fi
+
+# Lint staged .nix files with statix
+if [ -n "$staged_nix" ]; then
+  echo "Linting .nix files..."
+  echo "$staged_nix" | while read -r f; do statix check "$f"; done
+fi

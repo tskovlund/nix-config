@@ -13,8 +13,8 @@ This file documents how this repo is structured and how to extend it.
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, not user config)
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
-- **files/**: Raw config files that modules source or symlink (e.g., Neovim Lua files)
-- **.githooks/**: Repo-local git hooks (pre-push runs `nix flake check`)
+- **files/**: Raw config files that modules source or symlink
+- **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
 
 ## Profiles: base vs personal
@@ -32,6 +32,8 @@ When adding new config, put it in base unless it's obviously personal. When in d
    imports = [
      ./shell
      ./git
+     ./tools
+     ./editor
      # add new module here
    ];
    ```
@@ -102,7 +104,9 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 
 - `make switch` — apply base + personal config (macOS)
 - `make switch-base` — apply base only config (macOS)
-- `make check` — validate flake
+- `make check` — validate flake (both platforms)
+- `make fmt` — format all Nix files with nixfmt
+- `make lint` — lint all Nix files with statix + deadnix
 - `make update` — update all inputs
 - `nix repl --file flake.nix` — explore the flake interactively
 

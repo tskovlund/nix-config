@@ -5,6 +5,7 @@
     ./shell
     ./git
     ./tools
+    ./editor
   ];
 
   # Let home-manager manage itself (provides the `home-manager` CLI).
