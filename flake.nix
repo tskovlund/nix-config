@@ -61,10 +61,18 @@
         };
 
       # Helper: create a standalone home-manager config with the given modules.
+      # Uses import (not legacyPackages) so we can configure allowUnfreePredicate.
       makeLinux =
         homeModules:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          pkgs = import nixpkgs {
+            system = "x86_64-linux";
+            config.allowUnfreePredicate =
+              pkg:
+              builtins.elem (nixpkgs.lib.getName pkg) [
+                "claude-code-bin"
+              ];
+          };
           modules = homeModules ++ [
             nixvim.homeModules.nixvim
             {

@@ -16,6 +16,27 @@ Some things can't be declared in Nix. This is the checklist for new machines aft
 
 ## All platforms
 
+### Claude Code
+
+The statusline script is managed by Nix (symlinked to `~/.claude/statusline-command.sh`). Settings and plugins are not — Claude Code reads and writes `~/.claude/settings.json` at runtime (e.g. when toggling plugins), so it needs to stay writable.
+
+After first deploy, configure `~/.claude/settings.json`:
+
+```json
+{
+  "enabledPlugins": {
+    "Notion@claude-plugins-official": true,
+    "linear@claude-plugins-official": true
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  }
+}
+```
+
+Install additional plugins as needed via `/plugins` inside Claude Code.
+
 ### GitHub CLI
 
 - Run `gh auth login` after first deploy to authenticate git operations
