@@ -8,7 +8,7 @@
       settings.style = "night";
     };
 
-    # Extra themes available via :colorscheme and <leader>ct picker
+    # Extra themes available via :colorscheme and <leader>cs picker
     extraPlugins = with pkgs.vimPlugins; [
       gruvbox-nvim
       catppuccin-nvim

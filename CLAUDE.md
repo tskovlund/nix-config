@@ -14,7 +14,7 @@ This file documents how this repo is structured and how to extend it.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **files/**: Raw config files that modules source or symlink
-- **.githooks/**: Repo-local git hooks (pre-push runs `nix flake check`)
+- **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
 
 ## Profiles: base vs personal
