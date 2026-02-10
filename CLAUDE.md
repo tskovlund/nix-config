@@ -52,7 +52,7 @@ When adding new config, put it in base unless it's obviously personal. When in d
 4. Push and create a PR linking the relevant phase issue
 5. Copilot auto-reviews the PR via the "Protect main" ruleset — review its comments, reply/resolve as appropriate
 6. Once CI passes and comments are resolved, merge
-7. Pull main locally, delete the feature branch
+7. Pull main locally, delete the feature branch, prune stale remote tracking refs: `git fetch --prune`
 
 Note: the pre-push hook runs `nix flake check` on every push (including direct-to-main). CI also runs on PRs with required status checks for both Linux and macOS.
 
