@@ -54,7 +54,17 @@
     enable = true;
     enableZshIntegration = true;
     settings = {
-      format = "$directory$git_branch$git_status$nix_shell$python$nodejs$rust$fill$cmd_duration$time$line_break$character";
+      format = "$directory$git_branch$git_status$nix_shell$python$nodejs$rust$fill$cmd_duration$username$hostname $time$line_break$character";
+
+      username = {
+        show_always = true;
+        format = "[$user]($style)";
+      };
+
+      hostname = {
+        ssh_only = false;
+        format = "[@$hostname]($style)";
+      };
 
       git_status = {
         format = "([$all_status$ahead_behind]($style) )";
