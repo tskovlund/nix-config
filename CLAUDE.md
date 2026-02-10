@@ -64,9 +64,14 @@ Note: the pre-push hook runs `nix flake check` on every push (including direct-t
 ### Issue tracking
 
 - Each implementation phase has a corresponding GitHub issue
-- Keep issues up to date: when decisions are made, work starts, or a phase completes, update the relevant issue
 - Issues are the permanent record of decisions and progress
 - Repo owner can bypass force-push protection when needed (e.g., amending commits on a PR branch)
+
+**Update issues as part of the development process:**
+
+1. **Starting work**: Update the issue status from "Not started" to "In progress"
+2. **During development**: Record decisions made (framework choices, config patterns, trade-offs) in the issue body as they happen
+3. **After merge**: Update the issue body with the final outcome — what was built, decisions made, anything also delivered beyond the original scope. Change status to "Complete" with a reference to the PR
 
 ## Style preferences
 
