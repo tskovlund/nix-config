@@ -5,6 +5,10 @@
   # Settings and plugins are managed manually (see CLAUDE.md).
   home.packages = [ pkgs.claude-code-bin ];
 
+  # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
+  # Nix puts the binary in the store, so we symlink it to the expected location.
+  home.file.".local/bin/claude".source = "${pkgs.claude-code-bin}/bin/claude";
+
   # Statusline script — displays workspace context and session info.
   # To activate, add to ~/.claude/settings.json:
   #   "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
