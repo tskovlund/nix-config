@@ -5,6 +5,9 @@
   # Settings and plugins are managed manually (see docs/manual-setup.md).
   home.packages = [ pkgs.claude-code-bin ];
 
+  # Default to Opus 4.6
+  home.sessionVariables.ANTHROPIC_MODEL = "claude-opus-4-6";
+
   # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
   # Nix puts the binary in the store, so we symlink it to the expected location.
   home.file.".local/bin/claude".source = "${pkgs.claude-code-bin}/bin/claude";
