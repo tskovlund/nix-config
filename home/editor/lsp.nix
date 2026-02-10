@@ -17,18 +17,48 @@
         enable = true;
         keymaps = {
           lspBuf = {
-            gd = { action = "definition"; desc = "Go to definition"; };
-            gD = { action = "declaration"; desc = "Go to declaration"; };
-            gr = { action = "references"; desc = "Show references"; };
-            K = { action = "hover"; desc = "Hover docs"; };
-            "<leader>rn" = { action = "rename"; desc = "Rename symbol"; };
-            "<leader>." = { action = "code_action"; desc = "Code action"; };
+            gd = {
+              action = "definition";
+              desc = "Go to definition";
+            };
+            gD = {
+              action = "declaration";
+              desc = "Go to declaration";
+            };
+            gr = {
+              action = "references";
+              desc = "Show references";
+            };
+            K = {
+              action = "hover";
+              desc = "Hover docs";
+            };
+            "<leader>rn" = {
+              action = "rename";
+              desc = "Rename symbol";
+            };
+            "<leader>." = {
+              action = "code_action";
+              desc = "Code action";
+            };
           };
           diagnostic = {
-            "<leader>dj" = { action = "goto_next"; desc = "Next diagnostic"; };
-            "<leader>dk" = { action = "goto_prev"; desc = "Previous diagnostic"; };
-            "]d" = { action = "goto_next"; desc = "Next diagnostic"; };
-            "[d" = { action = "goto_prev"; desc = "Previous diagnostic"; };
+            "<leader>dj" = {
+              action = "goto_next";
+              desc = "Next diagnostic";
+            };
+            "<leader>dk" = {
+              action = "goto_prev";
+              desc = "Previous diagnostic";
+            };
+            "]d" = {
+              action = "goto_next";
+              desc = "Next diagnostic";
+            };
+            "[d" = {
+              action = "goto_prev";
+              desc = "Previous diagnostic";
+            };
           };
         };
         servers = {
@@ -96,7 +126,10 @@
       lint = {
         enable = true;
         lintersByFt = {
-          nix = [ "statix" "deadnix" ];
+          nix = [
+            "statix"
+            "deadnix"
+          ];
         };
       };
 

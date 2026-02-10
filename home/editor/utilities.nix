@@ -32,13 +32,13 @@
         enable = true;
         modules = {
           # Better around/inside text objects
-          ai = {};
+          ai = { };
           # Close buffer without destroying window layout
-          bufremove = {};
+          bufremove = { };
           # Icon provider
-          icons = {};
+          icons = { };
           # Toggle single/multi-line (gS)
-          splitjoin = {};
+          splitjoin = { };
         };
       };
     };

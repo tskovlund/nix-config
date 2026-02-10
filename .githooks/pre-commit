@@ -12,5 +12,5 @@ fi
 # Lint staged .nix files with statix
 if [ -n "$staged_nix" ]; then
   echo "Linting .nix files..."
-  echo "$staged_nix" | xargs statix check
+  echo "$staged_nix" | while read -r f; do statix check "$f"; done
 fi

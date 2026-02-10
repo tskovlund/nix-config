@@ -41,7 +41,7 @@ fmt:
 
 # Lint all Nix files
 lint:
-	find . -name '*.nix' -not -path './result/*' | xargs statix check
+	statix check . -i result/
 	deadnix --no-lambda-pattern-names .
 
 # Remove build artifacts

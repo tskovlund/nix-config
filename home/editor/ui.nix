@@ -24,8 +24,14 @@
         settings = {
           options = {
             theme = "auto";
-            component_separators = { left = "|"; right = "|"; };
-            section_separators = { left = ""; right = ""; };
+            component_separators = {
+              left = "|";
+              right = "|";
+            };
+            section_separators = {
+              left = "";
+              right = "";
+            };
             globalstatus = true;
           };
           sections = {
@@ -85,11 +91,26 @@
       which-key = {
         enable = true;
         settings.spec = [
-          { __unkeyed-1 = "<leader>s"; group = "Search"; }
-          { __unkeyed-1 = "<leader>d"; group = "Diagnostics"; }
-          { __unkeyed-1 = "<leader>f"; group = "Format"; }
-          { __unkeyed-1 = "<leader>r"; group = "Refactor"; }
-          { __unkeyed-1 = "<leader>c"; group = "Color"; }
+          {
+            __unkeyed-1 = "<leader>s";
+            group = "Search";
+          }
+          {
+            __unkeyed-1 = "<leader>d";
+            group = "Diagnostics";
+          }
+          {
+            __unkeyed-1 = "<leader>f";
+            group = "Format";
+          }
+          {
+            __unkeyed-1 = "<leader>r";
+            group = "Refactor";
+          }
+          {
+            __unkeyed-1 = "<leader>c";
+            group = "Color";
+          }
         ];
       };
 

@@ -1,0 +1,5 @@
+# { ... }: is the standard NixOS module signature — statix suggests _: but
+# that hides the fact these are modules that accept (and may later use) args.
+# Flat programs.foo = {}; programs.bar = {}; is idiomatic for home-manager
+# configs where each program block is independent and easy to reorganize.
+disabled = ["empty_pattern", "repeated_keys"]

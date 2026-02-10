@@ -25,57 +25,72 @@
     };
   };
 
-  outputs = { self, nixpkgs, nix-darwin, home-manager, agenix, nixvim, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nix-darwin,
+      home-manager,
+      agenix,
+      nixvim,
+      ...
+    }:
     let
       username = "thomas";
 
       # Helper: create a nix-darwin system with the given home-manager modules.
-      makeDarwin = homeModules: nix-darwin.lib.darwinSystem {
-        system = "aarch64-darwin";
-        modules = [
-          ./hosts/darwin
-          home-manager.darwinModules.home-manager
-          {
-            users.users.${username}.home = "/Users/${username}";
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.backupFileExtension = "hm-backup";
-            home-manager.users.${username} = {
-              imports = homeModules ++ [ nixvim.homeModules.nixvim ];
-              home.username = username;
-              home.homeDirectory = "/Users/${username}";
-            };
-          }
-        ];
-      };
+      makeDarwin =
+        homeModules:
+        nix-darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          modules = [
+            ./hosts/darwin
+            home-manager.darwinModules.home-manager
+            {
+              users.users.${username}.home = "/Users/${username}";
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "hm-backup";
+              home-manager.users.${username} = {
+                imports = homeModules ++ [ nixvim.homeModules.nixvim ];
+                home.username = username;
+                home.homeDirectory = "/Users/${username}";
+              };
+            }
+          ];
+        };
 
       # Helper: create a standalone home-manager config with the given modules.
-      makeLinux = homeModules: home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        modules = homeModules ++ [
-          nixvim.homeModules.nixvim
-          {
-            home.username = username;
-            home.homeDirectory = "/home/${username}";
-          }
-        ];
-      };
+      makeLinux =
+        homeModules:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          modules = homeModules ++ [
+            nixvim.homeModules.nixvim
+            {
+              home.username = username;
+              home.homeDirectory = "/home/${username}";
+            }
+          ];
+        };
 
       # Module sets
       baseModules = [ ./home ];
       personalModules = baseModules ++ [ ./home/personal.nix ];
 
       # Helper: create a dev shell with formatting/linting tools and hook setup.
-      makeDevShell = pkgs: pkgs.mkShell {
-        packages = with pkgs; [
-          nixfmt
-          statix
-          deadnix
-        ];
-        shellHook = ''
-          git config core.hooksPath .githooks
-        '';
-      };
+      makeDevShell =
+        pkgs:
+        pkgs.mkShell {
+          packages = with pkgs; [
+            nixfmt
+            statix
+            deadnix
+          ];
+          shellHook = ''
+            git config core.hooksPath .githooks
+          '';
+        };
     in
     {
       # macOS — base + personal (default for personal machines)
