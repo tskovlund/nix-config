@@ -14,6 +14,12 @@ Some things can't be declared in Nix. This is the checklist for new machines aft
 - First bootstrap may require: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
   - Only needed if Determinate Nix owns `/etc/zshenv` before nix-darwin is installed
 
+## Linux / WSL
+
+### Fonts
+
+On macOS, nix-darwin installs FiraCode Nerd Font system-wide. On Linux/WSL there is no display server — fonts are rendered by the terminal emulator on the host. Install a [Nerd Font](https://www.nerdfonts.com/) (e.g. FiraCode Nerd Font) in your terminal emulator to get correct glyphs in the starship prompt and Neovim.
+
 ## All platforms
 
 ### Claude Code

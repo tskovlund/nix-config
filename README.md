@@ -67,21 +67,21 @@ If `/etc/zshenv` (or other files in `/etc/`) conflict, rename them first:
 sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin
 ```
 
-### Subsequent deploys (macOS or Linux)
-
-The Makefile auto-detects your platform:
-
-```sh
-make switch         # base + personal
-make switch-base    # base only
-```
-
 ### Linux / WSL (first time)
 
 If `home-manager` isn't on your PATH yet, bootstrap it:
 
 ```sh
 nix run home-manager -- switch --flake .#linux
+```
+
+### Subsequent deploys
+
+The Makefile auto-detects your platform:
+
+```sh
+make switch         # base + personal
+make switch-base    # base only
 ```
 
 ### Why `--flake .#darwin` instead of just `--flake .`?
@@ -189,9 +189,22 @@ CI also validates both Linux and macOS on every PR.
 | Format all Nix files | `make fmt` |
 | Lint all Nix files | `make lint` |
 | Update all inputs | `make update` |
+
+### macOS (nix-darwin)
+
+| Task | Command |
+|------|---------|
 | See what changed | `darwin-rebuild build --flake .#darwin && nix diff-closures /run/current-system ./result` |
 | Rollback | `darwin-rebuild switch --rollback` |
 | List generations | `darwin-rebuild --list-generations` |
+
+### Linux / WSL (home-manager)
+
+| Task | Command |
+|------|---------|
+| See what changed | `home-manager build --flake .#linux && nix diff-closures ~/.local/state/nix/profiles/home-manager ./result` |
+| Rollback | `home-manager switch --flake .#linux -b backup` |
+| List generations | `home-manager generations` |
 
 ## Inputs 📦
 
