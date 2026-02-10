@@ -5,14 +5,22 @@
 
 input=$(cat)
 
-# Extract values from JSON
-cwd=$(echo "$input" | jq -r '.workspace.current_dir')
-model=$(echo "$input" | jq -r '.model.display_name // empty')
-used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
-cost=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
-lines_add=$(echo "$input" | jq -r '.cost.total_lines_added // empty')
-lines_del=$(echo "$input" | jq -r '.cost.total_lines_removed // empty')
-version=$(echo "$input" | jq -r '.version // empty')
+# Extract values from JSON with a single jq invocation
+eval "$(
+  jq -r '
+    {
+      cwd: .workspace.current_dir,
+      model: .model.display_name // "",
+      used_pct: .context_window.used_percentage // "",
+      cost: .cost.total_cost_usd // "",
+      lines_add: .cost.total_lines_added // "",
+      lines_del: .cost.total_lines_removed // "",
+      version: .version // ""
+    }
+    | to_entries[]
+    | "\(.key)=\(.value | @sh)"
+  ' <<< "$input"
+)"
 
 # Colors — standard ANSI, muted palette
 c_dir=$'\033[36m'        # directory (cyan)
@@ -68,7 +76,7 @@ if git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     stash_count=$(git -C "$cwd" stash list 2>/dev/null | wc -l | tr -d ' ')
     [ "$stash_count" -gt 0 ] && git_info+=" ${c_green}\$${stash_count}"
 
-    git_dir=$(git -C "$cwd" rev-parse --git-dir 2>/dev/null)
+    git_dir=$(git -C "$cwd" rev-parse --absolute-git-dir 2>/dev/null)
     [ -f "$git_dir/MERGE_HEAD" ] && git_info+=" ${c_red}merge"
     { [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; } && git_info+=" ${c_red}rebase"
 
@@ -105,10 +113,11 @@ fi
 # --- Timestamp ---
 current_time=$(date +%H:%M:%S)
 
-# --- Build output ---
+# --- Build output (pipe-separated sections) ---
+pipe="${c_dim} | ${c_reset}"
 output="${c_dir}${dir_parent}${c_dir_b}${dir_last}${c_reset}"
 [ -n "$git_info" ] && output+=" ${git_info}${c_reset}"
-[ -n "$claude_parts" ] && output+=" ${c_dim}·${c_reset} ${claude_parts}${c_reset}"
-output+=" ${c_dim}· ${current_time}${c_reset}"
+[ -n "$claude_parts" ] && output+="${pipe}${claude_parts}${c_reset}"
+output+="${pipe}${c_dim}${current_time}${c_reset}"
 
 printf '%b' "$output"

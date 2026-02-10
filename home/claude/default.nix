@@ -2,7 +2,7 @@
 
 {
   # Claude Code — AI coding assistant CLI.
-  # Settings and plugins are managed manually (see CLAUDE.md).
+  # Settings and plugins are managed manually (see docs/manual-setup.md).
   home.packages = [ pkgs.claude-code-bin ];
 
   # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
