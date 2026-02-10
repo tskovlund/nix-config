@@ -14,10 +14,9 @@
           "<leader>sr" = { action = "oldfiles"; options.desc = "Recent files"; };
           "<leader>sw" = { action = "grep_string"; options.desc = "Grep current word"; };
           "<leader>s/" = { action = "current_buffer_fuzzy_find"; options.desc = "Fuzzy find in buffer"; };
-          "<leader>ct" = { action = "colorscheme"; options.desc = "Colorscheme picker"; };
         };
         settings.defaults = {
-          file_ignore_patterns = [ "node_modules" ".git/" "result/" ".direnv/" ];
+          file_ignore_patterns = [ "node_modules" "\\.git/" "result/" "\\.direnv/" ];
         };
       };
 
@@ -62,6 +61,16 @@
 
       # Telescope: search TODOs
       { mode = "n"; key = "<leader>sT"; action = "<cmd>TodoTelescope<CR>"; options.desc = "Search TODOs"; }
+
+      # Colorscheme picker with live preview
+      {
+        mode = "n"; key = "<leader>cs"; options.desc = "Colorscheme picker";
+        action.__raw = ''
+          function()
+            require("telescope.builtin").colorscheme({ enable_preview = true })
+          end
+        '';
+      }
     ];
   };
 }

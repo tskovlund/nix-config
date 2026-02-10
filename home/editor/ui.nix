@@ -89,7 +89,7 @@
           { __unkeyed-1 = "<leader>d"; group = "Diagnostics"; }
           { __unkeyed-1 = "<leader>f"; group = "Format"; }
           { __unkeyed-1 = "<leader>r"; group = "Refactor"; }
-          { __unkeyed-1 = "<leader>c"; group = "Colorscheme"; }
+          { __unkeyed-1 = "<leader>c"; group = "Color"; }
         ];
       };
 
