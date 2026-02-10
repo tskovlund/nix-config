@@ -18,9 +18,14 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, nix-darwin, home-manager, agenix, ... }:
+  outputs = { self, nixpkgs, nix-darwin, home-manager, agenix, nixvim, ... }:
     let
       username = "thomas";
 
@@ -36,7 +41,7 @@
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "hm-backup";
             home-manager.users.${username} = {
-              imports = homeModules;
+              imports = homeModules ++ [ nixvim.homeModules.nixvim ];
               home.username = username;
               home.homeDirectory = "/Users/${username}";
             };
@@ -48,6 +53,7 @@
       makeLinux = homeModules: home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         modules = homeModules ++ [
+          nixvim.homeModules.nixvim
           {
             home.username = username;
             home.homeDirectory = "/home/${username}";

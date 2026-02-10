@@ -104,6 +104,7 @@ nix-config/
 │   ├── default.nix              # Base dev environment (always imported)
 │   ├── personal.nix             # Personal additions (imported by non-base targets)
 │   ├── shell/                   # Zsh, starship prompt, bat
+│   ├── editor/                  # Neovim via nixvim (LSP, completion, themes)
 │   ├── git/                     # Git, delta, gh CLI
 │   └── tools/                   # CLI toolkit, direnv, fzf
 │
@@ -119,6 +120,20 @@ nix-config/
 - [zsh](https://www.zsh.org/) with [starship](https://starship.rs/) prompt, [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
 - [bat](https://github.com/sharkdp/bat) — syntax-highlighted cat replacement + man pager
 - [FiraCode Nerd Font](https://github.com/tonsky/FiraCode)
+
+### Editor
+- [Neovim](https://neovim.io/) via [nixvim](https://github.com/nix-community/nixvim) — fully declarative, typed Nix configuration
+- [TokyoNight](https://github.com/folke/tokyonight.nvim) theme (night) with 5 extra themes available via `<leader>ct` picker
+- LSP support: nixd, pyright, ruff, ts_ls, rust-analyzer, clangd, omnisharp, fsautocomplete, jdtls, lua_ls
+- [telescope](https://github.com/nvim-telescope/telescope.nvim) — fuzzy finder for files, grep, buffers, and more
+- [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) — completion with LSP, snippets, buffer, and path sources
+- [conform.nvim](https://github.com/stevearc/conform.nvim) — format on save (nixfmt, ruff, prettier, rustfmt, stylua)
+- [treesitter](https://github.com/nvim-treesitter/nvim-treesitter) — syntax highlighting and smart indentation
+- [oil.nvim](https://github.com/stevearc/oil.nvim) — buffer-based file explorer
+- [flash.nvim](https://github.com/folke/flash.nvim) — enhanced motion and jump
+- [gitsigns](https://github.com/lewis6991/gitsigns.nvim) — git signs and inline blame
+- [which-key](https://github.com/folke/which-key.nvim) — keybind discovery popup
+- [lualine](https://github.com/nvim-lualine/lualine.nvim) — statusline with mode, branch, diagnostics, clock
 
 ### Git
 - [delta](https://github.com/dandavison/delta) — syntax-highlighted diffs
@@ -179,6 +194,7 @@ CI also validates both Linux and macOS on every PR.
 | [nix-darwin](https://github.com/LnL7/nix-darwin) | Declarative macOS system configuration. |
 | [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment (dotfiles, packages, programs). |
 | [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets management. |
+| [nixvim](https://github.com/nix-community/nixvim) | Neovim configuration as typed Nix expressions. |
 
 All inputs follow a single nixpkgs to avoid version drift. If an input ever breaks against nixpkgs-unstable (extremely rare), temporarily pin it to a specific rev — see CLAUDE.md for instructions.
 

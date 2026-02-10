@@ -13,7 +13,7 @@ This file documents how this repo is structured and how to extend it.
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, not user config)
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
-- **files/**: Raw config files that modules source or symlink (e.g., Neovim Lua files)
+- **files/**: Raw config files that modules source or symlink
 - **.githooks/**: Repo-local git hooks (pre-push runs `nix flake check`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
 
@@ -32,6 +32,8 @@ When adding new config, put it in base unless it's obviously personal. When in d
    imports = [
      ./shell
      ./git
+     ./tools
+     ./editor
      # add new module here
    ];
    ```
