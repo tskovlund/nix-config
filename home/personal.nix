@@ -1,6 +1,10 @@
 { pkgs, ... }:
 
 {
+  imports = [
+    ./claude
+  ];
+
   # Personal additions layered on top of the base dev environment.
   # Only imported by the "darwin" / "linux" targets, not "darwin-base" / "linux-base".
   #

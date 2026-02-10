@@ -16,6 +16,13 @@
   # Platform identifier for this host.
   nixpkgs.hostPlatform = "aarch64-darwin";
 
+  # Allow specific unfree packages (home-manager inherits this via useGlobalPkgs).
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (pkgs.lib.getName pkg) [
+      "claude-code-bin"
+    ];
+
   # State version for nix-darwin. Set once on first build, never change.
   # Changing this can trigger irreversible state migrations.
   system.stateVersion = 5;

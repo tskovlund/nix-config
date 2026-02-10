@@ -12,7 +12,10 @@
     enable = true;
     enableZshIntegration = true;
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
-    defaultOptions = [ "--height 40%" "--border" ];
+    defaultOptions = [
+      "--height 40%"
+      "--border"
+    ];
     fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
     changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
   };
@@ -66,13 +69,13 @@
 
   home.packages = with pkgs; [
     # CLI toolkit
-    yq          # YAML processor (jq for YAML)
-    wget        # HTTP file downloads
-    tree        # directory tree visualization
-    devbox      # portable dev environments for non-Nix contributors
-    typst       # modern typesetting (LaTeX alternative)
-    catimg      # display images in terminal
-    glow        # terminal markdown renderer
+    yq # YAML processor (jq for YAML)
+    wget # HTTP file downloads
+    tree # directory tree visualization
+    devbox # portable dev environments for non-Nix contributors
+    typst # modern typesetting (LaTeX alternative)
+    catimg # display images in terminal
+    glow # terminal markdown renderer
 
     # essentials
     sl

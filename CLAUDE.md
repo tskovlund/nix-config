@@ -20,7 +20,7 @@ This file documents how this repo is structured and how to extend it.
 ## Profiles: base vs personal
 
 - **`home/default.nix`** — base dev environment. Everything that belongs on any dev machine (shell, editor, git, CLI tools). New modules go here by default.
-- **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases).
+- **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases, Claude Code).
 
 When adding new config, put it in base unless it's obviously personal. When in doubt, ask.
 
