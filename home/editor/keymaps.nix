@@ -26,8 +26,5 @@
     # Delete without yanking (black hole register)
     { mode = ["n" "v"]; key = "x"; action = "\"_x"; options.desc = "Delete char (no yank)"; }
     { mode = ["n" "v"]; key = "X"; action = "\"_X"; options.desc = "Delete char backward (no yank)"; }
-
-    # Exit terminal mode
-    { mode = "t"; key = "<Esc><Esc>"; action = "<C-\\><C-n>"; options.desc = "Exit terminal mode"; }
   ];
 }
