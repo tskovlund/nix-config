@@ -4,7 +4,7 @@
   programs.nixvim = {
     # Formatter and linter binaries (LSP servers are installed by nixvim automatically)
     extraPackages = with pkgs; [
-      nixfmt-rfc-style
+      nixfmt
       prettierd
       stylua
       statix

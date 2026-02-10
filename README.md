@@ -166,7 +166,7 @@ cd ~/repos/nix-config
 direnv allow
 ```
 
-This automatically sets up commit hooks (pre-push runs `nix flake check`). If direnv isn't available yet (fresh clone before first deploy), you can set up hooks manually:
+This automatically sets up commit hooks — pre-commit formats and lints `.nix` files, pre-push runs `nix flake check --all-systems`. If direnv isn't available yet (fresh clone before first deploy), you can set up hooks manually:
 
 ```sh
 git config core.hooksPath .githooks
@@ -181,6 +181,8 @@ CI also validates both Linux and macOS on every PR.
 | Apply config (base + personal) | `make switch` |
 | Apply config (base only) | `make switch-base` |
 | Validate without applying | `make check` |
+| Format all Nix files | `make fmt` |
+| Lint all Nix files | `make lint` |
 | Update all inputs | `make update` |
 | See what changed | `darwin-rebuild build --flake .#darwin && nix diff-closures /run/current-system ./result` |
 | Rollback | `darwin-rebuild switch --rollback` |

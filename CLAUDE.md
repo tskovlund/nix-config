@@ -104,7 +104,9 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 
 - `make switch` — apply base + personal config (macOS)
 - `make switch-base` — apply base only config (macOS)
-- `make check` — validate flake
+- `make check` — validate flake (both platforms)
+- `make fmt` — format all Nix files with nixfmt
+- `make lint` — lint all Nix files with statix + deadnix
 - `make update` — update all inputs
 - `nix repl --file flake.nix` — explore the flake interactively
 

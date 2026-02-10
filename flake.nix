@@ -64,6 +64,18 @@
       # Module sets
       baseModules = [ ./home ];
       personalModules = baseModules ++ [ ./home/personal.nix ];
+
+      # Helper: create a dev shell with formatting/linting tools and hook setup.
+      makeDevShell = pkgs: pkgs.mkShell {
+        packages = with pkgs; [
+          nixfmt
+          statix
+          deadnix
+        ];
+        shellHook = ''
+          git config core.hooksPath .githooks
+        '';
+      };
     in
     {
       # macOS — base + personal (default for personal machines)
@@ -83,21 +95,8 @@
       homeConfigurations."linux-base" = makeLinux baseModules;
 
       # Dev shell — enter with `nix develop` or automatically via direnv
-      # Sets up commit hooks on entry
-      devShells."aarch64-darwin".default = let
-        pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-      in pkgs.mkShell {
-        shellHook = ''
-          git config core.hooksPath .githooks
-        '';
-      };
-
-      devShells."x86_64-linux".default = let
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      in pkgs.mkShell {
-        shellHook = ''
-          git config core.hooksPath .githooks
-        '';
-      };
+      # Provides formatting/linting tools and sets up commit hooks
+      devShells."aarch64-darwin".default = makeDevShell nixpkgs.legacyPackages.aarch64-darwin;
+      devShells."x86_64-linux".default = makeDevShell nixpkgs.legacyPackages.x86_64-linux;
     };
 }

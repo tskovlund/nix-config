@@ -9,7 +9,7 @@
 
 UNAME := $(shell uname -s)
 
-.PHONY: switch switch-base check update fmt clean
+.PHONY: switch switch-base check update fmt lint clean
 
 ifeq ($(UNAME),Darwin)
 # macOS: rebuild system + home config via nix-darwin
@@ -37,7 +37,12 @@ update:
 
 # Format all Nix files
 fmt:
-	nix fmt
+	find . -name '*.nix' -not -path './result/*' | xargs nixfmt
+
+# Lint all Nix files
+lint:
+	find . -name '*.nix' -not -path './result/*' | xargs statix check
+	deadnix --no-lambda-pattern-names .
 
 # Remove build artifacts
 clean:
