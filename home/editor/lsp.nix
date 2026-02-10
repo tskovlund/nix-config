@@ -1,7 +1,16 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   programs.nixvim = {
+    # Formatter and linter binaries (LSP servers are installed by nixvim automatically)
+    extraPackages = with pkgs; [
+      nixfmt-rfc-style
+      prettierd
+      stylua
+      statix
+      deadnix
+    ];
+
     plugins = {
       # LSP
       lsp = {
@@ -68,15 +77,15 @@
           formatters_by_ft = {
             nix = [ "nixfmt" ];
             python = [ "ruff_format" ];
-            javascript = [ "prettier" ];
-            typescript = [ "prettier" ];
-            javascriptreact = [ "prettier" ];
-            typescriptreact = [ "prettier" ];
-            json = [ "prettier" ];
-            yaml = [ "prettier" ];
-            markdown = [ "prettier" ];
-            html = [ "prettier" ];
-            css = [ "prettier" ];
+            javascript = [ "prettierd" ];
+            typescript = [ "prettierd" ];
+            javascriptreact = [ "prettierd" ];
+            typescriptreact = [ "prettierd" ];
+            json = [ "prettierd" ];
+            yaml = [ "prettierd" ];
+            markdown = [ "prettierd" ];
+            html = [ "prettierd" ];
+            css = [ "prettierd" ];
             rust = [ "rustfmt" ];
             lua = [ "stylua" ];
           };
