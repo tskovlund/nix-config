@@ -52,7 +52,7 @@
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
               home-manager.users.${username} = {
-                imports = homeModules ++ [ nixvim.homeModules.nixvim ];
+                imports = homeModules ++ darwinExtraModules ++ [ nixvim.homeModules.nixvim ];
                 home.username = username;
                 home.homeDirectory = "/Users/${username}";
               };
@@ -85,6 +85,7 @@
       # Module sets
       baseModules = [ ./home ];
       personalModules = baseModules ++ [ ./home/personal.nix ];
+      darwinExtraModules = [ ./home/darwin ];
 
       # Helper: create a dev shell with formatting/linting tools and hook setup.
       makeDevShell =
