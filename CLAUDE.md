@@ -64,22 +64,40 @@ When adding new config, put it in base unless it's obviously personal. When in d
 
 Note: the pre-push hook runs `nix flake check` on every push (including direct-to-main). CI also runs on PRs with required status checks for both Linux and macOS.
 
+### PR structure
+
+A PR template is defined in `.github/PULL_REQUEST_TEMPLATE.md`. When using `gh pr create --body`, follow the same structure:
+
+- **Summary** — what this PR does and why, as a short list of bullet points.
+- **Test plan** — checkboxes for how the change was verified. Always include `make check` and `make switch`. Add issue-specific verification steps as needed.
+- **Related issues** — link related GitHub issues (`Closes #N` or `Related: #N`) and Linear issues (full URL).
+
 ### Keeping docs current
 
 - **README.md** and **CLAUDE.md** must be updated whenever changes affect them (new modules, new tools, workflow changes, architectural decisions)
-- **GitHub issues** must be updated when decisions are made, work starts, or a phase completes (see below)
+- **GitHub issues** conventions are documented below
 
 ### Issue tracking
 
-- Each implementation phase has a corresponding GitHub issue
-- Issues are the permanent record of decisions and progress
-- Repo owner can bypass force-push protection when needed (e.g., amending commits on a PR branch)
+GitHub Issues is the implementation tracker for this repo. Linear handles higher-level planning.
 
-**Update issues as part of the development process:**
+**Issue types and templates:**
 
-1. **Starting work**: Update the issue status from "Not started" to "In progress"
-2. **During development**: Record decisions made (framework choices, config patterns, trade-offs) in the issue body as they happen
-3. **After merge**: Update the issue body with the final outcome — what was built, decisions made, anything also delivered beyond the original scope. Change status to "Complete" with a reference to the PR
+Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the appropriate template when creating issues — via the GitHub web UI (which presents template selection) or by following the template structure when using `gh issue create`.
+
+- **Enhancement** — new features or improvements. Sections: Summary, Why, Requirements (checkboxes), Caveats, Acceptance criteria, References.
+- **Bug** — something broken. Sections: Summary, Problem, Fix (checkboxes), Context, Acceptance criteria.
+- **Research** — exploratory / future consideration. Sections: What, Why consider it, Why not now, References, Trigger to revisit. Research issues do **not** have acceptance criteria — they end with "Trigger to revisit" instead.
+
+**Conventions:**
+
+- **Acceptance criteria on every actionable issue.** Every enhancement and bug must have an explicit "Acceptance criteria" section with verifiable conditions. This is how we know when an issue is done.
+- **No "Status:" headers in issue bodies.** GitHub's open/closed state tracks status. Don't add "Status: Not started" or "Status: Done" lines to issue descriptions.
+- **Retrospective info goes in comments, not body edits.** Once an issue is closed, don't edit the body to add outcomes, decisions, or file lists. Add a comment instead. The issue body is the spec as it was when work started; comments preserve the timeline.
+- **Labels:** `bug`, `enhancement`, `documentation`, `phase`, `ci`, `research`, `dependencies`, `github actions`. Apply at least one label to every issue.
+- **No milestones or GitHub Projects.** Linear handles planning. The `phase` label is sufficient for grouping implementation phases.
+- **Cross-reference related issues** using `#N` links. Reference Linear issues with their full URL when relevant.
+- **Repo owner can bypass force-push protection** when needed (e.g., amending commits on a PR branch).
 
 ## Style preferences
 
