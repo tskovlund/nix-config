@@ -103,6 +103,7 @@ nix-config/
 ├── home/
 │   ├── default.nix              # Base dev environment (always imported)
 │   ├── personal.nix             # Personal additions (imported by non-base targets)
+│   ├── darwin/                  # macOS-only home-manager config (Homebrew PATH, etc.)
 │   ├── shell/                   # Zsh, starship prompt, bat
 │   ├── editor/                  # Neovim via nixvim (LSP, completion, themes)
 │   ├── git/                     # Git, delta, gh CLI

@@ -83,8 +83,8 @@ Note: the pre-push hook runs `nix flake check` on every push (including direct-t
 
 - Each module directory has a `default.nix` entry point
 - Use `programs.<name>` and `home.file` over raw file writes when possible — home-manager options give you type checking and merging
-- Platform-specific logic: use `pkgs.stdenv.isDarwin` / `pkgs.stdenv.isLinux` inside home modules
 - Keep modules focused: one concern per directory (shell, git, editor, etc.)
+- **Platform-specific config:** Use dedicated platform modules (`home/darwin/`, `home/linux/`) rather than `isDarwin`/`isLinux` conditionals in shared modules. These are wired into `makeDarwin`/`makeLinux` in `flake.nix` via `darwinExtraModules`. Small one-off checks with `pkgs.stdenv.isDarwin` are acceptable, but growing platform-specific config should move to the platform module.
 
 ## State versions — never change these
 
@@ -114,6 +114,11 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make lint` — lint all Nix files with statix + deadnix
 - `make update` — update all inputs
 - `nix repl --file flake.nix` — explore the flake interactively
+
+**Important:** Git commands that trigger hooks (commit, push) require dev shell tools (`nixfmt`, `statix`, `deadnix`). Prefix with `nix develop --command` if not already in the dev shell:
+```sh
+nix develop --command git commit -m "message"
+```
 
 ## Secrets
 
