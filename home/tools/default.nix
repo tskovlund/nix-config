@@ -73,6 +73,7 @@
     wget # HTTP file downloads
     tree # directory tree visualization
     devbox # portable dev environments for non-Nix contributors
+    podman # daemonless container engine (Docker-compatible)
     typst # modern typesetting (LaTeX alternative)
     catimg # display images in terminal
     glow # terminal markdown renderer

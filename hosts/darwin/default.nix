@@ -23,6 +23,38 @@
       "claude-code-bin"
     ];
 
+  # --- Homebrew (cask management) ---
+  # Homebrew itself is installed separately (not managed by Nix).
+  # nix-darwin's homebrew module manages what Homebrew installs declaratively.
+  homebrew = {
+    enable = true;
+
+    # Remove casks/formulae not declared here on every rebuild.
+    onActivation.cleanup = "zap";
+
+    brews = [
+      "mas"
+    ];
+
+    # Base casks — useful on any macOS machine.
+    casks = [
+      "firefox"
+      "google-chrome"
+      "iterm2"
+      "podman-desktop"
+      "scroll-reverser"
+      "disk-inventory-x"
+    ];
+
+    # Mac App Store — base apps (requires being signed into the App Store).
+    masApps = {
+      "Amphetamine" = 937984704;
+      "Keynote" = 409183694;
+      "Numbers" = 409203825;
+      "Pages" = 409201541;
+    };
+  };
+
   # State version for nix-darwin. Set once on first build, never change.
   # Changing this can trigger irreversible state migrations.
   system.stateVersion = 5;

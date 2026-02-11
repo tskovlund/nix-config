@@ -33,14 +33,16 @@ Each platform has two targets:
 
    This installs Nix with flakes and the `nix` command enabled by default. If you use the [official installer](https://nixos.org/download/) instead, you'll need to enable `experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`.
 
-2. **Clone this repo**:
+2. **macOS only: Install Homebrew** — https://brew.sh. nix-darwin manages what Homebrew installs (casks, Mac App Store apps), but Homebrew itself must be installed first. Also sign into the Mac App Store before deploying.
+
+3. **Clone this repo**:
 
    ```sh
    git clone https://github.com/tskovlund/nix-config.git ~/repos/nix-config
    cd ~/repos/nix-config
    ```
 
-3. **Personalize** — edit the `username` variable at the top of `flake.nix`:
+4. **Personalize** — edit the `username` variable at the top of `flake.nix`:
 
    ```nix
    let
@@ -97,7 +99,8 @@ nix-config/
 ├── Makefile                     # Convenience targets (make switch, etc.)
 │
 ├── hosts/
-│   ├── darwin/default.nix       # macOS system config (nix-darwin)
+│   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks)
+│   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
 │   └── linux/default.nix        # Linux system config (placeholder)
 │
 ├── home/
