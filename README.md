@@ -33,14 +33,16 @@ Each platform has two targets:
 
    This installs Nix with flakes and the `nix` command enabled by default. If you use the [official installer](https://nixos.org/download/) instead, you'll need to enable `experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`.
 
-2. **Clone this repo**:
+2. **macOS only: Install Homebrew** — https://brew.sh. nix-darwin manages what Homebrew installs (casks, Mac App Store apps), but Homebrew itself must be installed first. Also sign into the Mac App Store before deploying.
+
+3. **Clone this repo**:
 
    ```sh
    git clone https://github.com/tskovlund/nix-config.git ~/repos/nix-config
    cd ~/repos/nix-config
    ```
 
-3. **Personalize** — edit the `username` variable at the top of `flake.nix`:
+4. **Personalize** — edit the `username` variable at the top of `flake.nix`:
 
    ```nix
    let
@@ -97,12 +99,14 @@ nix-config/
 ├── Makefile                     # Convenience targets (make switch, etc.)
 │
 ├── hosts/
-│   ├── darwin/default.nix       # macOS system config (nix-darwin)
+│   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks, system defaults)
+│   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
 │   └── linux/default.nix        # Linux system config (placeholder)
 │
 ├── home/
 │   ├── default.nix              # Base dev environment (always imported)
 │   ├── personal.nix             # Personal additions (imported by non-base targets)
+│   ├── darwin/                  # macOS-only home-manager config (Homebrew PATH, etc.)
 │   ├── shell/                   # Zsh, starship prompt, bat
 │   ├── editor/                  # Neovim via nixvim (LSP, completion, themes)
 │   ├── git/                     # Git, delta, gh CLI
@@ -157,6 +161,12 @@ nix-config/
 - [tree](https://mama.indstate.edu/users/ice/tree/) — directory tree visualization
 - [wget](https://www.gnu.org/software/wget/) — HTTP file downloads
 - [sl](https://github.com/mtoyoda/sl), [cowsay](https://github.com/tnalpgge/rank-amateur-cowsay), [lolcat](https://github.com/busyloop/lolcat), [fortune](https://github.com/shlomif/fortune-mod), [figlet](http://www.figlet.org/), [ponysay](https://github.com/erkin/ponysay)
+
+### macOS system defaults (nix-darwin)
+- Dock, Finder, keyboard, trackpad (all gestures), screenshots, Stage Manager, hot corners
+- Control center / menu bar visibility, screensaver, login window, Activity Monitor
+- Touch ID for sudo, clipboard history, language/region, AirDrop
+- [fn-toggle](https://github.com/jkbrzt/macos-fn-toggle) — toggle fn key behavior via Spotlight (packaged as Nix derivation)
 
 ### Claude Code (personal profile only)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI

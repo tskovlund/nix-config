@@ -68,11 +68,15 @@
   };
 
   home.packages = with pkgs; [
+    # Nix tooling
+    home-manager # standalone CLI (generations, packages, etc.)
+
     # CLI toolkit
     yq # YAML processor (jq for YAML)
     wget # HTTP file downloads
     tree # directory tree visualization
     devbox # portable dev environments for non-Nix contributors
+    podman # daemonless container engine (Docker-compatible)
     typst # modern typesetting (LaTeX alternative)
     catimg # display images in terminal
     glow # terminal markdown renderer

@@ -9,6 +9,23 @@ Some things can't be declared in Nix. This is the checklist for new machines aft
 - **Font**: Preferences → Profiles → Text → Font → select "FiraCode Nerd Font"
   - FiraCode Nerd Font is installed by nix-darwin, but iTerm2's font preference must be set manually (iTerm2 rewrites its plist, making Nix management fragile)
 
+### Homebrew
+
+- **Install Homebrew** before first `make switch`: https://brew.sh
+  - nix-darwin's homebrew module manages what Homebrew installs, but does not install Homebrew itself
+- **Sign into the Mac App Store** before first `make switch`
+  - Required for `masApps` (Amphetamine, iWork apps, Final Cut Pro, etc.) — `mas` will fail to install apps if not signed in
+
+### fn-toggle
+
+- **Grant accessibility permissions** on first run: System Settings → Privacy & Security → Accessibility → fn-toggle.app
+  - fn-toggle is installed by Nix (via home-manager) but needs this one-time manual permission to toggle the fn key behavior
+
+### Screenshots
+
+- **Create `~/Screenshots` directory** if it doesn't exist: `mkdir -p ~/Screenshots`
+  - nix-darwin sets `screencapture.location = "~/Screenshots"` but doesn't create the directory
+
 ### Determinate Nix
 
 - First bootstrap may require: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`

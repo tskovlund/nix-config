@@ -11,6 +11,8 @@ This file documents how this repo is structured and how to extend it.
   - `homeConfigurations."linux-base"` — Linux, base only
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, not user config)
+  - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
+  - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **files/**: Raw config files that modules source or symlink
@@ -19,8 +21,14 @@ This file documents how this repo is structured and how to extend it.
 
 ## Profiles: base vs personal
 
-- **`home/default.nix`** — base dev environment. Everything that belongs on any dev machine (shell, editor, git, CLI tools). New modules go here by default.
-- **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases, Claude Code).
+The base/personal split applies at both layers:
+
+- **home-manager** (user config):
+  - **`home/default.nix`** — base dev environment. Everything that belongs on any dev machine (shell, editor, git, CLI tools). New modules go here by default.
+  - **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases, Claude Code).
+- **nix-darwin** (system config):
+  - **`hosts/darwin/default.nix`** — base system config including base Homebrew casks (Firefox, Chrome, iTerm2, etc.)
+  - **`hosts/darwin/personal.nix`** — personal casks, Mac App Store apps, personal brew formulae.
 
 When adding new config, put it in base unless it's obviously personal. When in doubt, ask.
 
@@ -83,8 +91,8 @@ Note: the pre-push hook runs `nix flake check` on every push (including direct-t
 
 - Each module directory has a `default.nix` entry point
 - Use `programs.<name>` and `home.file` over raw file writes when possible — home-manager options give you type checking and merging
-- Platform-specific logic: use `pkgs.stdenv.isDarwin` / `pkgs.stdenv.isLinux` inside home modules
 - Keep modules focused: one concern per directory (shell, git, editor, etc.)
+- **Platform-specific config:** Use dedicated platform modules (`home/darwin/`, `home/linux/`) rather than `isDarwin`/`isLinux` conditionals in shared modules. These are wired into `makeDarwin` in `flake.nix` via `darwinHomeModules`. Small one-off checks with `pkgs.stdenv.isDarwin` are acceptable, but growing platform-specific config should move to the platform module.
 
 ## State versions — never change these
 
@@ -114,6 +122,11 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make lint` — lint all Nix files with statix + deadnix
 - `make update` — update all inputs
 - `nix repl --file flake.nix` — explore the flake interactively
+
+**Important:** Git commands that trigger hooks (commit, push) require dev shell tools (`nixfmt`, `statix`, `deadnix`). Prefix with `nix develop --command` if not already in the dev shell:
+```sh
+nix develop --command git commit -m "message"
+```
 
 ## Secrets
 

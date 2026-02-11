@@ -38,26 +38,33 @@
     let
       username = "thomas";
 
-      # Helper: create a nix-darwin system with the given home-manager modules.
+      # Helper: create a nix-darwin system with the given modules.
+      # homeModules: home-manager modules (cross-platform user config)
+      # darwinModules: extra nix-darwin system modules (e.g. hosts/darwin/personal.nix)
       makeDarwin =
-        homeModules:
+        {
+          homeModules,
+          darwinModules ? [ ],
+        }:
         nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           modules = [
             ./hosts/darwin
             home-manager.darwinModules.home-manager
             {
+              system.primaryUser = username;
               users.users.${username}.home = "/Users/${username}";
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
               home-manager.users.${username} = {
-                imports = homeModules ++ [ nixvim.homeModules.nixvim ];
+                imports = homeModules ++ darwinHomeModules ++ [ nixvim.homeModules.nixvim ];
                 home.username = username;
                 home.homeDirectory = "/Users/${username}";
               };
             }
-          ];
+          ]
+          ++ darwinModules;
         };
 
       # Helper: create a standalone home-manager config with the given modules.
@@ -85,6 +92,7 @@
       # Module sets
       baseModules = [ ./home ];
       personalModules = baseModules ++ [ ./home/personal.nix ];
+      darwinHomeModules = [ ./home/darwin ];
 
       # Helper: create a dev shell with formatting/linting tools and hook setup.
       makeDevShell =
@@ -103,11 +111,16 @@
     {
       # macOS — base + personal (default for personal machines)
       # Apply with: darwin-rebuild switch --flake .#darwin
-      darwinConfigurations."darwin" = makeDarwin personalModules;
+      darwinConfigurations."darwin" = makeDarwin {
+        homeModules = personalModules;
+        darwinModules = [ ./hosts/darwin/personal.nix ];
+      };
 
       # macOS — base only (dev environment without personal additions)
       # Apply with: darwin-rebuild switch --flake .#darwin-base
-      darwinConfigurations."darwin-base" = makeDarwin baseModules;
+      darwinConfigurations."darwin-base" = makeDarwin {
+        homeModules = baseModules;
+      };
 
       # Linux — base + personal
       # Apply with: home-manager switch --flake .#linux
