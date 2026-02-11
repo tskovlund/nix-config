@@ -99,7 +99,7 @@ nix-config/
 ├── Makefile                     # Convenience targets (make switch, etc.)
 │
 ├── hosts/
-│   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks)
+│   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks, system defaults)
 │   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
 │   └── linux/default.nix        # Linux system config (placeholder)
 │
@@ -161,6 +161,12 @@ nix-config/
 - [tree](https://mama.indstate.edu/users/ice/tree/) — directory tree visualization
 - [wget](https://www.gnu.org/software/wget/) — HTTP file downloads
 - [sl](https://github.com/mtoyoda/sl), [cowsay](https://github.com/tnalpgge/rank-amateur-cowsay), [lolcat](https://github.com/busyloop/lolcat), [fortune](https://github.com/shlomif/fortune-mod), [figlet](http://www.figlet.org/), [ponysay](https://github.com/erkin/ponysay)
+
+### macOS system defaults (nix-darwin)
+- Dock, Finder, keyboard, trackpad (all gestures), screenshots, Stage Manager, hot corners
+- Control center / menu bar visibility, screensaver, login window, Activity Monitor
+- Touch ID for sudo, clipboard history, language/region, AirDrop
+- [fn-toggle](https://github.com/jkbrzt/macos-fn-toggle) — toggle fn key behavior via Spotlight (packaged as Nix derivation)
 
 ### Claude Code (personal profile only)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI

@@ -11,7 +11,7 @@ This file documents how this repo is structured and how to extend it.
   - `homeConfigurations."linux-base"` — Linux, base only
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, not user config)
-  - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks)
+  - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
   - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.

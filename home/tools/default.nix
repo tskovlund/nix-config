@@ -68,6 +68,9 @@
   };
 
   home.packages = with pkgs; [
+    # Nix tooling
+    home-manager # standalone CLI (generations, packages, etc.)
+
     # CLI toolkit
     yq # YAML processor (jq for YAML)
     wget # HTTP file downloads
