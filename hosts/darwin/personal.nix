@@ -1,6 +1,9 @@
 { ... }:
 
 {
+  # Stage Manager — personal preference, not in base config.
+  system.defaults.WindowManager.GloballyEnabled = true;
+
   homebrew = {
     # Personal casks — only on personal machines.
     casks = [

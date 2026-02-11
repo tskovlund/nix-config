@@ -106,8 +106,7 @@
       KeyRepeat = 2;
       "com.apple.keyboard.fnState" = false; # Fn key = special keys (toggled by fn-toggle)
 
-      # Appearance
-      AppleInterfaceStyle = "Dark";
+      # Appearance (auto-switches between light and dark based on time of day)
       AppleInterfaceStyleSwitchesAutomatically = true;
 
       # Disable text corrections
@@ -205,10 +204,7 @@
     ActivityMonitor.ShowCategory = 100; # All processes
 
     # Window management
-    WindowManager = {
-      GloballyEnabled = true; # Stage Manager
-      EnableTilingByEdgeDrag = true;
-    };
+    WindowManager.EnableTilingByEdgeDrag = true;
 
     # Menu bar clock
     menuExtraClock = {
@@ -234,7 +230,7 @@
         ];
         AppleLocale = "en_US@rg=dkzzzz";
       };
-      # Clipboard history (Sequoia+)
+      # Clipboard history (requires macOS Sequoia or later; safely ignored on older versions)
       "com.apple.Spotlight" = {
         PasteboardHistoryEnabled = true;
         PasteboardHistoryTimeout = 604800; # 7 days
