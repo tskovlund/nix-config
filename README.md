@@ -225,9 +225,11 @@ No manual setup required — the config handles user creation, zsh as default sh
 To add a new NixOS host (VPS, bare-metal, Raspberry Pi, etc.):
 
 1. Create a new directory in `hosts/<hostname>/` with your host-specific config (hardware, networking, services, etc.)
-2. Import `./hosts/nixos` to inherit the general NixOS layer (user setup, flakes, zsh, home-manager)
+2. Create host-specific config WITHOUT importing `./hosts/nixos` (it's automatically included by `makeNixOS`)
 3. Add a `nixosConfigurations.<hostname>` entry in `flake.nix` using the `makeNixOS` helper
 4. Apply with `sudo nixos-rebuild switch --flake .#<hostname>`
+
+> **Note:** For non-WSL NixOS hosts (VPS, bare-metal, Raspberry Pi), you must configure authentication in the host-specific config, e.g. via `users.users.${username}.initialPassword` or `users.users.${username}.openssh.authorizedKeys`. The `makeNixOS` helper does not set a password or SSH keys — WSL handles this via the `nixos-wsl` module.
 
 See `hosts/nixos-wsl/` as an example of how to compose the general `nixos` layer with host-specific config.
 
@@ -258,7 +260,8 @@ nix-config/
 │   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
 │   ├── linux/default.nix        # Linux system config (placeholder)
 │   ├── nixos/default.nix        # General NixOS layer (user setup, flakes, zsh, home-manager)
-│   ├── nixos-wsl/default.nix    # NixOS-WSL entry point (imports nixos layer + wsl settings)
+│   ├── wsl/default.nix          # General WSL layer (interop, automount, start menu)
+│   ├── nixos-wsl/default.nix    # NixOS-WSL entry point (imports wsl layer; nixos layer added by makeNixOS)
 │   └── [future: vps/, rpi/]     # Additional NixOS hosts (import nixos layer + host-specific config)
 │
 ├── home/
@@ -382,7 +385,7 @@ CI also validates both Linux and macOS on every PR.
 | Rollback | `home-manager switch --flake .#linux -b backup` |
 | List generations | `home-manager generations` |
 
-### NixOS / WSL (nixos-rebuild)
+### NixOS-WSL (nixos-rebuild)
 
 | Task | Command |
 |------|---------|

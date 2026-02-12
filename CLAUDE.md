@@ -17,7 +17,8 @@ This file documents how this repo is structured and how to extend it.
   - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
   - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, home-manager integration). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
-  - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the general nixos layer plus nixos-wsl-specific settings.
+  - `hosts/wsl/default.nix` — general WSL layer (interop, automount, start menu launchers). Reusable for any WSL distribution, not just NixOS-WSL.
+  - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
