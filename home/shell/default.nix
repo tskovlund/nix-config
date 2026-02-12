@@ -145,6 +145,7 @@ in
         format = "$output";
         unsafe_no_escape = true;
         shell = [ "sh" ];
+        command_timeout = 2000;
         description = "Username with deterministic hash-based color";
       };
 
@@ -154,6 +155,7 @@ in
         format = "$output";
         unsafe_no_escape = true;
         shell = [ "sh" ];
+        command_timeout = 2000;
         description = "Hostname with deterministic hash-based color";
       };
 
