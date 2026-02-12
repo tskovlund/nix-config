@@ -1,14 +1,11 @@
 { pkgs, ... }:
 
 let
-  # Script that outputs text colored by a deterministic hash of the input string.
-  # Uses HSL with hue derived from SHA-256, fixed saturation and lightness for
-  # vibrant, readable colors on dark terminal backgrounds.
-  #
-  # Usage: hash-color <string-to-hash> <text-to-display>
+  # Computes a #RRGGBB hex color from a string via SHA-256 hash.
+  # HSL color space: full hue range, saturation 65%, lightness 55-75%.
+  # Output: just the hex color string, e.g. "#db6ce0"
   hashColorScript = pkgs.writeShellScript "hash-color" ''
     input="$1"
-    label="$2"
 
     # Portable SHA-256: macOS has shasum, Linux has sha256sum
     if command -v sha256sum >/dev/null 2>&1; then
@@ -17,26 +14,17 @@ let
       hash=$(printf '%s' "$input" | shasum -a 256 | cut -c1-12)
     fi
 
-    # Convert first 12 hex chars to an HSL color, then to RGB.
-    # Hue: full 0-360 range from first 4 hex chars (0-65535 mapped to 0-360)
-    # Saturation: fixed at 65% for vibrant but not neon colors
-    # Lightness: range 55-75% from next 2 hex chars, readable on dark backgrounds
-    ${pkgs.gawk}/bin/awk -v hash="$hash" -v label="$label" 'BEGIN {
-      # Parse hex chars for hue (4 chars = 16 bits) and lightness offset (2 chars = 8 bits)
+    # Convert first 6 hex chars to an HSL color, then to RGB hex.
+    # Uses awk for the math — runs once at shell init, not per prompt.
+    ${pkgs.gawk}/bin/awk -v hash="$hash" 'BEGIN {
       hue_hex = substr(hash, 1, 4)
       lit_hex = substr(hash, 5, 2)
 
-      # Convert hex to decimal
       hue_val = 0
       for (i = 1; i <= length(hue_hex); i++) {
         c = substr(hue_hex, i, 1)
         if (c ~ /[0-9]/) d = c + 0
-        else if (c == "a" || c == "A") d = 10
-        else if (c == "b" || c == "B") d = 11
-        else if (c == "c" || c == "C") d = 12
-        else if (c == "d" || c == "D") d = 13
-        else if (c == "e" || c == "E") d = 14
-        else if (c == "f" || c == "F") d = 15
+        else d = (index("abcdef", tolower(c)) + 9)
         hue_val = hue_val * 16 + d
       }
 
@@ -44,20 +32,14 @@ let
       for (i = 1; i <= length(lit_hex); i++) {
         c = substr(lit_hex, i, 1)
         if (c ~ /[0-9]/) d = c + 0
-        else if (c == "a" || c == "A") d = 10
-        else if (c == "b" || c == "B") d = 11
-        else if (c == "c" || c == "C") d = 12
-        else if (c == "d" || c == "D") d = 13
-        else if (c == "e" || c == "E") d = 14
-        else if (c == "f" || c == "F") d = 15
+        else d = (index("abcdef", tolower(c)) + 9)
         lit_val = lit_val * 16 + d
       }
 
       h = (hue_val / 65535.0) * 360.0
       s = 0.65
-      l = 0.55 + (lit_val / 255.0) * 0.20  # Range: 0.55 to 0.75
+      l = 0.55 + (lit_val / 255.0) * 0.20
 
-      # HSL to RGB conversion
       c = (1 - (2 * l - 1 > 0 ? 2 * l - 1 : -(2 * l - 1))) * s
       hp = h / 60.0
       x = c * (1 - ((hp % 2) - 1 > 0 ? (hp % 2) - 1 : -((hp % 2) - 1)))
@@ -74,8 +56,7 @@ let
       g = int((g1 + m) * 255 + 0.5)
       b = int((b1 + m) * 255 + 0.5)
 
-      # Output with 24-bit ANSI color escape (bold)
-      printf "\033[1;38;2;%d;%d;%dm%s\033[0m", r, g, b, label
+      printf "#%02x%02x%02x", r, g, b
     }'
   '';
 in
@@ -115,6 +96,11 @@ in
       }
       autoload -Uz add-zsh-hook
       add-zsh-hook preexec _alias_expansion_preexec
+
+      # Compute deterministic hash colors for username/hostname once at shell init.
+      # Starship reads these env vars for styling — zero cost per prompt render.
+      export STARSHIP_USER_COLOR="$(${hashColorScript} "$(whoami)")"
+      export STARSHIP_HOST_COLOR="$(${hashColorScript} "$(hostname -s)")"
     '';
 
     history = {
@@ -133,30 +119,18 @@ in
     enable = true;
     enableZshIntegration = true;
     settings = {
-      format = "$directory$git_branch$git_status$nix_shell$python$nodejs$rust$fill$cmd_duration\${custom.username_colored}\${custom.hostname_colored} $time$line_break$character";
+      format = "$directory$git_branch$git_status$nix_shell$python$nodejs$rust$fill$cmd_duration$username$hostname $time$line_break$character";
 
-      # Disable built-in username/hostname — replaced by hash-colored custom commands below
-      username.disabled = true;
-      hostname.disabled = true;
-
-      custom.username_colored = {
-        command = "${hashColorScript} \"$(whoami)\" \"$(whoami)\"";
-        when = "true";
-        format = "$output";
-        unsafe_no_escape = true;
-        shell = [ "sh" ];
-        command_timeout = 2000;
-        description = "Username with deterministic hash-based color";
+      # Hash-colored username/hostname: colors are computed once at shell init
+      # and cached in STARSHIP_USER_COLOR / STARSHIP_HOST_COLOR env vars.
+      username = {
+        show_always = true;
+        format = "[$user](bold \${env:STARSHIP_USER_COLOR})";
       };
 
-      custom.hostname_colored = {
-        command = "${hashColorScript} \"$(hostname -s)\" \"@$(hostname -s)\"";
-        when = "true";
-        format = "$output";
-        unsafe_no_escape = true;
-        shell = [ "sh" ];
-        command_timeout = 2000;
-        description = "Hostname with deterministic hash-based color";
+      hostname = {
+        ssh_only = false;
+        format = "[@$hostname](bold \${env:STARSHIP_HOST_COLOR})";
       };
 
       git_status = {
