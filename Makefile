@@ -14,7 +14,7 @@
 # Or pass it directly: make switch PERSONAL_INPUT=path:/path/to/nix-config-personal
 
 UNAME := $(shell uname -s)
-IS_NIXOS := $(shell command -v nixos-rebuild >/dev/null 2>&1 && echo 1 || echo 0)
+IS_NIXOS := $(shell [ -e /etc/NIXOS ] && echo 1 || echo 0)
 IS_WSL := $(shell [ -f /proc/sys/fs/binfmt_misc/WSLInterop ] && echo 1 || echo 0)
 
 # Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
@@ -96,7 +96,7 @@ switch-base: .check-identity
 	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 endif
 
-# Explicit NixOS-WSL targets (work on any platform if you want to build remotely)
+# Explicit NixOS-WSL targets (require nixos-rebuild — NixOS only)
 switch-wsl: .check-identity
 	sudo nixos-rebuild switch --flake .#wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 

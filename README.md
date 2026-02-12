@@ -204,7 +204,7 @@ nix run home-manager -- switch --flake .#linux \
 
 If `/etc/zshenv` conflicts on macOS: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
 
-### NixOS / WSL (first time)
+### NixOS-WSL (first time)
 
 On a fresh NixOS-WSL installation, the flake-based nixos-rebuild is already available. Just clone and apply:
 

@@ -1,12 +1,9 @@
 { ... }:
 
 {
-  # Import general NixOS and WSL layers
+  # Import general WSL layer (interop, automount, start menu launchers).
+  # The general NixOS layer (hosts/nixos) is imported by makeNixOS in flake.nix.
   imports = [
-    ../nixos
     ../wsl
   ];
-
-  # NixOS-WSL specific configuration will be applied via the
-  # nixos-wsl.nixosModules.wsl module imported in flake.nix
 }

@@ -5,8 +5,9 @@
   # wsl.defaultUser is set by the nixos-wsl entry point or flake
   wsl.enable = true;
 
-  # Enable WSL interop — allows running Windows executables from WSL
-  # includePath = true adds Windows executables to PATH
+  # Include Windows executables in PATH for seamless interop (e.g. explorer.exe,
+  # code.exe). This is the primary reason to use WSL over a VM — disable if you
+  # prefer strict isolation.
   wsl.interop.includePath = true;
 
   # Enable Start Menu launchers for GUI apps

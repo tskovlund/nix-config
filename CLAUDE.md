@@ -77,11 +77,28 @@ When adding new config, put it in base unless it's obviously personal. When in d
 2. Make changes, test with `make check` and `make switch`
 3. Commit with conventional commit messages
 4. Push and create a PR linking the relevant phase issue
-5. Copilot auto-reviews the PR via the "Protect main" ruleset — review its comments, reply/resolve as appropriate
-6. Once CI passes and comments are resolved, merge
-7. Pull main locally, delete the feature branch, prune stale remote tracking refs: `git fetch --prune`
+5. **Review loop — iterate until clean:**
+   - Wait for CI and Copilot review (Copilot auto-reviews via the "Protect main" ruleset)
+   - Read all Copilot comments: `gh api repos/tskovlund/nix-config/pulls/<N>/comments`
+   - Address each comment: fix the code, or reply explaining why no change is needed
+   - Push fixes, then check for new comments — repeat until no unresolved comments remain
+   - This loop is part of the definition of done. A PR is not ready for human review until CI passes and all automated review comments are resolved.
+6. Once CI passes and comments are resolved, notify Thomas for final review
+7. Thomas merges. After merge:
+   - Pull main locally, delete the feature branch, prune stale remote tracking refs: `git fetch --prune`
+   - Close related GitHub issues (if not auto-closed by `Closes #N`)
+   - Update related Linear issues (add comment with PR link, move to Done)
 
 Note: the pre-push hook runs `nix flake check` on every push (including direct-to-main). CI also runs on PRs with required status checks for both Linux and macOS.
+
+### Agent autonomy
+
+The goal is to maximize continuous agent work without human intervention. Agents should:
+- Follow the PR review loop above autonomously — don't stop after the first push
+- Use agent teams for parallel work when tasks are independent
+- Pick up the next logical task after completing one (check Linear and GitHub issues)
+- Only pause for human input when a design decision genuinely requires it
+- Document all decisions and trade-offs in PR descriptions and issue comments so Thomas can review asynchronously
 
 ### PR structure
 
@@ -129,6 +146,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 - **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
 - **Proper fixes over workarounds.** Always solve problems at the root cause. Workarounds are acceptable only for sufficiently small problems, with clear justification, and require explicit confirmation from Thomas. If a workaround is used, document why and create a follow-up issue for the proper fix. Workarounds erode maintainability over time — resist them by default.
 - **Verify UI changes before pushing.** For visual/UI changes (prompts, themes, TUI output, etc.) where `make check` can't confirm correctness, `make switch` first and ask Thomas to verify the result visually before committing and pushing.
+- **Use the best model for the job.** Cost is not a concern. When spawning agents for complex tasks, use Opus (with extended thinking if beneficial). Use Sonnet for straightforward, well-scoped subtasks.
 
 ## Module conventions
 
