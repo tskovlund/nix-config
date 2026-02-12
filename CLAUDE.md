@@ -129,7 +129,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 - **Acceptance criteria on every actionable issue.** Every enhancement and bug must have an explicit "Acceptance criteria" section with verifiable conditions. This is how we know when an issue is done.
 - **No "Status:" headers in issue bodies.** GitHub's open/closed state tracks status. Don't add "Status: Not started" or "Status: Done" lines to issue descriptions.
-- **Don't edit issue bodies — use comments.** The issue body is the original spec. New context, corrections, investigation findings, and retrospective info all go in comments, preserving the timeline. The only exceptions are fixing typos, adding missing template sections before work starts, or ticking checkboxes.
+- **Don't edit issue bodies — use comments.** The issue body is the original spec. New context, corrections, investigation findings, and retrospective info all go in comments, preserving the timeline. The only exceptions are fixing typos, adding missing template sections before work starts, or ticking checkboxes (in issues, PRs, etc.).
 - **Always read issue comments before working on an issue.** Comments are a crucial part of issue tracking — they contain scope changes, investigation findings, design decisions, and context that the body alone won't have. The body may be outdated or incomplete. Skip this only when the issue is obviously simple or freshly created.
 - **Labels:** `bug`, `enhancement`, `documentation`, `phase`, `ci`, `research`, `dependencies`, `github actions`. Apply at least one label to every issue.
 - **No milestones or GitHub Projects.** Linear handles planning. The `phase` label is sufficient for grouping implementation phases.
