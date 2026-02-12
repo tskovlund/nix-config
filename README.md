@@ -2,12 +2,43 @@
 
 Fully declarative, cross-platform environment using Nix flakes, nix-darwin, and home-manager.
 
-## What this does
-
-Everything about your environment — shell, editor, git, CLI tools, system preferences — is defined as code in this repo. Applying the config on a new machine reproduces the entire setup exactly 🏠
+Everything about your environment — shell, editor, git, CLI tools, system preferences — is defined as code in this repo. Applying the config on a new machine reproduces the entire setup exactly.
 
 - **macOS**: nix-darwin manages system settings + home-manager manages user config
 - **Linux / WSL**: standalone home-manager manages user config
+
+## Quick start 🚀
+
+```sh
+# 1. Install Nix (Determinate installer recommended)
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# 2. macOS only: install Homebrew (nix-darwin manages what it installs, but not Homebrew itself)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 3. Clone and deploy
+git clone https://github.com/tskovlund/nix-config.git
+cd nix-config
+
+# macOS (first time — subsequent deploys: make switch)
+nix build .#darwinConfigurations.darwin.system
+sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin
+
+# Linux / WSL (first time — subsequent deploys: make switch)
+nix run home-manager -- switch --flake .#linux
+```
+
+See [Prerequisites](#prerequisites-) for full details.
+
+## Highlights ✨
+
+- **[Starship](https://starship.rs/) prompt** with deterministic hash-colored hostname and username — each machine gets a unique, consistent color so you always know where you are
+- **Full-fledged [Neovim](https://neovim.io/)** via [nixvim](https://github.com/nix-community/nixvim) — LSP, completion, format-on-save, telescope, treesitter, and more ([details below](#editor))
+- **Case-insensitive tab completion** and [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) out of the box
+- **Touch ID for sudo** — no more typing passwords in the terminal
+- **Opinionated CLI toolkit** — [bat](https://github.com/sharkdp/bat) as cat/man pager, [delta](https://github.com/dandavison/delta) for diffs, [eza](https://github.com/eza-community/eza) for ls, [zoxide](https://github.com/ajeetdsouza/zoxide) for cd, [fzf](https://github.com/junegunn/fzf) for everything else
+- **[direnv](https://github.com/direnv/direnv) + [nix-direnv](https://github.com/nix-community/nix-direnv)** — automatic per-project dev environments
+- ...and a lot more good stuff. See [What's included](#whats-included-) for the full inventory.
 
 ## Profiles 🧩
 
@@ -38,8 +69,8 @@ Each platform has two targets:
 3. **Clone this repo**:
 
    ```sh
-   git clone https://github.com/tskovlund/nix-config.git ~/repos/nix-config
-   cd ~/repos/nix-config
+   git clone https://github.com/tskovlund/nix-config.git
+   cd nix-config
    ```
 
 4. **Personalize** — edit the `username` variable at the top of `flake.nix`:
