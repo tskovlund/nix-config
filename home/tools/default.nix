@@ -69,7 +69,7 @@
 
   home.packages = with pkgs; [
     # Nix tooling
-    home-manager # standalone CLI (generations, packages, etc.)
+    home-manager # CLI for generations, packages, etc. (programs.home-manager.enable is a no-op in module mode)
 
     # Terminal
     tmux # terminal multiplexer (also required for Claude Code agent teams split-pane mode)
