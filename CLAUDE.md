@@ -105,6 +105,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 - **No ambiguous abbreviations.** Use explicit names: `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
 - **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
 - **Proper fixes over workarounds.** Always solve problems at the root cause. Workarounds are acceptable only for sufficiently small problems, with clear justification, and require explicit confirmation from Thomas. If a workaround is used, document why and create a follow-up issue for the proper fix. Workarounds erode maintainability over time — resist them by default.
+- **Verify UI changes before pushing.** For visual/UI changes (prompts, themes, TUI output, etc.) where `make check` can't confirm correctness, `make switch` first and ask Thomas to verify the result visually before committing and pushing.
 
 ## Module conventions
 
