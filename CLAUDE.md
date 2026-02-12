@@ -93,7 +93,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 - **Acceptance criteria on every actionable issue.** Every enhancement and bug must have an explicit "Acceptance criteria" section with verifiable conditions. This is how we know when an issue is done.
 - **No "Status:" headers in issue bodies.** GitHub's open/closed state tracks status. Don't add "Status: Not started" or "Status: Done" lines to issue descriptions.
-- **Retrospective info goes in comments, not body edits.** Once an issue is closed, don't edit the body to add outcomes, decisions, or file lists. Add a comment instead. The issue body is the spec as it was when work started; comments preserve the timeline.
+- **Don't edit issue bodies — use comments.** The issue body is the original spec. New context, corrections, investigation findings, and retrospective info all go in comments, preserving the timeline. The only exceptions are fixing typos or adding missing template sections before work starts.
 - **Labels:** `bug`, `enhancement`, `documentation`, `phase`, `ci`, `research`, `dependencies`, `github actions`. Apply at least one label to every issue.
 - **No milestones or GitHub Projects.** Linear handles planning. The `phase` label is sufficient for grouping implementation phases.
 - **Cross-reference related issues** using `#N` links. Reference Linear issues with their full URL when relevant.
@@ -104,6 +104,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 - **Conventional commits.** All commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): description`. Common types: `feat`, `fix`, `docs`, `chore`, `refactor`. Scope is optional (e.g., `feat(shell): add fzf integration`).
 - **No ambiguous abbreviations.** Use explicit names: `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
 - **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
+- **Proper fixes over workarounds.** Always solve problems at the root cause. Workarounds are acceptable only for sufficiently small problems, with clear justification, and require explicit confirmation from Thomas. If a workaround is used, document why and create a follow-up issue for the proper fix. Workarounds erode maintainability over time — resist them by default.
 
 ## Module conventions
 

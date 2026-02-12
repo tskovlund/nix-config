@@ -71,6 +71,9 @@
     # Nix tooling
     home-manager # standalone CLI (generations, packages, etc.)
 
+    # Terminal
+    tmux # terminal multiplexer (also required for Claude Code agent teams split-pane mode)
+
     # CLI toolkit
     yq # YAML processor (jq for YAML)
     wget # HTTP file downloads

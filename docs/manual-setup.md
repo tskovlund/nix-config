@@ -58,6 +58,8 @@ After first deploy, configure `~/.claude/settings.json`:
 }
 ```
 
+Agent teams and tmux split-pane mode are fully Nix-managed (env var + shell alias) — no manual settings.json configuration needed for these.
+
 Install additional plugins as needed via `/plugins` inside Claude Code.
 
 ### GitHub CLI

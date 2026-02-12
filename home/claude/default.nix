@@ -8,6 +8,12 @@
   # Default to Opus 4.6
   home.sessionVariables.ANTHROPIC_MODEL = "claude-opus-4-6";
 
+  # Enable experimental agent teams (parallel multi-agent orchestration)
+  home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+
+  # Default to tmux split-pane mode for agent teams (renders as native iTerm2 splits on macOS)
+  programs.zsh.shellAliases.claude = "claude --teammate-mode tmux";
+
   # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
   # Nix puts the binary in the store, so we symlink it to the expected location.
   home.file.".local/bin/claude".source = "${pkgs.claude-code-bin}/bin/claude";
