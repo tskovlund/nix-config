@@ -9,11 +9,15 @@ This file documents how this repo is structured and how to extend it.
   - `darwinConfigurations."darwin-base"` — macOS, base only
   - `homeConfigurations."linux"` — Linux, base + personal
   - `homeConfigurations."linux-base"` — Linux, base only
+  - `nixosConfigurations."wsl"` — NixOS-WSL, base + personal
+  - `nixosConfigurations."wsl-base"` — NixOS-WSL, base only
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
-- **hosts/**: Platform-specific *system* config (nix-darwin settings, not user config)
+- **hosts/**: Platform-specific *system* config (nix-darwin settings, NixOS settings, not user config)
   - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
   - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
+  - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, home-manager integration). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
+  - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the general nixos layer plus nixos-wsl-specific settings.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
@@ -145,6 +149,7 @@ Optional local config lives at `~/.config/nix-config/local.nix` (outside the rep
 ## State versions — never change these
 
 - `system.stateVersion = 5` in `hosts/darwin/default.nix`
+- `system.stateVersion = "25.05"` in `hosts/nixos/default.nix`
 - `home.stateVersion = "25.11"` in `home/default.nix`
 
 These are compatibility markers, not package selectors. Changing them can trigger irreversible data migrations.
@@ -165,9 +170,11 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 
 - `bootstrap.sh` — new-machine bootstrap (installs Nix, clones, deploys)
 - `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
-- `make switch` — apply base + personal config (macOS)
-- `make switch-base` — apply base only config (macOS)
-- `make check` — validate flake (both platforms)
+- `make switch` — apply base + personal config (auto-detects macOS / Linux / NixOS-WSL)
+- `make switch-base` — apply base only config (auto-detects platform)
+- `make switch-wsl` — apply NixOS-WSL config (base + personal, explicit target)
+- `make switch-wsl-base` — apply NixOS-WSL base only config (explicit target)
+- `make check` — validate flake (all platforms)
 - `make fmt` — format all Nix files with nixfmt
 - `make lint` — lint all Nix files with statix + deadnix
 - `make update` — update all inputs

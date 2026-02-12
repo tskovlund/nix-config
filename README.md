@@ -6,6 +6,7 @@ Everything about your environment — shell, editor, git, CLI tools, system pref
 
 - **macOS**: nix-darwin manages system settings + home-manager manages user config
 - **Linux / WSL**: standalone home-manager manages user config
+- **NixOS / NixOS-WSL**: nixos-rebuild manages system + home config
 
 ## Quick start 🚀
 
@@ -53,8 +54,8 @@ Each platform has two targets:
 
 | Target | What it includes | Use case |
 |--------|-----------------|----------|
-| `darwin` / `linux` | base + personal | Personal machines |
-| `darwin-base` / `linux-base` | base only | Shared or work machines |
+| `darwin` / `linux` / `wsl` | base + personal | Personal machines |
+| `darwin-base` / `linux-base` / `wsl-base` | base only | Shared or work machines |
 
 ## Personal identity 🔑
 
@@ -203,6 +204,33 @@ nix run home-manager -- switch --flake .#linux \
 
 If `/etc/zshenv` conflicts on macOS: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
 
+### NixOS / WSL (first time)
+
+On a fresh NixOS-WSL installation, the flake-based nixos-rebuild is already available. Just clone and apply:
+
+```sh
+# Clone the repo
+git clone https://github.com/tskovlund/nix-config.git
+cd nix-config
+
+# Edit flake.nix to set your username (see Prerequisites)
+# Then apply the config
+sudo nixos-rebuild switch --flake .#wsl
+```
+
+No manual setup required — the config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
+
+#### Adding a new NixOS host
+
+To add a new NixOS host (VPS, bare-metal, Raspberry Pi, etc.):
+
+1. Create a new directory in `hosts/<hostname>/` with your host-specific config (hardware, networking, services, etc.)
+2. Import `./hosts/nixos` to inherit the general NixOS layer (user setup, flakes, zsh, home-manager)
+3. Add a `nixosConfigurations.<hostname>` entry in `flake.nix` using the `makeNixOS` helper
+4. Apply with `sudo nixos-rebuild switch --flake .#<hostname>`
+
+See `hosts/nixos-wsl/` as an example of how to compose the general `nixos` layer with host-specific config.
+
 ### Subsequent deploys
 
 The Makefile auto-detects your platform and reads the personal identity override from `~/.config/nix-config/personal-input`:
@@ -228,7 +256,10 @@ nix-config/
 ├── hosts/
 │   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks, system defaults)
 │   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
-│   └── linux/default.nix        # Linux system config (placeholder)
+│   ├── linux/default.nix        # Linux system config (placeholder)
+│   ├── nixos/default.nix        # General NixOS layer (user setup, flakes, zsh, home-manager)
+│   ├── nixos-wsl/default.nix    # NixOS-WSL entry point (imports nixos layer + wsl settings)
+│   └── [future: vps/, rpi/]     # Additional NixOS hosts (import nixos layer + host-specific config)
 │
 ├── home/
 │   ├── default.nix              # Base dev environment (always imported)
@@ -350,6 +381,16 @@ CI also validates both Linux and macOS on every PR.
 | See what changed | `home-manager build --flake .#linux && nix diff-closures ~/.local/state/nix/profiles/home-manager ./result` |
 | Rollback | `home-manager switch --flake .#linux -b backup` |
 | List generations | `home-manager generations` |
+
+### NixOS / WSL (nixos-rebuild)
+
+| Task | Command |
+|------|---------|
+| Apply NixOS-WSL config (explicit) | `make switch-wsl` or `sudo nixos-rebuild switch --flake .#wsl` |
+| Apply NixOS-WSL base config | `make switch-wsl-base` or `sudo nixos-rebuild switch --flake .#wsl-base` |
+| See what changed | `nixos-rebuild build --flake .#wsl && nix diff-closures /nix/var/nix/profiles/system ./result` |
+| Rollback | `sudo nixos-rebuild switch --rollback` |
+| List generations | `sudo nix-env --list-generations --profile /nix/var/nix/profiles/system` |
 
 ## Inputs 📦
 
