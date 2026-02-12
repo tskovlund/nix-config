@@ -54,8 +54,8 @@ Each platform has two targets:
 
 | Target | What it includes | Use case |
 |--------|-----------------|----------|
-| `darwin` / `linux` / `wsl` | base + personal | Personal machines |
-| `darwin-base` / `linux-base` / `wsl-base` | base only | Shared or work machines |
+| `darwin` / `linux` / `nixos-wsl` | base + personal | Personal machines |
+| `darwin-base` / `linux-base` / `nixos-wsl-base` | base only | Shared or work machines |
 
 ## Personal identity 🔑
 
@@ -215,7 +215,7 @@ cd nix-config
 
 # Edit flake.nix to set your username (see Prerequisites)
 # Then apply the config
-sudo nixos-rebuild switch --flake .#wsl
+sudo nixos-rebuild switch --flake .#nixos-wsl
 ```
 
 No manual setup required — the config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
@@ -386,9 +386,9 @@ CI also validates both Linux and macOS on every PR.
 
 | Task | Command |
 |------|---------|
-| Apply NixOS-WSL config (explicit) | `make switch-wsl` or `sudo nixos-rebuild switch --flake .#wsl` |
-| Apply NixOS-WSL base config | `make switch-wsl-base` or `sudo nixos-rebuild switch --flake .#wsl-base` |
-| See what changed | `nixos-rebuild build --flake .#wsl && nix diff-closures /nix/var/nix/profiles/system ./result` |
+| Apply NixOS-WSL config (explicit) | `make switch-nixos-wsl` or `sudo nixos-rebuild switch --flake .#nixos-wsl` |
+| Apply NixOS-WSL base config | `make switch-nixos-wsl-base` or `sudo nixos-rebuild switch --flake .#nixos-wsl-base` |
+| See what changed | `nixos-rebuild build --flake .#nixos-wsl && nix diff-closures /nix/var/nix/profiles/system ./result` |
 | Rollback | `sudo nixos-rebuild switch --rollback` |
 | List generations | `sudo nix-env --list-generations --profile /nix/var/nix/profiles/system` |
 

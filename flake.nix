@@ -214,10 +214,10 @@
       homeConfigurations."linux-base" = makeLinux baseModules;
 
       # NixOS-WSL — base + personal
-      # Apply with: nixos-rebuild switch --flake .#wsl
-      nixosConfigurations."wsl" = makeNixOS {
+      # Apply with: nixos-rebuild switch --flake .#nixos-wsl
+      nixosConfigurations."nixos-wsl" = makeNixOS {
         system = "x86_64-linux";
-        hostname = "wsl";
+        hostname = "nixos-wsl";
         homeModules = personalModules;
         nixosModules = [
           ./hosts/nixos-wsl
@@ -227,10 +227,10 @@
       };
 
       # NixOS-WSL — base only
-      # Apply with: nixos-rebuild switch --flake .#wsl-base
-      nixosConfigurations."wsl-base" = makeNixOS {
+      # Apply with: nixos-rebuild switch --flake .#nixos-wsl-base
+      nixosConfigurations."nixos-wsl-base" = makeNixOS {
         system = "x86_64-linux";
-        hostname = "wsl-base";
+        hostname = "nixos-wsl-base";
         homeModules = baseModules;
         nixosModules = [
           ./hosts/nixos-wsl

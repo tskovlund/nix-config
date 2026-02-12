@@ -1,10 +1,10 @@
 # nix-config Makefile
 #
 # Supported platforms:
-#   macOS        — nix-darwin + home-manager (system + user config)
-#   Linux        — standalone home-manager (user config only, any distro)
-#   NixOS-WSL    — NixOS + home-manager as module (full system, WSL-specific)
-#   NixOS (VPS)  — future: NixOS + home-manager as module (full system, server)
+#   darwin       — macOS via nix-darwin + home-manager (system + user config)
+#   linux        — any Linux distro via standalone home-manager (user config only)
+#   nixos-wsl    — NixOS on WSL via nixos-rebuild + home-manager module (full system)
+#   nixos        — generic NixOS via nixos-rebuild + home-manager module (future: VPS, bare-metal)
 #
 # `make switch` auto-detects the current platform.
 # Explicit targets (e.g. `make switch-darwin`) always work regardless of platform.
@@ -42,7 +42,7 @@ endif
 .PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
 .PHONY: switch-darwin switch-darwin-base
 .PHONY: switch-linux switch-linux-base
-.PHONY: switch-wsl switch-wsl-base
+.PHONY: switch-nixos-wsl switch-nixos-wsl-base
 
 # --- Identity check (only for switch targets) ---
 
@@ -77,19 +77,19 @@ switch-base: .check-identity
 else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
 switch: .check-identity
-	sudo nixos-rebuild switch --flake .#wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo nixos-rebuild switch --flake .#nixos-wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-base: .check-identity
-	sudo nixos-rebuild switch --flake .#wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo nixos-rebuild switch --flake .#nixos-wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 else
 switch:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
-	@echo "Use an explicit target: make switch-wsl, make switch-vps, etc."
+	@echo "Use an explicit target: make switch-nixos-wsl, etc."
 	@exit 1
 
 switch-base:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
-	@echo "Use an explicit target: make switch-wsl-base, etc."
+	@echo "Use an explicit target: make switch-nixos-wsl-base, etc."
 	@exit 1
 endif
 else
@@ -114,11 +114,11 @@ switch-linux: .check-identity
 switch-linux-base: .check-identity
 	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-wsl: .check-identity
-	sudo nixos-rebuild switch --flake .#wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+switch-nixos-wsl: .check-identity
+	sudo nixos-rebuild switch --flake .#nixos-wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-wsl-base: .check-identity
-	sudo nixos-rebuild switch --flake .#wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+switch-nixos-wsl-base: .check-identity
+	sudo nixos-rebuild switch --flake .#nixos-wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
 bootstrap:
