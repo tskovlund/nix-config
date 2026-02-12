@@ -1,11 +1,13 @@
 { pkgs, ... }:
 
 let
-  # Computes a #RRGGBB hex color from a string via SHA-256 hash.
-  # HSL color space: full hue range, saturation 65%, lightness 55-75%.
-  # Output: just the hex color string, e.g. "#db6ce0"
+  # Outputs ANSI-colored bold text: hash-color <string-to-hash> <label>
+  # Color is derived from SHA-256 of the input string, mapped to HSL
+  # (full hue range, saturation 65%, lightness 55-75%) for readable
+  # colors on dark backgrounds. Runs once at shell init, cached in env vars.
   hashColorScript = pkgs.writeShellScript "hash-color" ''
     input="$1"
+    label="$2"
 
     # Portable SHA-256: macOS has shasum, Linux has sha256sum
     if command -v sha256sum >/dev/null 2>&1; then
@@ -14,9 +16,7 @@ let
       hash=$(printf '%s' "$input" | shasum -a 256 | cut -c1-12)
     fi
 
-    # Convert first 6 hex chars to an HSL color, then to RGB hex.
-    # Uses awk for the math — runs once at shell init, not per prompt.
-    ${pkgs.gawk}/bin/awk -v hash="$hash" 'BEGIN {
+    ${pkgs.gawk}/bin/awk -v hash="$hash" -v label="$label" 'BEGIN {
       hue_hex = substr(hash, 1, 4)
       lit_hex = substr(hash, 5, 2)
 
@@ -56,7 +56,7 @@ let
       g = int((g1 + m) * 255 + 0.5)
       b = int((b1 + m) * 255 + 0.5)
 
-      printf "#%02x%02x%02x", r, g, b
+      printf "\033[1;38;2;%d;%d;%dm%s\033[0m", r, g, b, label
     }'
   '';
 in
@@ -97,10 +97,10 @@ in
       autoload -Uz add-zsh-hook
       add-zsh-hook preexec _alias_expansion_preexec
 
-      # Compute deterministic hash colors for username/hostname once at shell init.
-      # Starship reads these env vars for styling — zero cost per prompt render.
-      export STARSHIP_USER_COLOR="$(${hashColorScript} "$(whoami)")"
-      export STARSHIP_HOST_COLOR="$(${hashColorScript} "$(hostname -s)")"
+      # Compute hash-colored username/hostname once at shell init.
+      # Cached in env vars — starship custom commands just echo them (instant).
+      export _PROMPT_USER="$(${hashColorScript} "$(whoami)" "$(whoami)")"
+      export _PROMPT_HOST="$(${hashColorScript} "$(hostname -s)" "@$(hostname -s)")"
     '';
 
     history = {
@@ -119,18 +119,31 @@ in
     enable = true;
     enableZshIntegration = true;
     settings = {
-      format = "$directory$git_branch$git_status$nix_shell$python$nodejs$rust$fill$cmd_duration$username$hostname $time$line_break$character";
+      format = "$directory$git_branch$git_status$nix_shell$python$nodejs$rust$fill$cmd_duration\${custom.user}\${custom.host} $time$line_break$character";
 
-      # Hash-colored username/hostname: colors are computed once at shell init
-      # and cached in STARSHIP_USER_COLOR / STARSHIP_HOST_COLOR env vars.
-      username = {
-        show_always = true;
-        format = "[$user](bold \${env:STARSHIP_USER_COLOR})";
+      # Disable built-in modules — replaced by hash-colored custom commands
+      username.disabled = true;
+      hostname.disabled = true;
+
+      # Hash-colored username/hostname: ANSI strings are computed once at shell
+      # init (in zsh initContent) and cached in _PROMPT_USER / _PROMPT_HOST.
+      # These custom commands just echo the cached value — instant, no computation.
+      custom.user = {
+        command = "printf '%s' \"$_PROMPT_USER\"";
+        when = "true";
+        format = "$output";
+        unsafe_no_escape = true;
+        shell = [ "sh" ];
+        description = "Username with deterministic hash-based color (cached)";
       };
 
-      hostname = {
-        ssh_only = false;
-        format = "[@$hostname](bold \${env:STARSHIP_HOST_COLOR})";
+      custom.host = {
+        command = "printf '%s' \"$_PROMPT_HOST\"";
+        when = "true";
+        format = "$output";
+        unsafe_no_escape = true;
+        shell = [ "sh" ];
+        description = "Hostname with deterministic hash-based color (cached)";
       };
 
       git_status = {
