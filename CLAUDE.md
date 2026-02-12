@@ -190,8 +190,9 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
 - `make switch` — apply base + personal config (auto-detects macOS / Linux / NixOS-WSL)
 - `make switch-base` — apply base only config (auto-detects platform)
-- `make switch-wsl` — apply NixOS-WSL config (base + personal, explicit target)
-- `make switch-wsl-base` — apply NixOS-WSL base only config (explicit target)
+- `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
+- `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
+- `make switch-wsl` / `switch-wsl-base` — explicit NixOS-WSL targets
 - `make check` — validate flake (all platforms)
 - `make fmt` — format all Nix files with nixfmt
 - `make lint` — lint all Nix files with statix + deadnix

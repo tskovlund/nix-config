@@ -1,11 +1,16 @@
 # nix-config Makefile
 #
-# `make switch` auto-detects macOS vs Linux vs NixOS-WSL and applies the right config.
+# Supported platforms:
+#   macOS        — nix-darwin + home-manager (system + user config)
+#   Linux        — standalone home-manager (user config only, any distro)
+#   NixOS-WSL    — NixOS + home-manager as module (full system, WSL-specific)
+#   NixOS (VPS)  — future: NixOS + home-manager as module (full system, server)
 #
-# Why the explicit --flake .#name?
-# nix-darwin auto-detects configs by hostname, but we use generic names
-# ("darwin", "linux", "wsl") so the config is portable across machines without
-# renaming. This Makefile handles the flag for you.
+# `make switch` auto-detects the current platform.
+# Explicit targets (e.g. `make switch-darwin`) always work regardless of platform.
+#
+# Why --flake .#name? nix-darwin auto-detects by hostname, but we use generic
+# names so the config is portable. The Makefile handles the flag for you.
 #
 # Personal identity override:
 # All switch targets require a personal identity flake. Configure it with:
@@ -34,7 +39,10 @@ else ifneq ($(wildcard $(PERSONAL_INPUT_FILE)),)
   endif
 endif
 
-.PHONY: switch switch-base switch-wsl switch-wsl-base bootstrap check update fmt lint clean .check-identity
+.PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
+.PHONY: switch-darwin switch-darwin-base
+.PHONY: switch-linux switch-linux-base
+.PHONY: switch-wsl switch-wsl-base
 
 # --- Identity check (only for switch targets) ---
 
@@ -58,37 +66,33 @@ ifeq ($(strip $(OVERRIDE_FLAGS)),)
 	@exit 1
 endif
 
+# --- Auto-detecting targets ---
+
 ifeq ($(UNAME),Darwin)
-# macOS: rebuild system + home config via nix-darwin
 switch: .check-identity
 	sudo darwin-rebuild switch --flake .#darwin $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-base: .check-identity
 	sudo darwin-rebuild switch --flake .#darwin-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 else ifeq ($(IS_NIXOS),1)
-# NixOS: rebuild system + home config via nixos-rebuild
 ifeq ($(IS_WSL),1)
-# NixOS-WSL detected
 switch: .check-identity
 	sudo nixos-rebuild switch --flake .#wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-base: .check-identity
 	sudo nixos-rebuild switch --flake .#wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 else
-# Generic NixOS (future hosts like VPS)
 switch:
-	@echo "Error: NixOS detected but no specific host configured."
-	@echo "For NixOS-WSL, use: make switch-wsl"
-	@echo "For other NixOS hosts, add them to this Makefile."
+	@echo "Error: NixOS detected but no specific host configured in auto-detect."
+	@echo "Use an explicit target: make switch-wsl, make switch-vps, etc."
 	@exit 1
 
 switch-base:
-	@echo "Error: NixOS detected but no specific host configured."
-	@echo "For NixOS-WSL, use: make switch-wsl-base"
+	@echo "Error: NixOS detected but no specific host configured in auto-detect."
+	@echo "Use an explicit target: make switch-wsl-base, etc."
 	@exit 1
 endif
 else
-# Linux: rebuild home config via standalone home-manager
 switch: .check-identity
 	home-manager switch --flake .#linux $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
@@ -96,7 +100,20 @@ switch-base: .check-identity
 	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 endif
 
-# Explicit NixOS-WSL targets (require nixos-rebuild — NixOS only)
+# --- Explicit platform targets ---
+
+switch-darwin: .check-identity
+	sudo darwin-rebuild switch --flake .#darwin $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+
+switch-darwin-base: .check-identity
+	sudo darwin-rebuild switch --flake .#darwin-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+
+switch-linux: .check-identity
+	home-manager switch --flake .#linux $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+
+switch-linux-base: .check-identity
+	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+
 switch-wsl: .check-identity
 	sudo nixos-rebuild switch --flake .#wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
@@ -107,23 +124,20 @@ switch-wsl-base: .check-identity
 bootstrap:
 	@bash scripts/post-bootstrap.sh
 
-# Validate the flake without applying
+# --- Shared targets ---
+
 check:
 	nix flake check --all-systems
 
-# Update all flake inputs to latest
 update:
 	nix flake update
 
-# Format all Nix files
 fmt:
 	find . -name '*.nix' -not -path './result/*' | xargs nixfmt
 
-# Lint all Nix files
 lint:
 	statix check . -i result/
 	deadnix --no-lambda-pattern-names .
 
-# Remove build artifacts
 clean:
 	rm -rf result
