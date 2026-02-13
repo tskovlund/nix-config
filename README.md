@@ -9,26 +9,28 @@ Everything about your environment — shell, editor, git, CLI tools, system pref
 
 ## Quick start 🚀
 
+The bootstrap script handles everything — installing Nix, Homebrew (macOS), cloning the repo, setting up identity, and running the first deploy:
+
 ```sh
-# 1. Install Nix (Determinate installer recommended)
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-
-# 2. macOS only: install Homebrew (nix-darwin manages what it installs, but not Homebrew itself)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# 3. Clone and deploy
-git clone https://github.com/tskovlund/nix-config.git
-cd nix-config
-
-# macOS (first time — subsequent deploys: make switch)
-nix build .#darwinConfigurations.darwin.system
-sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin
-
-# Linux / WSL (first time — subsequent deploys: make switch)
-nix run home-manager -- switch --flake .#linux
+curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
-See [Prerequisites](#prerequisites-) for full details.
+Or review first, then run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh -o bootstrap.sh
+less bootstrap.sh   # review
+bash bootstrap.sh
+```
+
+After the first deploy completes, run post-deploy initialization:
+
+```sh
+cd ~/repos/nix-config
+make bootstrap      # gh auth, Claude settings, manual step reminders
+```
+
+See [Prerequisites](#prerequisites-) for manual setup or [Deploy](#deploy-) for details on what the bootstrap does.
 
 ## Highlights ✨
 
@@ -166,10 +168,26 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
 
 ## Deploy 🚀
 
-### macOS (first time)
+### New machine (bootstrap)
 
-Bootstrap nix-darwin — build the config, then activate as root:
+The easiest way is `bootstrap.sh` (see [Quick start](#quick-start-)). It handles:
 
+1. Installing Determinate Nix
+2. Installing Homebrew (macOS)
+3. Profile selection (personal or base)
+4. Mac App Store sign-in reminder (macOS, personal profile)
+5. Handling `/etc/zshenv` conflicts (macOS)
+6. Cloning the repo
+7. Setting up personal identity (remote flake URL or local identity)
+8. Running the first platform-specific build
+
+After bootstrap, run `make bootstrap` for post-deploy setup (GitHub CLI auth, Claude Code settings, cleanup).
+
+### Manual first-time deploy
+
+If you prefer to set up manually instead of using `bootstrap.sh`:
+
+**macOS:**
 ```sh
 nix build .#darwinConfigurations.darwin.system \
   --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
@@ -177,20 +195,13 @@ sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin \
   --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
-If `/etc/zshenv` (or other files in `/etc/`) conflict, rename them first:
-
-```sh
-sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin
-```
-
-### Linux / WSL (first time)
-
-If `home-manager` isn't on your PATH yet, bootstrap it:
-
+**Linux / WSL:**
 ```sh
 nix run home-manager -- switch --flake .#linux \
   --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
+
+If `/etc/zshenv` conflicts on macOS: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
 
 ### Subsequent deploys
 
@@ -212,6 +223,7 @@ nix-config/
 ├── flake.nix                    # Entry point: inputs + all targets
 ├── flake.lock                   # Pinned dependency versions
 ├── Makefile                     # Convenience targets (make switch, etc.)
+├── bootstrap.sh                 # New-machine bootstrap (curl-pipeable)
 │
 ├── hosts/
 │   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks, system defaults)
@@ -228,6 +240,8 @@ nix-config/
 │   ├── tools/                   # CLI toolkit, direnv, fzf
 │   └── claude/                  # Claude Code + statusline script
 │
+├── scripts/                     # Support scripts
+│   └── post-bootstrap.sh        # Post-deploy initialization (make bootstrap)
 ├── stubs/personal/              # Placeholder identity for CI (overridden on real machines)
 ├── examples/                    # Templates (local.nix, etc.)
 ├── .githooks/                   # Repo-local git hooks (pre-push)
@@ -311,6 +325,8 @@ CI also validates both Linux and macOS on every PR.
 
 | Task | Command |
 |------|---------|
+| Bootstrap a new machine | `bash bootstrap.sh` (or curl-pipe, see Quick start) |
+| Post-deploy setup | `make bootstrap` |
 | Apply config (base + personal) | `make switch` |
 | Apply with machine-local config | `make switch IMPURE=1` |
 | Apply config (base only) | `make switch-base` |
@@ -351,7 +367,7 @@ All non-personal inputs follow a single nixpkgs to avoid version drift. If an in
 
 ## Manual setup 🔧✋
 
-Some things can't be declared in Nix (yet). See [`docs/manual-setup.md`](docs/manual-setup.md) for post-deploy steps on new machines.
+Most post-deploy steps are automated by `bootstrap.sh` and `make bootstrap`. A few things truly can't be automated — see [`docs/manual-setup.md`](docs/manual-setup.md) for the remaining manual steps.
 
 ## License 📄
 

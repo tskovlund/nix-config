@@ -17,6 +17,8 @@ This file documents how this repo is structured and how to extend it.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
+- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, runs first deploy.
+- **scripts/**: Support scripts (not Nix modules). Currently contains `post-bootstrap.sh` for post-deploy initialization.
 - **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
 
@@ -158,6 +160,8 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 
 ## Commands
 
+- `bootstrap.sh` — new-machine bootstrap (installs Nix, clones, deploys)
+- `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
 - `make switch` — apply base + personal config (macOS)
 - `make switch-base` — apply base only config (macOS)
 - `make check` — validate flake (both platforms)

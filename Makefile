@@ -32,7 +32,7 @@ else ifneq ($(wildcard $(PERSONAL_INPUT_FILE)),)
   endif
 endif
 
-.PHONY: switch switch-base check update fmt lint clean .check-identity
+.PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
 
 # --- Identity check (only for switch targets) ---
 
@@ -71,6 +71,10 @@ switch: .check-identity
 switch-base: .check-identity
 	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 endif
+
+# Post-deploy initialization (gh auth, Claude settings, manual step reminders)
+bootstrap:
+	@bash scripts/post-bootstrap.sh
 
 # Validate the flake without applying
 check:
