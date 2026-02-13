@@ -36,4 +36,11 @@ in
   # Requires granting accessibility permissions on first run:
   # System Settings → Privacy & Security → Accessibility → fn-toggle.app
   home.packages = [ fn-toggle ];
+
+  # Store SSH key passphrases in the macOS Keychain. Combined with
+  # addKeysToAgent (set in home/ssh/), you type your passphrase once
+  # and Keychain remembers it across reboots.
+  programs.ssh.extraConfig = ''
+    UseKeychain yes
+  '';
 }

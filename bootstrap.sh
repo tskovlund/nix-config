@@ -298,19 +298,35 @@ FLAKE
   fi
 fi
 
-# --- Step 8: Age key check (forward-compatible) ------------------------------
+# --- Step 8: Age key for secrets decryption -----------------------------------
 
 AGE_KEY_PATH="$HOME/.config/agenix/age-key.txt"
 
-if [ ! -f "$AGE_KEY_PATH" ]; then
-  if [ -d "$NIX_CONFIG_DIR/secrets" ] && \
-     [ -n "$(find "$NIX_CONFIG_DIR/secrets" -maxdepth 1 -name "*.age" -print -quit 2>/dev/null)" ]; then
-    echo ""
-    warn "Agenix secrets found but no age key at $AGE_KEY_PATH"
-    echo "  Generate one:  age-keygen -o $AGE_KEY_PATH"
-    echo "  Then add the public key to secrets.nix and re-encrypt."
-    echo ""
-  fi
+if [ -f "$AGE_KEY_PATH" ]; then
+  ok "Age key already exists at $AGE_KEY_PATH"
+elif [ "$PROFILE" = "personal" ]; then
+  echo ""
+  info "Generating age key for agenix secrets decryption..."
+  echo "  This key lets make switch decrypt your SSH keys, API tokens, etc."
+  echo "  It has no passphrase — security comes from file permissions + disk encryption."
+  echo "  The same key is used on all your machines — copy it from an existing one"
+  echo "  instead of generating a new one if you've already set up another machine."
+  echo ""
+
+  mkdir -p "$(dirname "$AGE_KEY_PATH")"
+  chmod 700 "$(dirname "$AGE_KEY_PATH")"
+
+  nix run nixpkgs#age -- -keygen -o "$AGE_KEY_PATH" 2>/dev/null \
+    || nix shell nixpkgs#age -c age-keygen -o "$AGE_KEY_PATH"
+  chmod 600 "$AGE_KEY_PATH"
+
+  AGE_PUB_KEY="$(nix run nixpkgs#age -- -keygen -y "$AGE_KEY_PATH" 2>/dev/null \
+    || nix shell nixpkgs#age -c age-keygen -y "$AGE_KEY_PATH")"
+  ok "Age key generated"
+  echo ""
+  echo "  Public key (add to secrets.nix in your personal flake):"
+  echo "  $AGE_PUB_KEY"
+  echo ""
 fi
 
 # --- Step 9: Create ~/Screenshots (macOS only) -------------------------------

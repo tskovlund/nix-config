@@ -83,7 +83,7 @@ make switch PERSONAL_INPUT=path:/path/to/local-checkout
 
 ### Creating your personal flake
 
-Your personal flake needs a `flake.nix` that exports an `identity` attribute set:
+Your personal flake needs a `flake.nix` that exports `identity` and `homeModules`:
 
 ```nix
 {
@@ -96,6 +96,10 @@ Your personal flake needs a `flake.nix` that exports an `identity` attribute set
       fullName = "Your Full Name";
       email = "you@example.com";
     };
+
+    # Home-manager modules for secrets, SSH, personal dotfiles.
+    # Empty list if you don't have any yet.
+    homeModules = [ ];
   };
 }
 ```
@@ -112,7 +116,7 @@ Your personal flake needs a `flake.nix` that exports an `identity` attribute set
 - **Forkable** — fork nix-config, create your own personal flake, deploy. No grep-and-replace.
 - **Private** — your identity repo can be private while nix-config stays public.
 - **Per-machine** — different machines can point to different identity flakes (personal vs work).
-- **Extensible** — the personal flake is where secrets, SSH keys, and personal dotfiles will live.
+- **Extensible** — the personal flake exports `homeModules` for secrets, SSH keys, and personal dotfiles.
 
 ## Machine-local config 🔧
 
@@ -275,6 +279,7 @@ nix-config/
 │   ├── shell/                   # Zsh, starship prompt, bat
 │   ├── editor/                  # Neovim via nixvim (LSP, completion, themes)
 │   ├── git/                     # Git, delta, gh CLI
+│   ├── ssh/                     # SSH client config (addKeysToAgent, host routing)
 │   ├── tools/                   # CLI toolkit, direnv, fzf
 │   └── claude/                  # Claude Code + statusline script
 │
@@ -311,7 +316,14 @@ nix-config/
 
 ### Git
 - [delta](https://github.com/dandavison/delta) — syntax-highlighted diffs
-- [gh](https://cli.github.com/) — GitHub CLI with credential helper
+- [gh](https://cli.github.com/) — GitHub CLI
+- SSH commit signing (via personal flake) — verified commits on GitHub with your SSH key
+- SSH protocol for all GitHub URLs (via personal flake) — transparent HTTPS-to-SSH rewrite
+
+### SSH and secrets
+- [agenix](https://github.com/ryantm/agenix) — age-encrypted secrets decrypted on `make switch`
+- SSH client config with `AddKeysToAgent` and macOS Keychain integration
+- SSH key management via personal flake (encrypted private keys, host routing)
 
 ### CLI toolkit
 - [zoxide](https://github.com/ajeetdsouza/zoxide) — smart cd that learns your most-used directories
@@ -337,7 +349,7 @@ nix-config/
 - Touch ID for sudo, clipboard history, language/region, AirDrop
 - [fn-toggle](https://github.com/jkbrzt/macos-fn-toggle) — toggle fn key behavior via Spotlight (packaged as Nix derivation)
 
-### Claude Code (personal profile only)
+### Claude Code
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI
 - Custom statusline showing directory, git status, model, context usage, cost, and session info (aligned with starship prompt style)
 - [MCP Memory Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) — persistent knowledge graph across sessions (entities, relations, observations)

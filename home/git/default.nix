@@ -1,4 +1,9 @@
-{ pkgs, identity, ... }:
+{
+  lib,
+  pkgs,
+  identity,
+  ...
+}:
 
 {
   programs.git = {
@@ -101,6 +106,6 @@
   # GitHub CLI (credential helper enabled by default)
   programs.gh = {
     enable = true;
-    settings.git_protocol = "https";
+    settings.git_protocol = lib.mkDefault "https";
   };
 }
