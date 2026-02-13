@@ -10,6 +10,8 @@ Everything about your environment — shell, editor, git, CLI tools, system pref
 
 ## Quick start 🚀
 
+### macOS and Linux
+
 The bootstrap script handles everything — installing Nix, Homebrew (macOS), cloning the repo, setting up identity, and running the first deploy:
 
 ```sh
@@ -31,7 +33,27 @@ cd ~/repos/nix-config   # or wherever you cloned it
 make bootstrap           # gh auth, Claude settings, manual step reminders
 ```
 
-See [Prerequisites](#prerequisites-) for manual setup or [Deploy](#deploy-) for details on what the bootstrap does.
+### NixOS / NixOS-WSL
+
+On NixOS, Nix is already available — no bootstrap script needed. Clone and apply directly:
+
+```sh
+git clone https://github.com/tskovlund/nix-config.git
+cd nix-config
+
+# Set up personal identity
+mkdir -p ~/.config/nix-config
+echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
+
+# Apply the config
+make switch
+```
+
+`make switch` auto-detects NixOS-WSL and runs the right `nixos-rebuild` command. The config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
+
+After the first deploy, optionally run `make bootstrap` for post-deploy setup.
+
+> **Manual setup?** See [Prerequisites](#prerequisites-) for step-by-step instructions on any platform, or [Deploy](#deploy-) for details on what the bootstrap does under the hood.
 
 ## Highlights ✨
 
@@ -43,19 +65,87 @@ See [Prerequisites](#prerequisites-) for manual setup or [Deploy](#deploy-) for 
 - **[direnv](https://github.com/direnv/direnv) + [nix-direnv](https://github.com/nix-community/nix-direnv)** — automatic per-project dev environments
 - ...and a lot more good stuff. See [What's included](#whats-included-) for the full inventory.
 
-## Profiles 🧩
+## Architecture 🧩
 
-The config is split into two composable layers:
+### Flake targets
+
+The flake defines 6 targets across 3 platforms. Each platform has a full target (base + personal) and a base-only target:
+
+| Target | Platform | Profile | Build tool |
+|--------|----------|---------|------------|
+| `darwin` | macOS | base + personal | `darwin-rebuild` |
+| `darwin-base` | macOS | base only | `darwin-rebuild` |
+| `linux` | Linux / WSL | base + personal | `home-manager` |
+| `linux-base` | Linux / WSL | base only | `home-manager` |
+| `nixos-wsl` | NixOS-WSL | base + personal | `nixos-rebuild` |
+| `nixos-wsl-base` | NixOS-WSL | base only | `nixos-rebuild` |
+
+Use the full target for personal machines, base-only for shared or work machines.
+
+### Profiles
+
+User config lives in `home/` as home-manager modules, split into two composable layers:
 
 - **base** (`home/default.nix`) — dev environment essentials: shell, editor, git, CLI tools. Everything you'd want on any dev machine, including a work laptop.
-- **personal** (`home/personal.nix`) — personal additions layered on top of base. Personal aliases, fun tools, personal SSH hosts, etc.
+- **personal** (`home/personal.nix`) — personal additions layered on top of base. Personal aliases, fun tools, etc.
 
-Each platform has two targets:
+The personal flake can also export `homeModules` — additional home-manager modules for secrets, SSH keys, and personal dotfiles that live in the private repo.
 
-| Target | What it includes | Use case |
-|--------|-----------------|----------|
-| `darwin` / `linux` / `nixos-wsl` | base + personal | Personal machines |
-| `darwin-base` / `linux-base` / `nixos-wsl-base` | base only | Shared or work machines |
+### How everything composes
+
+```
+                          flake.nix
+                             │
+               ┌─────────────┼─────────────┐
+               ▼             ▼              ▼
+          makeDarwin     makeLinux      makeNixOS
+               │             │              │
+    ┌──────────┤          returns         ┌─┤
+    ▼          ▼       homeManager        ▼  ▼
+hosts/darwin  home-     Configuration   hosts/  home-
+              manager                   nixos   manager
+              user ──►                    │     user ──►
+              config   home/ modules    (auto)  config   home/ modules
+                       + home/darwin/           + home/nixos/
+                       + personalHome           + personalHome
+                         Modules                  Modules
+                       + local.nix              + local.nix
+```
+
+Three helpers in `flake.nix` wire targets together:
+
+- **`makeDarwin`** — creates a nix-darwin system. Always imports `hosts/darwin/` for system config and `home/darwin/` for macOS-specific home-manager config (Homebrew PATH, Keychain SSH).
+- **`makeLinux`** — creates a standalone home-manager configuration. No system-level config.
+- **`makeNixOS`** — creates a NixOS system. Always imports `hosts/nixos/` (flakes, zsh, user setup) and `home/nixos/` (systemd workaround). Host-specific modules are passed via `nixosModules`.
+
+Each helper also imports:
+- The chosen profile modules (`baseModules` or `personalModules` + `personalHomeModules`)
+- `nixvim` and `agenix` home-manager modules
+- Machine-local config from `~/.config/nix-config/local.nix` (when `--impure` is used)
+
+### Host layers
+
+System-level config lives in `hosts/`, split into reusable layers:
+
+| Directory | What it does | Imported by |
+|-----------|-------------|-------------|
+| `hosts/darwin/` | macOS system config (Nix settings, fonts, casks, system defaults) | `makeDarwin` (always) |
+| `hosts/darwin/personal.nix` | Personal macOS casks + Mac App Store apps | `darwin` target only |
+| `hosts/linux/` | Linux system config (placeholder) | Not auto-imported |
+| `hosts/nixos/` | General NixOS layer (user setup, flakes, zsh) | `makeNixOS` (always) |
+| `hosts/wsl/` | General WSL layer (interop, automount, start menu) | `hosts/nixos-wsl/` |
+| `hosts/nixos-wsl/` | NixOS-WSL entry point — imports `hosts/wsl/` | `nixos-wsl` targets via `nixosModules` |
+
+The key insight: `hosts/nixos/` is auto-imported by `makeNixOS`, so host-specific modules (like `hosts/nixos-wsl/`) should NOT import it. The `hosts/wsl/` layer is separate from `hosts/nixos/` because WSL config is not NixOS-specific — it could be reused by other WSL distributions.
+
+### Platform home-manager modules
+
+Some home-manager config is platform-specific:
+
+- **`home/darwin/`** — macOS-only: Homebrew PATH, fn-toggle app, SSH Keychain integration
+- **`home/nixos/`** — NixOS-only: disables systemd user service management during activation (linger handles startup instead)
+
+These are wired into `makeDarwin` and `makeNixOS` respectively — shared modules in `home/` stay platform-agnostic.
 
 ## Personal identity 🔑
 
@@ -152,6 +242,8 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
 
 ## Prerequisites 📋
 
+These steps are for manual setup. If you used `bootstrap.sh` or the NixOS quick start above, skip to [Deploy](#deploy-).
+
 1. **Install Nix** — we recommend the [Determinate Nix Installer](https://github.com/DeterminateSystems/nix-installer):
 
    ```sh
@@ -159,6 +251,8 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
    ```
 
    This installs Nix with flakes and the `nix` command enabled by default. If you use the [official installer](https://nixos.org/download/) instead, you'll need to enable `experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`.
+
+   On NixOS, Nix is already installed — skip this step.
 
 2. **macOS only: Install Homebrew** — https://brew.sh. nix-darwin manages what Homebrew installs (casks, Mac App Store apps), but Homebrew itself must be installed first. Also sign into the Mac App Store before deploying.
 
@@ -175,7 +269,7 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
 
 ### New machine (bootstrap)
 
-The easiest way is `bootstrap.sh` (see [Quick start](#quick-start-)). It handles:
+**macOS and Linux:** The easiest way is `bootstrap.sh` (see [Quick start](#quick-start-)). It handles:
 
 1. Installing Determinate Nix
 2. Installing Homebrew (macOS)
@@ -184,9 +278,12 @@ The easiest way is `bootstrap.sh` (see [Quick start](#quick-start-)). It handles
 5. Handling `/etc/zshenv` conflicts (macOS)
 6. Cloning the repo
 7. Setting up personal identity (remote flake URL or local identity)
-8. Running the first platform-specific build
+8. Generating an age key for secrets decryption (personal profile)
+9. Running the first platform-specific build
 
 After bootstrap, run `make bootstrap` for post-deploy setup (GitHub CLI auth, Claude Code settings, cleanup).
+
+**NixOS / NixOS-WSL:** Nix is already part of the system, so `bootstrap.sh` isn't needed. Clone the repo, configure identity, and run `make switch` — see the [NixOS quick start](#nixos--nixos-wsl) above.
 
 ### Manual first-time deploy
 
@@ -206,28 +303,15 @@ nix run home-manager -- switch --flake .#linux \
   --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
-If `/etc/zshenv` conflicts on macOS: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
-
-### NixOS-WSL (first time)
-
-On a fresh NixOS-WSL installation, the flake-based nixos-rebuild is already available. Just clone and apply:
-
+**NixOS-WSL:**
 ```sh
-# Clone the repo
-git clone https://github.com/tskovlund/nix-config.git
-cd nix-config
-
-# Configure personal identity (see Prerequisites)
-mkdir -p ~/.config/nix-config
-echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
-
-# Apply the config
-make switch
+sudo nixos-rebuild switch --flake .#nixos-wsl \
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
-The config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
+If `/etc/zshenv` conflicts on macOS: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
 
-#### Adding a new NixOS host
+### Adding a new NixOS host
 
 To add a new NixOS host (VPS, bare-metal, Raspberry Pi, etc.):
 
@@ -266,20 +350,20 @@ nix-config/
 │   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks, system defaults)
 │   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
 │   ├── linux/default.nix        # Linux system config (placeholder)
-│   ├── nixos/default.nix        # General NixOS layer (user setup, flakes, zsh, home-manager)
+│   ├── nixos/default.nix        # General NixOS layer (user setup, flakes, zsh, unfree config)
 │   ├── wsl/default.nix          # General WSL layer (interop, automount, start menu)
 │   ├── nixos-wsl/default.nix    # NixOS-WSL entry point (imports wsl layer; nixos layer added by makeNixOS)
-│   └── [future: vps/, rpi/]     # Additional NixOS hosts (import nixos layer + host-specific config)
+│   └── [future: vps/, rpi/]     # Additional NixOS hosts
 │
 ├── home/
 │   ├── default.nix              # Base dev environment (always imported)
 │   ├── personal.nix             # Personal additions (imported by non-base targets)
-│   ├── darwin/                  # macOS-only home-manager config (Homebrew PATH, etc.)
+│   ├── darwin/                  # macOS-only home-manager config (Homebrew PATH, Keychain SSH)
 │   ├── nixos/                   # NixOS-only home-manager config (systemd user services)
 │   ├── shell/                   # Zsh, starship prompt, bat
 │   ├── editor/                  # Neovim via nixvim (LSP, completion, themes)
 │   ├── git/                     # Git, delta, gh CLI
-│   ├── ssh/                     # SSH client config (addKeysToAgent, host routing)
+│   ├── ssh/                     # SSH client config (AddKeysToAgent, host routing)
 │   ├── tools/                   # CLI toolkit, direnv, fzf
 │   └── claude/                  # Claude Code + statusline script
 │
@@ -289,8 +373,7 @@ nix-config/
 ├── examples/                    # Templates (local.nix, etc.)
 ├── .githooks/                   # Repo-local git hooks (pre-push)
 ├── .envrc                       # direnv config (auto-enters dev shell)
-├── files/                       # Raw config files sourced by modules
-└── secrets/                     # agenix encrypted secrets
+└── files/                       # Raw config files sourced by modules
 ```
 
 ## What's included 🧰
