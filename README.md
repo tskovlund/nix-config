@@ -54,6 +54,63 @@ Each platform has two targets:
 | `darwin` / `linux` | base + personal | Personal machines |
 | `darwin-base` / `linux-base` | base only | Shared or work machines |
 
+## Personal identity 🔑
+
+This repo contains zero personal information. Your identity (username, name, email) comes from a separate **personal flake** that you control.
+
+### How it works
+
+The flake has an input called `personal` that defaults to a placeholder stub. On real machines, you override it with your own personal flake via `~/.config/nix-config/personal-input`:
+
+```sh
+mkdir -p ~/.config/nix-config
+echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
+```
+
+When you run `make switch`, the Makefile reads this file and passes `--override-input personal <url>` to the rebuild command. Without it, `make switch` prints a clear error explaining what to do.
+
+You can also pass the override directly:
+
+```sh
+make switch PERSONAL_INPUT=git+ssh://git@github.com/YOUR_USER/nix-config-personal
+make switch PERSONAL_INPUT=path:/path/to/local-checkout
+```
+
+> **Note:** On macOS, `make switch` runs under `sudo`. If SSH-based fetching fails (root can't access your SSH agent), use a local checkout instead: `make switch PERSONAL_INPUT=path:/path/to/nix-config-personal`
+
+### Creating your personal flake
+
+Your personal flake needs a `flake.nix` that exports an `identity` attribute set:
+
+```nix
+{
+  description = "Personal identity for nix-config";
+
+  outputs = { ... }: {
+    identity = {
+      isStub = false;
+      username = "your-username";
+      fullName = "Your Full Name";
+      email = "you@example.com";
+    };
+  };
+}
+```
+
+| Field | What it controls |
+|-------|-----------------|
+| `username` | System user account, home directory path |
+| `fullName` | Git commit author name |
+| `email` | Git commit author email |
+| `isStub` | Must be `false` in a real identity flake |
+
+### Why a separate repo?
+
+- **Forkable** — fork nix-config, create your own personal flake, deploy. No grep-and-replace.
+- **Private** — your identity repo can be private while nix-config stays public.
+- **Per-machine** — different machines can point to different identity flakes (personal vs work).
+- **Extensible** — the personal flake is where secrets, SSH keys, and personal dotfiles will live.
+
 ## Machine-local config 🔧
 
 For machine-specific packages that don't belong in the repo (work SDKs, vendor CLIs, experimental tools), create an optional local config file:
@@ -105,15 +162,7 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
    cd nix-config
    ```
 
-4. **Personalize** — edit the `username` variable at the top of `flake.nix`:
-
-   ```nix
-   let
-     username = "your-username-here";
-   in
-   ```
-
-   This single variable flows through to all configs (home directory, home-manager user, etc.).
+4. **Set up personal identity** — this config requires a personal identity flake that provides your username, name, and email. See [Personal identity](#personal-identity-) for details.
 
 ## Deploy 🚀
 
@@ -122,8 +171,10 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
 Bootstrap nix-darwin — build the config, then activate as root:
 
 ```sh
-nix build .#darwinConfigurations.darwin.system
-sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin
+nix build .#darwinConfigurations.darwin.system \
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
+sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin \
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
 If `/etc/zshenv` (or other files in `/etc/`) conflict, rename them first:
@@ -137,12 +188,13 @@ sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin
 If `home-manager` isn't on your PATH yet, bootstrap it:
 
 ```sh
-nix run home-manager -- switch --flake .#linux
+nix run home-manager -- switch --flake .#linux \
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
 ### Subsequent deploys
 
-The Makefile auto-detects your platform:
+The Makefile auto-detects your platform and reads the personal identity override from `~/.config/nix-config/personal-input`:
 
 ```sh
 make switch         # base + personal
@@ -176,6 +228,7 @@ nix-config/
 │   ├── tools/                   # CLI toolkit, direnv, fzf
 │   └── claude/                  # Claude Code + statusline script
 │
+├── stubs/personal/              # Placeholder identity for CI (overridden on real machines)
 ├── examples/                    # Templates (local.nix, etc.)
 ├── .githooks/                   # Repo-local git hooks (pre-push)
 ├── .envrc                       # direnv config (auto-enters dev shell)
@@ -290,8 +343,9 @@ CI also validates both Linux and macOS on every PR.
 | [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment (dotfiles, packages, programs). |
 | [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets management. |
 | [nixvim](https://github.com/nix-community/nixvim) | Neovim configuration as typed Nix expressions. |
+| personal (stub default) | Personal identity flake. Defaults to a placeholder stub; override with your own. See [Personal identity](#personal-identity-). |
 
-All inputs follow a single nixpkgs to avoid version drift. If an input ever breaks against nixpkgs-unstable (extremely rare), temporarily pin it to a specific rev — see CLAUDE.md for instructions.
+All non-personal inputs follow a single nixpkgs to avoid version drift. If an input ever breaks against nixpkgs-unstable (extremely rare), temporarily pin it to a specific rev — see CLAUDE.md for instructions.
 
 ## Manual setup 🔧✋
 

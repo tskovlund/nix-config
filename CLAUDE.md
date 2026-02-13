@@ -15,9 +15,22 @@ This file documents how this repo is structured and how to extend it.
   - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
+- **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
 - **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
+
+## Personal identity
+
+This repo contains no personal information. Identity (username, name, email) comes from an external **personal flake** input.
+
+- **`inputs.personal`** defaults to `path:./stubs/personal` — a stub with placeholder values and `isStub = true`.
+- On real machines, `make switch` reads `~/.config/nix-config/personal-input` and passes `--override-input personal <url>` to the rebuild command.
+- The personal flake exports `identity = { isStub, username, fullName, email }`.
+- In `flake.nix`, `username` is derived from `identity.username` and flows through to all system/user config via closures.
+- Home-manager modules receive `identity` via `extraSpecialArgs`. Use `{ identity, ... }:` in the module args to access it. Currently only `home/git/default.nix` uses `identity.fullName` and `identity.email`.
+- `nix flake check` in CI uses the stub (no override needed) and passes because stub values are valid strings.
+- `make switch` without identity configured prints a clear error message.
 
 ## Profiles: base vs personal
 
