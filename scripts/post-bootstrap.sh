@@ -60,10 +60,17 @@ if command_exists gh && gh auth status >/dev/null 2>&1; then
         ok "SSH key already on GitHub: $key_name"
       else
         info "Uploading SSH key to GitHub: $key_name"
-        gh ssh-key add "$pub" --title "$key_name" --type authentication
+        if gh ssh-key add "$pub" --title "$key_name" --type authentication; then
+          ok "SSH authentication key uploaded: $key_name"
+        else
+          warn "Failed to upload authentication key: $key_name (add manually with: gh ssh-key add $pub --type authentication)"
+        fi
         # Also add as signing key for verified commits
-        gh ssh-key add "$pub" --title "$key_name" --type signing
-        ok "SSH key uploaded: $key_name"
+        if gh ssh-key add "$pub" --title "$key_name" --type signing; then
+          ok "SSH signing key uploaded: $key_name"
+        else
+          warn "Failed to upload signing key: $key_name (add manually with: gh ssh-key add $pub --type signing)"
+        fi
       fi
     done
   fi

@@ -316,11 +316,11 @@ elif [ "$PROFILE" = "personal" ]; then
   mkdir -p "$(dirname "$AGE_KEY_PATH")"
   chmod 700 "$(dirname "$AGE_KEY_PATH")"
 
-  nix run nixpkgs#age -- -keygen -o "$AGE_KEY_PATH" 2>/dev/null \
+  nix run nixpkgs#age-keygen -- -o "$AGE_KEY_PATH" 2>/dev/null \
     || nix shell nixpkgs#age -c age-keygen -o "$AGE_KEY_PATH"
   chmod 600 "$AGE_KEY_PATH"
 
-  AGE_PUB_KEY="$(nix run nixpkgs#age -- -keygen -y "$AGE_KEY_PATH" 2>/dev/null \
+  AGE_PUB_KEY="$(nix run nixpkgs#age-keygen -- -y "$AGE_KEY_PATH" 2>/dev/null \
     || nix shell nixpkgs#age -c age-keygen -y "$AGE_KEY_PATH")"
   ok "Age key generated"
   echo ""

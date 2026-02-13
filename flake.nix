@@ -54,7 +54,7 @@
     }:
     let
       inherit (personal) identity;
-      personalHomeModules = personal.homeModules;
+      personalHomeModules = personal.homeModules or [ ];
       inherit (identity) username;
 
       # Optional machine-local home-manager config (outside the repo).
