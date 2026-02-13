@@ -118,7 +118,50 @@ else
   ok "No home-manager backup files found"
 fi
 
-# --- Step 4: Manual steps checklist -------------------------------------------
+# --- Step 4: Stale dotfile cleanup --------------------------------------------
+
+stale_files=(
+  "$HOME/.zshrc.old"
+  "$HOME/.zshenv.old"
+  "$HOME/.zprofile.old"
+  "$HOME/.p10k.zsh.old"
+  "$HOME/.zshrc-e"
+  "$HOME/.profile"
+)
+stale_dirs=(
+  "$HOME/.oh-my-zsh"
+  "$HOME/.ppd"
+)
+
+found_stale=()
+for f in "${stale_files[@]}"; do
+  [ -f "$f" ] && found_stale+=("$f")
+done
+for d in "${stale_dirs[@]}"; do
+  [ -d "$d" ] && found_stale+=("$d/")
+done
+
+if [ ${#found_stale[@]} -gt 0 ]; then
+  echo ""
+  info "Found stale dotfiles from previous config:"
+  for f in "${found_stale[@]}"; do echo "  $f"; done
+  echo ""
+  echo "  These are leftovers from a previous shell/editor setup."
+  echo "  Nix and home-manager now manage these — the old files are unused."
+  echo ""
+  printf "Delete them? [y/N]: "
+  read -r answer || true
+  if [[ "${answer:-n}" =~ ^[Yy] ]]; then
+    for f in "${found_stale[@]}"; do rm -rfv "$f"; done
+    ok "Stale dotfiles cleaned up"
+  else
+    ok "Stale dotfiles kept"
+  fi
+else
+  ok "No stale dotfiles found"
+fi
+
+# --- Step 5: Manual steps checklist -------------------------------------------
 
 echo ""
 printf '%sManual steps remaining%s\n' "${BOLD}" "${RESET}"

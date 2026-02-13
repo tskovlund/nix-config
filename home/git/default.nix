@@ -14,6 +14,7 @@
       pull.rebase = true;
       push.autoSetupRemote = true;
       rerere.enabled = true;
+      fetch.prune = true;
 
       alias = {
         flog = "log --graph --oneline --decorate";
