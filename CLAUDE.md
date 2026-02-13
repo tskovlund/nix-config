@@ -172,7 +172,8 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make lint` — lint all Nix files with statix + deadnix
 - `make update` — update all inputs
 - `nix repl --file flake.nix` — explore the flake interactively
-- `ct` — "claude team": launches `claude` inside tmux -CC (iTerm2 control mode) so agent team splits render as native iTerm2 panes. Use `ct` for agent team sessions; use `claude` directly for everything else.
+- `c` / `claude` — run Claude Code normally
+- `ct` / `claude-team` — launches Claude Code inside tmux -CC (iTerm2 control mode) so agent team splits render as native iTerm2 panes. Use for agent team sessions.
 
 **Important:** Git commands that trigger hooks (commit, push) require dev shell tools (`nixfmt`, `statix`, `deadnix`). Prefix with `nix develop --command` if not already in the dev shell:
 ```sh

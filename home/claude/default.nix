@@ -11,10 +11,13 @@
   # Enable experimental agent teams (parallel multi-agent orchestration)
   home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
 
-  # ct — "claude team": launches Claude Code inside tmux -CC (iTerm2 control
-  # mode) so agent team splits render as native iTerm2 panes. Use `ct` when
-  # you plan to use agent teams; use `claude` for everything else.
+  # Shell aliases for Claude Code:
+  #   c  — shorthand for claude
+  #   ct — "claude team": launches inside tmux -CC (iTerm2 control mode)
+  #         so agent team splits render as native iTerm2 panes
   programs.zsh.initContent = ''
+    alias c='claude'
+    alias claude-team='ct'
     ct() {
       if [ -n "$TMUX" ]; then
         command claude --teammate-mode tmux "$@"
