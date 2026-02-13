@@ -10,7 +10,7 @@
 # Personal identity override:
 # All switch targets require a personal identity flake. Configure it with:
 #   mkdir -p ~/.config/nix-config
-#   echo "github:YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
+#   echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
 # Or pass it directly: make switch PERSONAL_INPUT=path:/path/to/nix-config-personal
 
 UNAME := $(shell uname -s)
@@ -40,10 +40,10 @@ ifeq ($(wildcard $(PERSONAL_INPUT_FILE)),)
 	@echo "name, and email. Create the config file:"
 	@echo ""
 	@echo "  mkdir -p ~/.config/nix-config"
-	@echo '  echo "github:YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input'
+	@echo '  echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input'
 	@echo ""
 	@echo "Or pass it directly:"
-	@echo "  make switch PERSONAL_INPUT=github:YOUR_USER/nix-config-personal"
+	@echo "  make switch PERSONAL_INPUT=git+ssh://git@github.com/YOUR_USER/nix-config-personal"
 	@echo ""
 	@echo "For local development with a checkout:"
 	@echo "  make switch PERSONAL_INPUT=path:/path/to/nix-config-personal"

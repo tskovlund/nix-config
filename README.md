@@ -64,7 +64,7 @@ The flake has an input called `personal` that defaults to a placeholder stub. On
 
 ```sh
 mkdir -p ~/.config/nix-config
-echo "github:YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
+echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
 ```
 
 When you run `make switch`, the Makefile reads this file and passes `--override-input personal <url>` to the rebuild command. Without it, `make switch` prints a clear error explaining what to do.
@@ -72,7 +72,7 @@ When you run `make switch`, the Makefile reads this file and passes `--override-
 You can also pass the override directly:
 
 ```sh
-make switch PERSONAL_INPUT=github:YOUR_USER/nix-config-personal
+make switch PERSONAL_INPUT=git+ssh://git@github.com/YOUR_USER/nix-config-personal
 make switch PERSONAL_INPUT=path:/path/to/local-checkout
 ```
 
@@ -138,9 +138,9 @@ Bootstrap nix-darwin — build the config, then activate as root:
 
 ```sh
 nix build .#darwinConfigurations.darwin.system \
-  --override-input personal github:YOUR_USER/nix-config-personal
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin \
-  --override-input personal github:YOUR_USER/nix-config-personal
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
 If `/etc/zshenv` (or other files in `/etc/`) conflict, rename them first:
@@ -155,7 +155,7 @@ If `home-manager` isn't on your PATH yet, bootstrap it:
 
 ```sh
 nix run home-manager -- switch --flake .#linux \
-  --override-input personal github:YOUR_USER/nix-config-personal
+  --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 ```
 
 ### Subsequent deploys
