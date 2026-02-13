@@ -369,6 +369,24 @@ CI also validates both Linux and macOS on every PR.
 | Lint all Nix files | `make lint` |
 | Update all inputs | `make update` |
 
+### Updating dependencies
+
+All packages and tools are pinned via `flake.lock`. To get newer versions (e.g. a newer Claude Code, updated Neovim plugins, security patches):
+
+```sh
+make update    # updates flake.lock to latest nixpkgs-unstable + all inputs
+make switch    # applies the update
+```
+
+This is how you update everything — there's no `apt upgrade` or `brew update`. The flake lock is the single source of truth for dependency versions. If an update breaks something, roll back with `git checkout flake.lock && make switch`.
+
+For granular control, update individual inputs instead of all at once:
+
+```sh
+nix flake update nixpkgs              # only update nixpkgs
+nix flake update nixpkgs home-manager # update a subset
+```
+
 ### macOS (nix-darwin)
 
 | Task | Command |
