@@ -23,9 +23,9 @@
     }
   '';
 
-  # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
-  # Nix puts the binary in the store, so we symlink it to the expected location.
-  home.file.".local/bin/claude".source = "${pkgs.claude-code-bin}/bin/claude";
+  # Claude Code manages its own binary at ~/.local/bin/claude via self-update.
+  # The Nix package (home.packages) provides a fallback on PATH but we don't
+  # fight the self-updater by symlinking over it.
 
   # Statusline script — displays workspace context and session info.
   # To activate, add to ~/.claude/settings.json:
