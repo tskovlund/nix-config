@@ -154,7 +154,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 - Each module directory has a `default.nix` entry point
 - Use `programs.<name>` and `home.file` over raw file writes when possible — home-manager options give you type checking and merging
 - Keep modules focused: one concern per directory (shell, git, editor, etc.)
-- **Platform-specific config:** Use dedicated platform modules (`home/darwin/`, `home/linux/`) rather than `isDarwin`/`isLinux` conditionals in shared modules. These are wired into `makeDarwin` in `flake.nix` via `darwinHomeModules`. Small one-off checks with `pkgs.stdenv.isDarwin` are acceptable, but growing platform-specific config should move to the platform module.
+- **Platform-specific config:** Use dedicated platform modules (`home/darwin/`, `home/nixos/`) rather than `isDarwin`/`isLinux` conditionals in shared modules. These are wired into helpers in `flake.nix` via `darwinHomeModules` / `nixosHomeModules`. Small one-off checks with `pkgs.stdenv.isDarwin` are acceptable, but growing platform-specific config should move to the platform module.
 
 ## Machine-local config
 
