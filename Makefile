@@ -25,6 +25,9 @@ IS_WSL := $(shell [ -f /proc/sys/fs/binfmt_misc/WSLInterop ] && echo 1 || echo 0
 # Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
 IMPURE_FLAG := $(if $(IMPURE),--impure,)
 
+# Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs)
+REFRESH_FLAG := $(if $(REFRESH),--refresh,)
+
 # --- Personal identity override ---
 
 PERSONAL_INPUT_FILE := $(HOME)/.config/nix-config/personal-input
@@ -70,17 +73,17 @@ endif
 
 ifeq ($(UNAME),Darwin)
 switch: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo darwin-rebuild switch --flake .#darwin --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-base: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo darwin-rebuild switch --flake .#darwin-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
 switch: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-base: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 else
 switch:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
@@ -94,31 +97,31 @@ switch-base:
 endif
 else
 switch: .check-identity
-	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-base: .check-identity
-	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 endif
 
 # --- Explicit platform targets ---
 
 switch-darwin: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo darwin-rebuild switch --flake .#darwin --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-darwin-base: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo darwin-rebuild switch --flake .#darwin-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-linux: .check-identity
-	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-linux-base: .check-identity
-	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-nixos-wsl: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-nixos-wsl-base: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
+	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
 bootstrap:
