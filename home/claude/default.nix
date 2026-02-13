@@ -13,8 +13,15 @@
 
   # Wrap claude in tmux -CC (iTerm2 control mode) so agent team splits
   # render as native iTerm2 panes. If already inside tmux, just run directly.
+  # Non-interactive subcommands (mcp, config, etc.) skip the tmux wrapper.
   programs.zsh.initContent = ''
     claude() {
+      case "''${1:-}" in
+        mcp|config|update|api-key|doctor)
+          command claude "$@"
+          return
+          ;;
+      esac
       if [ -n "$TMUX" ]; then
         command claude --teammate-mode tmux "$@"
       else

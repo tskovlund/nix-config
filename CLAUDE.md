@@ -117,7 +117,10 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 ## Style preferences
 
-- **Conventional commits.** All commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): description`. Common types: `feat`, `fix`, `docs`, `chore`, `refactor`. Scope is optional (e.g., `feat(shell): add fzf integration`).
+- **Conventional commits.** All commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): description`. Common types: `feat`, `fix`, `docs`, `chore`, `refactor`. Include scope when a commit touches a single module; omit for cross-cutting changes. Use these scopes consistently:
+  - **Module scopes** (map to `home/<dir>/`): `shell`, `git`, `editor`, `tools`, `claude`, `darwin`, `linux`
+  - **Infra scopes**: `ci`, `bootstrap`, `flake`, `deps`
+  - Example: `feat(shell): add fzf integration`, `fix(claude): skip tmux for non-interactive subcommands`, `chore(deps): update flake inputs`
 - **No ambiguous abbreviations.** Use explicit names: `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
 - **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
 - **Proper fixes over workarounds.** Always solve problems at the root cause. Workarounds are acceptable only for sufficiently small problems, with clear justification, and require explicit confirmation from Thomas. If a workaround is used, document why and create a follow-up issue for the proper fix. Workarounds erode maintainability over time — resist them by default.

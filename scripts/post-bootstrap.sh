@@ -60,6 +60,34 @@ else
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(nix *)",
+      "Bash(make *)",
+      "Bash(home-manager *)",
+      "Bash(darwin-rebuild *)",
+      "Bash(nixos-rebuild *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(ls *)",
+      "Bash(which *)",
+      "Bash(* --version)",
+      "Bash(* --help)",
+      "Read",
+      "mcp__memory__*",
+      "mcp__plugin_linear_linear__*",
+      "mcp__plugin_Notion_notion__*"
+    ],
+    "deny": [
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(~/.aws/**)",
+      "Read(~/.ssh/id_*)"
+    ]
   }
 }
 JSON

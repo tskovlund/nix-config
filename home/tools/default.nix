@@ -76,6 +76,7 @@
 
     # CLI toolkit
     yq # YAML processor (jq for YAML)
+    coreutils # GNU coreutils (timeout, realpath, etc.)
     wget # HTTP file downloads
     tree # directory tree visualization
     devbox # portable dev environments for non-Nix contributors

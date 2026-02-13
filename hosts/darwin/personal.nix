@@ -41,8 +41,6 @@
       # Utilities
       "qbittorrent"
 
-      # AI
-      "claude"
     ];
 
     # Mac App Store apps (requires being signed into the App Store).
@@ -54,7 +52,6 @@
       "Logic Pro" = 634148309;
       "MainStage" = 634159523;
       "Motion" = 434290957;
-      "Proton Pass for Safari" = 6502835663;
       "WhatsApp" = 310633997;
     };
   };
