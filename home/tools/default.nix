@@ -53,9 +53,11 @@
   programs.jq.enable = true;
 
   # tealdeer: fast tldr client (community-maintained command cheatsheets)
+  # auto_update is intentionally disabled — it creates a systemd user timer
+  # that fails on NixOS (home-manager activation runs as a system service,
+  # not within a user session). Use `tldr --update` manually instead.
   programs.tealdeer = {
     enable = true;
-    settings.updates.auto_update = true;
   };
 
   # btop: system monitor
