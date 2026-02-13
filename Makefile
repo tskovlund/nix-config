@@ -10,7 +10,7 @@
 # Personal identity override:
 # All switch targets require a personal identity flake. Configure it with:
 #   mkdir -p ~/.config/nix-config
-#   echo "github:tskovlund/nix-config-personal" > ~/.config/nix-config/personal-input
+#   echo "github:YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
 # Or pass it directly: make switch PERSONAL_INPUT=path:/path/to/nix-config-personal
 
 UNAME := $(shell uname -s)
