@@ -422,6 +422,7 @@ nix flake update nixpkgs home-manager # update a subset
 | [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment (dotfiles, packages, programs). |
 | [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets management. |
 | [nixvim](https://github.com/nix-community/nixvim) | Neovim configuration as typed Nix expressions. |
+| [nixos-wsl](https://github.com/nix-community/NixOS-WSL) | NixOS on WSL integration module. |
 | [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | Nix-packaged MCP servers (used for persistent memory). |
 | personal (stub default) | Personal identity flake. Defaults to a placeholder stub; override with your own. See [Personal identity](#personal-identity-). |
 
