@@ -37,8 +37,7 @@ endif
 # --- Identity check (only for switch targets) ---
 
 .check-identity:
-ifndef PERSONAL_INPUT
-ifeq ($(wildcard $(PERSONAL_INPUT_FILE)),)
+ifeq ($(strip $(OVERRIDE_FLAGS)),)
 	@echo "Error: Personal identity not configured."
 	@echo ""
 	@echo "This config requires a personal identity flake to set your username,"
@@ -55,7 +54,6 @@ ifeq ($(wildcard $(PERSONAL_INPUT_FILE)),)
 	@echo ""
 	@echo "See README.md for details."
 	@exit 1
-endif
 endif
 
 ifeq ($(UNAME),Darwin)

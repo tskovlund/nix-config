@@ -162,7 +162,7 @@ Without `IMPURE=1`, the local file is silently ignored — pure evaluation canno
    cd nix-config
    ```
 
-4. **Set up personal identity** — this config requires a personal identity flake that provides your username, name, and email. See [Personal identity](#personal-identity-) below for details.
+4. **Set up personal identity** — this config requires a personal identity flake that provides your username, name, and email. See [Personal identity](#personal-identity-) for details.
 
 ## Deploy 🚀
 
