@@ -45,7 +45,7 @@ The base/personal split applies at both layers:
 
 - **home-manager** (user config):
   - **`home/default.nix`** — base dev environment. Everything that belongs on any dev machine (shell, editor, git, CLI tools). New modules go here by default.
-  - **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases, Claude Code).
+  - **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases).
 - **nix-darwin** (system config):
   - **`hosts/darwin/default.nix`** — base system config including base Homebrew casks (Firefox, Chrome, iTerm2, etc.)
   - **`hosts/darwin/personal.nix`** — personal casks, Mac App Store apps, personal brew formulae.
