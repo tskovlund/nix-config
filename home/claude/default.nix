@@ -11,8 +11,17 @@
   # Enable experimental agent teams (parallel multi-agent orchestration)
   home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
 
-  # Default to tmux split-pane mode for agent teams (renders as native iTerm2 splits on macOS)
-  programs.zsh.shellAliases.claude = "claude --teammate-mode tmux";
+  # Wrap claude in tmux -CC (iTerm2 control mode) so agent team splits
+  # render as native iTerm2 panes. If already inside tmux, just run directly.
+  programs.zsh.initContent = ''
+    claude() {
+      if [ -n "$TMUX" ]; then
+        command claude --teammate-mode tmux "$@"
+      else
+        tmux -CC new-session "command claude --teammate-mode tmux $*"
+      fi
+    }
+  '';
 
   # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
   # Nix puts the binary in the store, so we symlink it to the expected location.
