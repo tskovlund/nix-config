@@ -5,8 +5,8 @@ Fully declarative, cross-platform environment — shell, editor, git, CLI tools,
 This is a [template repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository). Hit **Use this template**, swap in your identity, deploy. Or fork it and make it yours. One command reproduces the entire setup on a new machine.
 
 - **macOS** — system settings + user config via nix-darwin and home-manager
-- **Linux** — user config via standalone home-manager (works on any distro, including WSL)
 - **NixOS** — full system + user config via nixos-rebuild and home-manager
+- **Linux** — user config via standalone home-manager (works on any distro, including WSL)
 
 ## Quick start 🚀
 
@@ -107,10 +107,10 @@ Every deployment is a **target** — a specific combination of build tool and pr
 |--------|---------|---------|
 | `darwin` | macOS system + user config | personal |
 | `darwin-base` | macOS system + user config | base |
-| `linux` | User config only (any Linux distro) | personal |
-| `linux-base` | User config only (any Linux distro) | base |
 | `nixos-wsl` | NixOS-WSL system + user config | personal |
 | `nixos-wsl-base` | NixOS-WSL system + user config | base |
+| `linux` | User config only (any Linux distro) | personal |
+| `linux-base` | User config only (any Linux distro) | base |
 
 **Profiles** control what gets included:
 - **base** — shell, editor, git, CLI tools, SSH client. Everything you'd want on any machine, including a work laptop.
@@ -217,12 +217,12 @@ For full manual control instead of the bootstrap script:
    sudo ./result/sw/bin/darwin-rebuild switch --flake .#darwin \
      --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
 
-   # Linux / WSL
-   nix run home-manager -- switch --flake .#linux \
-     --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
-
    # NixOS / NixOS-WSL
    sudo nixos-rebuild switch --flake .#nixos-wsl \
+     --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
+
+   # Linux / WSL (any distro)
+   nix run home-manager -- switch --flake .#linux \
      --override-input personal git+ssh://git@github.com/YOUR_USER/nix-config-personal
    ```
 
@@ -272,17 +272,6 @@ For granular control: `nix flake update nixpkgs` or `nix flake update nixpkgs ho
 </details>
 
 <details>
-<summary><strong>Linux / WSL (home-manager)</strong></summary>
-
-| Task | Command |
-|------|---------|
-| See what changed | `home-manager build --flake .#linux && nix diff-closures ~/.local/state/nix/profiles/home-manager ./result` |
-| Rollback | `home-manager switch --flake .#linux -b backup` |
-| List generations | `home-manager generations` |
-
-</details>
-
-<details>
 <summary><strong>NixOS-WSL (nixos-rebuild)</strong></summary>
 
 | Task | Command |
@@ -290,6 +279,17 @@ For granular control: `nix flake update nixpkgs` or `nix flake update nixpkgs ho
 | See what changed | `nixos-rebuild build --flake .#nixos-wsl && nix diff-closures /nix/var/nix/profiles/system ./result` |
 | Rollback | `sudo nixos-rebuild switch --rollback` |
 | List generations | `sudo nix-env --list-generations --profile /nix/var/nix/profiles/system` |
+
+</details>
+
+<details>
+<summary><strong>Linux / WSL (home-manager)</strong></summary>
+
+| Task | Command |
+|------|---------|
+| See what changed | `home-manager build --flake .#linux && nix diff-closures ~/.local/state/nix/profiles/home-manager ./result` |
+| Rollback | `home-manager switch --flake .#linux -b backup` |
+| List generations | `home-manager generations` |
 
 </details>
 

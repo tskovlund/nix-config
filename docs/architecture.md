@@ -8,7 +8,7 @@ These are the only terms you need:
 
 - **Target** — a concrete flake output you deploy with `make switch`. Example: `darwin`, `linux-base`, `nixos-wsl`. Each target combines a build tool and a profile.
 - **Profile** — the level of config a target includes: **base** (essentials for any dev machine) or **personal** (base + your personal additions, secrets, and identity-specific config).
-- **Build tool** — how the target gets deployed: `darwin-rebuild` (macOS), `home-manager` (Linux), or `nixos-rebuild` (NixOS).
+- **Build tool** — how the target gets deployed: `darwin-rebuild` (macOS), `nixos-rebuild` (NixOS), or `home-manager` (Linux — any distro).
 
 Everything else — helpers, host modules, home modules — is internal wiring described below.
 
@@ -20,10 +20,10 @@ The flake defines 6 targets:
 |--------|-----------|---------|----------------|
 | `darwin` | `darwin-rebuild` | personal | macOS system + user config |
 | `darwin-base` | `darwin-rebuild` | base | macOS system + user config |
-| `linux` | `home-manager` | personal | User config only (any Linux distro) |
-| `linux-base` | `home-manager` | base | User config only (any Linux distro) |
 | `nixos-wsl` | `nixos-rebuild` | personal | NixOS system + user config |
 | `nixos-wsl-base` | `nixos-rebuild` | base | NixOS system + user config |
+| `linux` | `home-manager` | personal | User config only (any Linux distro) |
+| `linux-base` | `home-manager` | base | User config only (any Linux distro) |
 
 **macOS** and **NixOS** targets manage both system-level settings and user config. **Linux** targets manage user config only — there's no system-level management, which is why they work on any Linux distro (Ubuntu, Fedora, WSL, etc.) without modification.
 
@@ -49,12 +49,12 @@ Three builder functions in `flake.nix` wire targets together:
                              │
                ┌─────────────┼─────────────┐
                ▼             ▼              ▼
-          makeDarwin     makeLinux      makeNixOS
+          makeDarwin     makeNixOS      makeLinux
                │             │              │
-    ┌──────────┤          returns         ┌─┤
-    ▼          ▼       homeManager        ▼  ▼
-  system      user    Configuration    system  user
-  config      config                   config  config
+    ┌──────────┤           ┌─┤           returns
+    ▼          ▼           ▼  ▼        homeManager
+  system      user      system  user   Configuration
+  config      config    config  config
 ```
 
 ### makeDarwin
@@ -68,15 +68,6 @@ Creates a nix-darwin system configuration. Always imports:
 
 Personal target also imports `hosts/darwin/personal.nix` (personal casks, Mac App Store apps).
 
-### makeLinux
-
-Creates a standalone home-manager configuration. No system-level config at all. Imports:
-- Profile modules (base or personal)
-- nixvim and agenix home-manager modules
-- Machine-local config (`local.nix`, when `--impure`)
-
-This is the simplest builder — no system management, no platform-specific home modules. Works on any Linux distro where Nix is installed.
-
 ### makeNixOS
 
 Creates a NixOS system configuration. Always imports:
@@ -87,6 +78,15 @@ Creates a NixOS system configuration. Always imports:
 - Machine-local config (`local.nix`, when `--impure`)
 
 Host-specific modules are passed via the `nixosModules` parameter. For example, the `nixos-wsl` target passes `hosts/nixos-wsl/default.nix`.
+
+### makeLinux
+
+Creates a standalone home-manager configuration. No system-level config at all. Imports:
+- Profile modules (base or personal)
+- nixvim and agenix home-manager modules
+- Machine-local config (`local.nix`, when `--impure`)
+
+This is the simplest builder — no system management, no platform-specific home modules. Works on any Linux distro where Nix is installed.
 
 ## System modules (`hosts/`)
 
