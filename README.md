@@ -6,6 +6,7 @@ Everything about your environment — shell, editor, git, CLI tools, system pref
 
 - **macOS**: nix-darwin manages system settings + home-manager manages user config
 - **Linux / WSL**: standalone home-manager manages user config
+- **NixOS / NixOS-WSL**: nixos-rebuild manages system + home config
 
 ## Quick start 🚀
 
@@ -53,8 +54,8 @@ Each platform has two targets:
 
 | Target | What it includes | Use case |
 |--------|-----------------|----------|
-| `darwin` / `linux` | base + personal | Personal machines |
-| `darwin-base` / `linux-base` | base only | Shared or work machines |
+| `darwin` / `linux` / `nixos-wsl` | base + personal | Personal machines |
+| `darwin-base` / `linux-base` / `nixos-wsl-base` | base only | Shared or work machines |
 
 ## Personal identity 🔑
 
@@ -203,6 +204,38 @@ nix run home-manager -- switch --flake .#linux \
 
 If `/etc/zshenv` conflicts on macOS: `sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin`
 
+### NixOS-WSL (first time)
+
+On a fresh NixOS-WSL installation, the flake-based nixos-rebuild is already available. Just clone and apply:
+
+```sh
+# Clone the repo
+git clone https://github.com/tskovlund/nix-config.git
+cd nix-config
+
+# Configure personal identity (see Prerequisites)
+mkdir -p ~/.config/nix-config
+echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
+
+# Apply the config
+make switch
+```
+
+The config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
+
+#### Adding a new NixOS host
+
+To add a new NixOS host (VPS, bare-metal, Raspberry Pi, etc.):
+
+1. Create a new directory in `hosts/<hostname>/` with your host-specific config (hardware, networking, services, etc.)
+2. Create host-specific config WITHOUT importing `./hosts/nixos` (it's automatically included by `makeNixOS`)
+3. Add a `nixosConfigurations.<hostname>` entry in `flake.nix` using the `makeNixOS` helper
+4. Apply with `sudo nixos-rebuild switch --flake .#<hostname>`
+
+> **Note:** For non-WSL NixOS hosts (VPS, bare-metal, Raspberry Pi), you must configure authentication in the host-specific config, e.g. via `users.users.${username}.initialPassword` or `users.users.${username}.openssh.authorizedKeys.keys`. The `makeNixOS` helper does not set a password or SSH keys — WSL handles this via the `nixos-wsl` module.
+
+See `hosts/nixos-wsl/` as an example of how to compose the general `nixos` layer with host-specific config.
+
 ### Subsequent deploys
 
 The Makefile auto-detects your platform and reads the personal identity override from `~/.config/nix-config/personal-input`:
@@ -228,12 +261,17 @@ nix-config/
 ├── hosts/
 │   ├── darwin/default.nix       # macOS base system config (nix-darwin, base casks, system defaults)
 │   ├── darwin/personal.nix      # macOS personal casks + Mac App Store apps
-│   └── linux/default.nix        # Linux system config (placeholder)
+│   ├── linux/default.nix        # Linux system config (placeholder)
+│   ├── nixos/default.nix        # General NixOS layer (user setup, flakes, zsh, home-manager)
+│   ├── wsl/default.nix          # General WSL layer (interop, automount, start menu)
+│   ├── nixos-wsl/default.nix    # NixOS-WSL entry point (imports wsl layer; nixos layer added by makeNixOS)
+│   └── [future: vps/, rpi/]     # Additional NixOS hosts (import nixos layer + host-specific config)
 │
 ├── home/
 │   ├── default.nix              # Base dev environment (always imported)
 │   ├── personal.nix             # Personal additions (imported by non-base targets)
 │   ├── darwin/                  # macOS-only home-manager config (Homebrew PATH, etc.)
+│   ├── nixos/                   # NixOS-only home-manager config (systemd user services)
 │   ├── shell/                   # Zsh, starship prompt, bat
 │   ├── editor/                  # Neovim via nixvim (LSP, completion, themes)
 │   ├── git/                     # Git, delta, gh CLI
@@ -335,6 +373,24 @@ CI also validates both Linux and macOS on every PR.
 | Lint all Nix files | `make lint` |
 | Update all inputs | `make update` |
 
+### Updating dependencies
+
+All packages and tools are pinned via `flake.lock`. To get newer versions (e.g. a newer Claude Code, updated Neovim plugins, security patches):
+
+```sh
+make update    # updates flake.lock to latest nixpkgs-unstable + all inputs
+make switch    # applies the update
+```
+
+This is how you update everything — there's no `apt upgrade` or `brew update`. The flake lock is the single source of truth for dependency versions. If an update breaks something, roll back with `git checkout flake.lock && make switch`.
+
+For granular control, update individual inputs instead of all at once:
+
+```sh
+nix flake update nixpkgs              # only update nixpkgs
+nix flake update nixpkgs home-manager # update a subset
+```
+
 ### macOS (nix-darwin)
 
 | Task | Command |
@@ -351,6 +407,16 @@ CI also validates both Linux and macOS on every PR.
 | Rollback | `home-manager switch --flake .#linux -b backup` |
 | List generations | `home-manager generations` |
 
+### NixOS-WSL (nixos-rebuild)
+
+| Task | Command |
+|------|---------|
+| Apply NixOS-WSL config (explicit) | `make switch-nixos-wsl` or `sudo nixos-rebuild switch --flake .#nixos-wsl` |
+| Apply NixOS-WSL base config | `make switch-nixos-wsl-base` or `sudo nixos-rebuild switch --flake .#nixos-wsl-base` |
+| See what changed | `nixos-rebuild build --flake .#nixos-wsl && nix diff-closures /nix/var/nix/profiles/system ./result` |
+| Rollback | `sudo nixos-rebuild switch --rollback` |
+| List generations | `sudo nix-env --list-generations --profile /nix/var/nix/profiles/system` |
+
 ## Inputs 📦
 
 | Input | What it does |
@@ -360,6 +426,7 @@ CI also validates both Linux and macOS on every PR.
 | [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment (dotfiles, packages, programs). |
 | [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets management. |
 | [nixvim](https://github.com/nix-community/nixvim) | Neovim configuration as typed Nix expressions. |
+| [nixos-wsl](https://github.com/nix-community/NixOS-WSL) | NixOS on WSL integration module. |
 | [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | Nix-packaged MCP servers (used for persistent memory). |
 | personal (stub default) | Personal identity flake. Defaults to a placeholder stub; override with your own. See [Personal identity](#personal-identity-). |
 

@@ -29,6 +29,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Personal identity (private). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
@@ -43,6 +48,7 @@
       agenix,
       nixvim,
       mcp-servers-nix,
+      nixos-wsl,
       personal,
       ...
     }:
@@ -121,10 +127,58 @@
             ];
         };
 
+      # Helper: create a NixOS system with the given modules.
+      # homeModules: home-manager modules (cross-platform user config)
+      # nixosModules: extra NixOS system modules (e.g. hosts/nixos-wsl/default.nix)
+      makeNixOS =
+        {
+          system,
+          hostname,
+          homeModules,
+          nixosModules ? [ ],
+        }:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ./hosts/nixos
+            { nixpkgs.overlays = [ mcp-servers-nix.overlays.default ]; }
+            home-manager.nixosModules.home-manager
+            (
+              { pkgs, ... }:
+              {
+                networking.hostName = hostname;
+                nixpkgs.hostPlatform = system;
+                # Configure the user account
+                users.users.${username} = {
+                  isNormalUser = true;
+                  shell = pkgs.zsh;
+                  extraGroups = [ "wheel" ];
+                  linger = true; # keep user systemd instance running so home-manager can start user services
+                };
+                home-manager.useGlobalPkgs = true;
+                home-manager.useUserPackages = true;
+                home-manager.backupFileExtension = "hm-backup";
+                home-manager.extraSpecialArgs = { inherit identity; };
+                home-manager.users.${username} = {
+                  imports =
+                    homeModules
+                    ++ nixosHomeModules
+                    ++ [ nixvim.homeModules.nixvim ]
+                    ++ localModules "/home/${username}";
+                  home.username = username;
+                  home.homeDirectory = "/home/${username}";
+                };
+              }
+            )
+          ]
+          ++ nixosModules;
+        };
+
       # Module sets
       baseModules = [ ./home ];
       personalModules = baseModules ++ [ ./home/personal.nix ];
       darwinHomeModules = [ ./home/darwin ];
+      nixosHomeModules = [ ./home/nixos ];
 
       # Helper: create a dev shell with formatting/linting tools and hook setup.
       makeDevShell =
@@ -161,6 +215,32 @@
       # Linux — base only
       # Apply with: home-manager switch --flake .#linux-base
       homeConfigurations."linux-base" = makeLinux baseModules;
+
+      # NixOS-WSL — base + personal
+      # Apply with: nixos-rebuild switch --flake .#nixos-wsl
+      nixosConfigurations."nixos-wsl" = makeNixOS {
+        system = "x86_64-linux";
+        hostname = "nixos-wsl";
+        homeModules = personalModules;
+        nixosModules = [
+          ./hosts/nixos-wsl
+          nixos-wsl.nixosModules.wsl
+          { wsl.defaultUser = username; }
+        ];
+      };
+
+      # NixOS-WSL — base only
+      # Apply with: nixos-rebuild switch --flake .#nixos-wsl-base
+      nixosConfigurations."nixos-wsl-base" = makeNixOS {
+        system = "x86_64-linux";
+        hostname = "nixos-wsl-base";
+        homeModules = baseModules;
+        nixosModules = [
+          ./hosts/nixos-wsl
+          nixos-wsl.nixosModules.wsl
+          { wsl.defaultUser = username; }
+        ];
+      };
 
       # Dev shell — enter with `nix develop` or automatically via direnv
       # Provides formatting/linting tools and sets up commit hooks
