@@ -6,6 +6,7 @@
     ./git
     ./tools
     ./editor
+    ./claude
   ];
 
   # State version for home-manager. Set once on first build, never change.

@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./claude
   ];
 
   # Personal additions layered on top of the base dev environment.
