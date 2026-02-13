@@ -165,13 +165,25 @@
         "type": "github"
       }
     },
+    "personal": {
+      "locked": {
+        "path": "./stubs/personal",
+        "type": "path"
+      },
+      "original": {
+        "path": "./stubs/personal",
+        "type": "path"
+      },
+      "parent": []
+    },
     "root": {
       "inputs": {
         "agenix": "agenix",
         "home-manager": "home-manager_2",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
-        "nixvim": "nixvim"
+        "nixvim": "nixvim",
+        "personal": "personal"
       }
     },
     "systems": {

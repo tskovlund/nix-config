@@ -23,6 +23,10 @@
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Personal identity (private). Default: stub with placeholder values.
+    # Override with real identity on personal machines — see README.
+    personal.url = "path:./stubs/personal";
   };
 
   outputs =
@@ -33,10 +37,12 @@
       home-manager,
       agenix,
       nixvim,
+      personal,
       ...
     }:
     let
-      username = "thomas";
+      inherit (personal) identity;
+      inherit (identity) username;
 
       # Helper: create a nix-darwin system with the given modules.
       # homeModules: home-manager modules (cross-platform user config)
@@ -57,6 +63,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
+              home-manager.extraSpecialArgs = { inherit identity; };
               home-manager.users.${username} = {
                 imports = homeModules ++ darwinHomeModules ++ [ nixvim.homeModules.nixvim ];
                 home.username = username;
@@ -80,6 +87,7 @@
                 "claude-code-bin"
               ];
           };
+          extraSpecialArgs = { inherit identity; };
           modules = homeModules ++ [
             nixvim.homeModules.nixvim
             {

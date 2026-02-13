@@ -1,12 +1,12 @@
-{ pkgs, ... }:
+{ pkgs, identity, ... }:
 
 {
   programs.git = {
     enable = true;
 
     settings = {
-      user.name = "Thomas Skovlund Hansen";
-      user.email = "thomas@skovlund.dev";
+      user.name = identity.fullName;
+      user.email = identity.email;
 
       core.editor = "nvim";
 
