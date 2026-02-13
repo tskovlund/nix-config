@@ -11,17 +11,11 @@
   # Enable experimental agent teams (parallel multi-agent orchestration)
   home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
 
-  # Wrap claude in tmux -CC (iTerm2 control mode) so agent team splits
-  # render as native iTerm2 panes. If already inside tmux, just run directly.
-  # Non-interactive subcommands (mcp, config, etc.) skip the tmux wrapper.
+  # ct — "claude team": launches Claude Code inside tmux -CC (iTerm2 control
+  # mode) so agent team splits render as native iTerm2 panes. Use `ct` when
+  # you plan to use agent teams; use `claude` for everything else.
   programs.zsh.initContent = ''
-    claude() {
-      case "''${1:-}" in
-        mcp|config|update|api-key|doctor)
-          command claude "$@"
-          return
-          ;;
-      esac
+    ct() {
       if [ -n "$TMUX" ]; then
         command claude --teammate-mode tmux "$@"
       else
