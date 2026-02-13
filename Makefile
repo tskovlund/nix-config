@@ -72,14 +72,14 @@ ifeq ($(UNAME),Darwin)
 switch: .check-identity
 	sudo darwin-rebuild switch --flake .#darwin $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-base:
+switch-base: .check-identity
 	sudo darwin-rebuild switch --flake .#darwin-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
 switch: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-base:
+switch-base: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 else
 switch:
@@ -96,7 +96,7 @@ else
 switch: .check-identity
 	home-manager switch --flake .#linux $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-base:
+switch-base: .check-identity
 	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 endif
 
@@ -105,19 +105,19 @@ endif
 switch-darwin: .check-identity
 	sudo darwin-rebuild switch --flake .#darwin $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-darwin-base:
+switch-darwin-base: .check-identity
 	sudo darwin-rebuild switch --flake .#darwin-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-linux: .check-identity
 	home-manager switch --flake .#linux $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-linux-base:
+switch-linux-base: .check-identity
 	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-nixos-wsl: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
-switch-nixos-wsl-base:
+switch-nixos-wsl-base: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
