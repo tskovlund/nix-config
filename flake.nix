@@ -153,16 +153,14 @@
                   isNormalUser = true;
                   shell = pkgs.zsh;
                   extraGroups = [ "wheel" ];
+                  linger = true; # keep user systemd instance running so home-manager can start user services
                 };
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;
                 home-manager.backupFileExtension = "hm-backup";
                 home-manager.extraSpecialArgs = { inherit identity; };
                 home-manager.users.${username} = {
-                  imports =
-                    homeModules
-                    ++ [ nixvim.homeModules.nixvim ]
-                    ++ localModules "/home/${username}";
+                  imports = homeModules ++ [ nixvim.homeModules.nixvim ] ++ localModules "/home/${username}";
                   home.username = username;
                   home.homeDirectory = "/home/${username}";
                 };
