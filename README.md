@@ -213,12 +213,15 @@ On a fresh NixOS-WSL installation, the flake-based nixos-rebuild is already avai
 git clone https://github.com/tskovlund/nix-config.git
 cd nix-config
 
-# Edit flake.nix to set your username (see Prerequisites)
-# Then apply the config
-sudo nixos-rebuild switch --flake .#nixos-wsl
+# Configure personal identity (see Prerequisites)
+mkdir -p ~/.config/nix-config
+echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
+
+# Apply the config
+make switch
 ```
 
-No manual setup required — the config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
+The config handles user creation, zsh as default shell, flakes enablement, and home-manager integration automatically.
 
 #### Adding a new NixOS host
 
