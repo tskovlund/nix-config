@@ -357,7 +357,7 @@ All inputs follow a single nixpkgs to avoid version drift.
 
 ## Post-deploy manual steps 🔧✋
 
-Most setup is automated by `bootstrap.sh` and `make bootstrap`. A few things still need manual intervention — see [`docs/manual-setup.md`](docs/manual-setup.md).
+Almost everything is automated. `make bootstrap` prints a checklist of the few remaining manual steps at the end (font selection, permissions). For reference, they're also documented in [`docs/manual-setup.md`](docs/manual-setup.md).
 
 ## License 📄
 
