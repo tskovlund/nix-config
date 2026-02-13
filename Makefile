@@ -9,22 +9,25 @@
 
 UNAME := $(shell uname -s)
 
+# Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
+IMPURE_FLAG := $(if $(IMPURE),--impure,)
+
 .PHONY: switch switch-base check update fmt lint clean
 
 ifeq ($(UNAME),Darwin)
 # macOS: rebuild system + home config via nix-darwin
 switch:
-	sudo darwin-rebuild switch --flake .#darwin
+	sudo darwin-rebuild switch --flake .#darwin $(IMPURE_FLAG)
 
 switch-base:
-	sudo darwin-rebuild switch --flake .#darwin-base
+	sudo darwin-rebuild switch --flake .#darwin-base $(IMPURE_FLAG)
 else
 # Linux: rebuild home config via standalone home-manager
 switch:
-	home-manager switch --flake .#linux
+	home-manager switch --flake .#linux $(IMPURE_FLAG)
 
 switch-base:
-	home-manager switch --flake .#linux-base
+	home-manager switch --flake .#linux-base $(IMPURE_FLAG)
 endif
 
 # Validate the flake without applying
