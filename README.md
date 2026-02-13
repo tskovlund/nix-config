@@ -229,7 +229,7 @@ To add a new NixOS host (VPS, bare-metal, Raspberry Pi, etc.):
 3. Add a `nixosConfigurations.<hostname>` entry in `flake.nix` using the `makeNixOS` helper
 4. Apply with `sudo nixos-rebuild switch --flake .#<hostname>`
 
-> **Note:** For non-WSL NixOS hosts (VPS, bare-metal, Raspberry Pi), you must configure authentication in the host-specific config, e.g. via `users.users.${username}.initialPassword` or `users.users.${username}.openssh.authorizedKeys`. The `makeNixOS` helper does not set a password or SSH keys — WSL handles this via the `nixos-wsl` module.
+> **Note:** For non-WSL NixOS hosts (VPS, bare-metal, Raspberry Pi), you must configure authentication in the host-specific config, e.g. via `users.users.${username}.initialPassword` or `users.users.${username}.openssh.authorizedKeys.keys`. The `makeNixOS` helper does not set a password or SSH keys — WSL handles this via the `nixos-wsl` module.
 
 See `hosts/nixos-wsl/` as an example of how to compose the general `nixos` layer with host-specific config.
 
