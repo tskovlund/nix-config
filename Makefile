@@ -15,6 +15,9 @@
 
 UNAME := $(shell uname -s)
 
+# Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
+IMPURE_FLAG := $(if $(IMPURE),--impure,)
+
 # --- Personal identity override ---
 
 PERSONAL_INPUT_FILE := $(HOME)/.config/nix-config/personal-input
@@ -58,17 +61,17 @@ endif
 ifeq ($(UNAME),Darwin)
 # macOS: rebuild system + home config via nix-darwin
 switch: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin $(OVERRIDE_FLAGS)
+	sudo darwin-rebuild switch --flake .#darwin $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-base: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin-base $(OVERRIDE_FLAGS)
+	sudo darwin-rebuild switch --flake .#darwin-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 else
 # Linux: rebuild home config via standalone home-manager
 switch: .check-identity
-	home-manager switch --flake .#linux $(OVERRIDE_FLAGS)
+	home-manager switch --flake .#linux $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 
 switch-base: .check-identity
-	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS)
+	home-manager switch --flake .#linux-base $(OVERRIDE_FLAGS) $(IMPURE_FLAG)
 endif
 
 # Validate the flake without applying

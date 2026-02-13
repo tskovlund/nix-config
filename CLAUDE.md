@@ -127,6 +127,15 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 - Keep modules focused: one concern per directory (shell, git, editor, etc.)
 - **Platform-specific config:** Use dedicated platform modules (`home/darwin/`, `home/linux/`) rather than `isDarwin`/`isLinux` conditionals in shared modules. These are wired into `makeDarwin` in `flake.nix` via `darwinHomeModules`. Small one-off checks with `pkgs.stdenv.isDarwin` are acceptable, but growing platform-specific config should move to the platform module.
 
+## Machine-local config
+
+Optional local config lives at `~/.config/nix-config/local.nix` (outside the repo). It's imported as a home-manager module by all targets (base and personal) when present and `--impure` is used. Without `--impure`, it's silently skipped.
+
+- Apply with: `make switch IMPURE=1`
+- The file is a standard home-manager module (receives `{ pkgs, ... }`)
+- `nix flake check` and CI are unaffected (pure evaluation = local.nix ignored)
+- See `examples/local.nix` for a starter template
+
 ## State versions — never change these
 
 - `system.stateVersion = 5` in `hosts/darwin/default.nix`

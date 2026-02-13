@@ -44,6 +44,15 @@
       inherit (personal) identity;
       inherit (identity) username;
 
+      # Optional machine-local home-manager config (outside the repo).
+      # Requires --impure to take effect; silently skipped in pure evaluation.
+      localModules =
+        homeDir:
+        let
+          path = /. + "${homeDir}/.config/nix-config/local.nix";
+        in
+        if builtins.pathExists path then [ path ] else [ ];
+
       # Helper: create a nix-darwin system with the given modules.
       # homeModules: home-manager modules (cross-platform user config)
       # darwinModules: extra nix-darwin system modules (e.g. hosts/darwin/personal.nix)
@@ -65,7 +74,11 @@
               home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = { inherit identity; };
               home-manager.users.${username} = {
-                imports = homeModules ++ darwinHomeModules ++ [ nixvim.homeModules.nixvim ];
+                imports =
+                  homeModules
+                  ++ darwinHomeModules
+                  ++ [ nixvim.homeModules.nixvim ]
+                  ++ localModules "/Users/${username}";
                 home.username = username;
                 home.homeDirectory = "/Users/${username}";
               };
@@ -88,13 +101,16 @@
               ];
           };
           extraSpecialArgs = { inherit identity; };
-          modules = homeModules ++ [
-            nixvim.homeModules.nixvim
-            {
-              home.username = username;
-              home.homeDirectory = "/home/${username}";
-            }
-          ];
+          modules =
+            homeModules
+            ++ localModules "/home/${username}"
+            ++ [
+              nixvim.homeModules.nixvim
+              {
+                home.username = username;
+                home.homeDirectory = "/home/${username}";
+              }
+            ];
         };
 
       # Module sets
