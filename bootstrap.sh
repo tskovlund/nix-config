@@ -261,12 +261,13 @@ if [ -z "$personal_url" ]; then
     [ -z "$local_email" ] && error "Email is required."
 
     # Sanitize inputs for Nix string interpolation — escape backslashes,
-    # double quotes, and ${ sequences that would break or inject into Nix strings.
+    # double quotes, ${ sequences, and newlines.
     nix_escape() {
       local s="$1"
       s="${s//\\/\\\\}"       # \ → \\
       s="${s//\"/\\\"}"       # " → \"
       s="${s//\$\{/\\\$\{}"   # ${ → \${
+      s="${s//$'\n'/\\n}"     # newline → \n
       printf '%s' "$s"
     }
 
@@ -303,7 +304,7 @@ AGE_KEY_PATH="$HOME/.config/agenix/age-key.txt"
 
 if [ ! -f "$AGE_KEY_PATH" ]; then
   if [ -d "$NIX_CONFIG_DIR/secrets" ] && \
-     compgen -G "$NIX_CONFIG_DIR/secrets/*.age" >/dev/null 2>&1; then
+     [ -n "$(find "$NIX_CONFIG_DIR/secrets" -maxdepth 1 -name "*.age" -print -quit 2>/dev/null)" ]; then
     echo ""
     warn "Agenix secrets found but no age key at $AGE_KEY_PATH"
     echo "  Generate one:  age-keygen -o $AGE_KEY_PATH"
