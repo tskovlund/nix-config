@@ -26,8 +26,8 @@ bash bootstrap.sh
 After the first deploy completes, run post-deploy initialization:
 
 ```sh
-cd ~/repos/nix-config
-make bootstrap      # gh auth, Claude settings, manual step reminders
+cd ~/repos/nix-config   # or wherever you cloned it
+make bootstrap           # gh auth, Claude settings, manual step reminders
 ```
 
 See [Prerequisites](#prerequisites-) for manual setup or [Deploy](#deploy-) for details on what the bootstrap does.
@@ -367,7 +367,7 @@ All non-personal inputs follow a single nixpkgs to avoid version drift. If an in
 
 ## Manual setup 🔧✋
 
-Most post-deploy steps are automated by `bootstrap.sh` and `make bootstrap`. A few things truly can't be automated — see [`docs/manual-setup.md`](docs/manual-setup.md) for the remaining manual steps.
+Most post-deploy steps are automated by `bootstrap.sh` and `make bootstrap`. A few things still require manual intervention — see [`docs/manual-setup.md`](docs/manual-setup.md) for the remaining steps.
 
 ## License 📄
 

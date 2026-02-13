@@ -44,7 +44,7 @@ prompt() {
   if [ -z "$_reply" ] && [ -n "$default" ]; then
     _reply="$default"
   fi
-  eval "$var=\$_reply"
+  printf -v "$var" '%s' "$_reply"
 }
 
 prompt_yes_no() {
@@ -75,6 +75,20 @@ fi
 
 PLATFORM="$(uname -s)"
 info "Detected platform: $PLATFORM"
+
+# Check required commands
+missing=()
+for cmd in curl git; do
+  command_exists "$cmd" || missing+=("$cmd")
+done
+if [ ${#missing[@]} -gt 0 ]; then
+  if is_macos; then
+    error "Missing required commands: ${missing[*]}. Install Xcode CLT: xcode-select --install"
+  else
+    error "Missing required commands: ${missing[*]}. Install them with your package manager."
+  fi
+fi
+
 echo ""
 
 # --- Step 1: Install Determinate Nix -----------------------------------------
@@ -166,9 +180,15 @@ fi
 
 if is_macos; then
   if [ -f /etc/zshenv ] && [ ! -L /etc/zshenv ]; then
-    info "Moving /etc/zshenv to /etc/zshenv.before-nix-darwin (avoids Determinate Nix conflict)"
-    sudo mv /etc/zshenv /etc/zshenv.before-nix-darwin
-    ok "/etc/zshenv moved"
+    ZSHENV_BACKUP="/etc/zshenv.before-nix-darwin"
+    if [ -e "$ZSHENV_BACKUP" ]; then
+      warn "/etc/zshenv exists but $ZSHENV_BACKUP already exists — skipping."
+      echo "  Resolve manually: compare both files and remove the conflicting one."
+    else
+      info "Moving /etc/zshenv to $ZSHENV_BACKUP (avoids Determinate Nix conflict)"
+      sudo mv /etc/zshenv "$ZSHENV_BACKUP"
+      ok "/etc/zshenv moved"
+    fi
   fi
 fi
 
@@ -189,6 +209,8 @@ fi
 
 if [ -d "$NIX_CONFIG_DIR/.git" ]; then
   ok "nix-config already cloned at $NIX_CONFIG_DIR"
+elif [ -d "$NIX_CONFIG_DIR" ] && [ -n "$(ls -A "$NIX_CONFIG_DIR" 2>/dev/null)" ]; then
+  error "$NIX_CONFIG_DIR exists and is not empty (and not a git repo). Remove it or choose a different location."
 else
   info "Cloning nix-config to $NIX_CONFIG_DIR..."
   mkdir -p "$(dirname "$NIX_CONFIG_DIR")"
@@ -238,6 +260,20 @@ if [ -z "$personal_url" ]; then
     [ -z "$local_fullname" ] && error "Full name is required."
     [ -z "$local_email" ] && error "Email is required."
 
+    # Sanitize inputs for Nix string interpolation — escape backslashes,
+    # double quotes, and ${ sequences that would break or inject into Nix strings.
+    nix_escape() {
+      local s="$1"
+      s="${s//\\/\\\\}"       # \ → \\
+      s="${s//\"/\\\"}"       # " → \"
+      s="${s//\$\{/\\\$\{}"   # ${ → \${
+      printf '%s' "$s"
+    }
+
+    safe_username="$(nix_escape "$local_username")"
+    safe_fullname="$(nix_escape "$local_fullname")"
+    safe_email="$(nix_escape "$local_email")"
+
     mkdir -p "$PERSONAL_LOCAL_DIR"
     cat > "$PERSONAL_LOCAL_DIR/flake.nix" << FLAKE
 {
@@ -246,9 +282,9 @@ if [ -z "$personal_url" ]; then
   outputs = { ... }: {
     identity = {
       isStub = false;
-      username = "$local_username";
-      fullName = "$local_fullname";
-      email = "$local_email";
+      username = "$safe_username";
+      fullName = "$safe_fullname";
+      email = "$safe_email";
     };
   };
 }

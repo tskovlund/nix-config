@@ -95,7 +95,7 @@ fi
 echo ""
 printf '%sManual steps remaining%s\n' "${BOLD}" "${RESET}"
 echo ""
-echo "  These can't be automated — check them off as you go:"
+echo "  These still require manual intervention:"
 echo ""
 
 if is_macos; then
