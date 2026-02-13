@@ -160,7 +160,11 @@
                 home-manager.backupFileExtension = "hm-backup";
                 home-manager.extraSpecialArgs = { inherit identity; };
                 home-manager.users.${username} = {
-                  imports = homeModules ++ [ nixvim.homeModules.nixvim ] ++ localModules "/home/${username}";
+                  imports =
+                    homeModules
+                    ++ nixosHomeModules
+                    ++ [ nixvim.homeModules.nixvim ]
+                    ++ localModules "/home/${username}";
                   home.username = username;
                   home.homeDirectory = "/home/${username}";
                 };
@@ -174,6 +178,7 @@
       baseModules = [ ./home ];
       personalModules = baseModules ++ [ ./home/personal.nix ];
       darwinHomeModules = [ ./home/darwin ];
+      nixosHomeModules = [ ./home/nixos ];
 
       # Helper: create a dev shell with formatting/linting tools and hook setup.
       makeDevShell =

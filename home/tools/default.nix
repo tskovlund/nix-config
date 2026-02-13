@@ -53,12 +53,9 @@
   programs.jq.enable = true;
 
   # tealdeer: fast tldr client (community-maintained command cheatsheets)
-  # auto_update disabled — the systemd user timer it creates fails during
-  # NixOS home-manager activation (runs as system service, user instance
-  # not yet available). linger=true fixes this after first reboot, but the
-  # initial build still fails. Use `tldr --update` manually.
   programs.tealdeer = {
     enable = true;
+    settings.updates.auto_update = true;
   };
 
   # btop: system monitor
