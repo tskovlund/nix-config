@@ -288,6 +288,7 @@ nix-config/
 ### Claude Code (personal profile only)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI
 - Custom statusline showing directory, git status, model, context usage, cost, and session info (aligned with starship prompt style)
+- [MCP Memory Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) — persistent knowledge graph across sessions (entities, relations, observations)
 
 ## Development 🛠️
 
@@ -343,6 +344,7 @@ CI also validates both Linux and macOS on every PR.
 | [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment (dotfiles, packages, programs). |
 | [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets management. |
 | [nixvim](https://github.com/nix-community/nixvim) | Neovim configuration as typed Nix expressions. |
+| [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | Nix-packaged MCP servers (used for persistent memory). |
 | personal (stub default) | Personal identity flake. Defaults to a placeholder stub; override with your own. See [Personal identity](#personal-identity-). |
 
 All non-personal inputs follow a single nixpkgs to avoid version drift. If an input ever breaks against nixpkgs-unstable (extremely rare), temporarily pin it to a specific rev — see CLAUDE.md for instructions.

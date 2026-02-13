@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   # Claude Code — AI coding assistant CLI.
@@ -23,9 +23,9 @@
     }
   '';
 
-  # Claude Code expects to find itself at ~/.local/bin/claude for self-update checks.
-  # Nix puts the binary in the store, so we symlink it to the expected location.
-  home.file.".local/bin/claude".source = "${pkgs.claude-code-bin}/bin/claude";
+  # Claude Code manages its own binary at ~/.local/bin/claude via self-update.
+  # The Nix package (home.packages) provides a fallback on PATH but we don't
+  # fight the self-updater by symlinking over it.
 
   # Statusline script — displays workspace context and session info.
   # To activate, add to ~/.claude/settings.json:
@@ -34,4 +34,22 @@
     source = ../../files/claude/statusline-command.sh;
     executable = true;
   };
+
+  # MCP Memory Server — persistent knowledge graph for Claude Code.
+  # Stores entities, relations, and observations in a JSONL file.
+  # Binary is Nix-managed; MCP registration is a one-time manual step
+  # (see docs/manual-setup.md).
+  home.file.".local/bin/mcp-server-memory" = {
+    executable = true;
+    text = ''
+      #!/bin/sh
+      export MEMORY_FILE_PATH="''${MEMORY_FILE_PATH:-$HOME/.local/share/claude-memory/memory.jsonl}"
+      exec ${pkgs.mcp-server-memory}/bin/mcp-server-memory "$@"
+    '';
+  };
+
+  # Ensure memory data directory exists.
+  home.activation.createClaudeMemoryDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p "$HOME/.local/share/claude-memory"
+  '';
 }

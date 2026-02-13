@@ -24,6 +24,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    mcp-servers-nix = {
+      url = "github:natsukium/mcp-servers-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Personal identity (private). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
@@ -37,6 +42,7 @@
       home-manager,
       agenix,
       nixvim,
+      mcp-servers-nix,
       personal,
       ...
     }:
@@ -65,6 +71,7 @@
           system = "aarch64-darwin";
           modules = [
             ./hosts/darwin
+            { nixpkgs.overlays = [ mcp-servers-nix.overlays.default ]; }
             home-manager.darwinModules.home-manager
             {
               system.primaryUser = username;
@@ -94,6 +101,7 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             system = "x86_64-linux";
+            overlays = [ mcp-servers-nix.overlays.default ];
             config.allowUnfreePredicate =
               pkg:
               builtins.elem (nixpkgs.lib.getName pkg) [

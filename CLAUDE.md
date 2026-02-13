@@ -171,6 +171,18 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 nix develop --command git commit -m "message"
 ```
 
+## Persistent memory (MCP)
+
+A persistent knowledge graph is available via the MCP memory server. It stores entities, relations, and observations in `~/.local/share/claude-memory/memory.jsonl`.
+
+Available tools: `create_entities`, `create_relations`, `add_observations`, `search_nodes`, `open_nodes`, `read_graph`, `delete_entities`, `delete_relations`, `delete_observations`.
+
+Guidelines:
+- At session start, search memory for context relevant to the current task
+- Store significant decisions, architecture choices, and user preferences as entities with observations
+- Store recurring patterns and lessons learned
+- Use relations to connect related entities (e.g., "nix-config" → "uses" → "home-manager")
+
 ## Secrets
 
 Secrets use agenix (age-encrypted). Never commit plaintext secrets, API keys, or private SSH keys. The `secrets/` directory will contain `.age` files only.
