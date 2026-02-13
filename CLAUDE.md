@@ -177,22 +177,9 @@ nix develop --command git commit -m "message"
 
 ## Persistent memory (MCP)
 
-A persistent knowledge graph is available via the MCP memory server. It stores entities, relations, and observations in `~/.local/share/claude-memory/memory.jsonl`.
+See global CLAUDE.md for full MCP memory guidelines (proactive querying, what to store vs keep in CLAUDE.md).
 
-Available tools: `create_entities`, `create_relations`, `add_observations`, `search_nodes`, `open_nodes`, `read_graph`, `delete_entities`, `delete_relations`, `delete_observations`.
-
-**Search limitation:** The search is not fuzzy — it won't match across spelling variants (e.g., "favourite" vs "favorite"). When searching, try multiple phrasings or search by entity name rather than observation content.
-
-**CLAUDE.md vs MCP memory — when to use which:**
-- **CLAUDE.md / auto-memory** — instructions, conventions, rules, project structure. Things needed from turn one, every session. Size-constrained.
-- **MCP memory** — accumulated knowledge: facts, decisions, historical context, entity relationships. Grows over time, queried on demand.
-- CLAUDE.md tells the model *what to do*. MCP memory stores *what has been learned*.
-
-Guidelines:
-- At session start, search memory for context relevant to the current task
-- Store significant decisions, architecture choices, and user preferences as entities with observations
-- Store recurring patterns and lessons learned
-- Use relations to connect related entities (e.g., "nix-config" → "uses" → "home-manager")
+The memory server binary is Nix-managed (`home/claude/default.nix`). MCP registration is a one-time manual step — see `docs/manual-setup.md`.
 
 ## Secrets
 
