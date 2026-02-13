@@ -62,6 +62,17 @@ Agent teams and tmux split-pane mode are fully Nix-managed (env var + shell alia
 
 Install additional plugins as needed via `/plugins` inside Claude Code.
 
+### Memory Server (MCP)
+
+The MCP memory server binary is Nix-managed (wrapper at `~/.local/bin/mcp-server-memory`). After `make switch`, register it with Claude Code (one-time):
+
+```sh
+claude mcp add --transport stdio --scope user memory -- \
+  ~/.local/bin/mcp-server-memory
+```
+
+Verify with `claude mcp list`. Memory data is stored at `~/.local/share/claude-memory/memory.jsonl`.
+
 ### GitHub CLI
 
 - Run `gh auth login` after first deploy to authenticate git operations

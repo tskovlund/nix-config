@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   # Claude Code — AI coding assistant CLI.
@@ -34,4 +34,22 @@
     source = ../../files/claude/statusline-command.sh;
     executable = true;
   };
+
+  # MCP Memory Server — persistent knowledge graph for Claude Code.
+  # Stores entities, relations, and observations in a JSONL file.
+  # Binary is Nix-managed; MCP registration is a one-time manual step
+  # (see docs/manual-setup.md).
+  home.file.".local/bin/mcp-server-memory" = {
+    executable = true;
+    text = ''
+      #!/bin/sh
+      export MEMORY_FILE_PATH="''${MEMORY_FILE_PATH:-$HOME/.local/share/claude-memory/memory.jsonl}"
+      exec ${pkgs.mcp-server-memory}/bin/mcp-server-memory "$@"
+    '';
+  };
+
+  # Ensure memory data directory exists.
+  home.activation.createClaudeMemoryDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p "$HOME/.local/share/claude-memory"
+  '';
 }
