@@ -164,7 +164,7 @@ Your personal flake needs a `flake.nix` that exports `identity` and `homeModules
 For machine-specific packages that don't belong in the repo (work SDKs, vendor CLIs, experimental tools), create an optional local config file:
 
 ```nix
--- ~/.config/nix-config/local.nix
+# ~/.config/nix-config/local.nix
 { pkgs, ... }:
 
 {
