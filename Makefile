@@ -20,11 +20,13 @@ UNAME := $(shell uname -s)
 PERSONAL_INPUT_FILE := $(HOME)/.config/nix-config/personal-input
 OVERRIDE_FLAGS :=
 
-ifneq ($(wildcard $(PERSONAL_INPUT_FILE)),)
-  PERSONAL_INPUT := $(shell cat $(PERSONAL_INPUT_FILE))
+ifdef PERSONAL_INPUT
   OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
-else ifdef PERSONAL_INPUT
-  OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
+else ifneq ($(wildcard $(PERSONAL_INPUT_FILE)),)
+  PERSONAL_INPUT := $(strip $(shell cat $(PERSONAL_INPUT_FILE)))
+  ifneq ($(PERSONAL_INPUT),)
+    OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
+  endif
 endif
 
 .PHONY: switch switch-base check update fmt lint clean .check-identity
@@ -79,12 +81,12 @@ update:
 
 # Format all Nix files
 fmt:
-	find . -name '*.nix' -not -path './result/*' -not -path './stubs/*' | xargs nixfmt
+	find . -name '*.nix' -not -path './result/*' | xargs nixfmt
 
 # Lint all Nix files
 lint:
-	statix check . -i result/ -i stubs/
-	deadnix --no-lambda-pattern-names --exclude stubs/ .
+	statix check . -i result/
+	deadnix --no-lambda-pattern-names .
 
 # Remove build artifacts
 clean:

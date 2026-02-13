@@ -76,6 +76,8 @@ make switch PERSONAL_INPUT=git+ssh://git@github.com/YOUR_USER/nix-config-persona
 make switch PERSONAL_INPUT=path:/path/to/local-checkout
 ```
 
+> **Note:** On macOS, `make switch` runs under `sudo`. If SSH-based fetching fails (root can't access your SSH agent), use a local checkout instead: `make switch PERSONAL_INPUT=path:/path/to/nix-config-personal`
+
 ### Creating your personal flake
 
 Your personal flake needs a `flake.nix` that exports an `identity` attribute set:
