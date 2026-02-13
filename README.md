@@ -54,6 +54,38 @@ Each platform has two targets:
 | `darwin` / `linux` | base + personal | Personal machines |
 | `darwin-base` / `linux-base` | base only | Shared or work machines |
 
+## Machine-local config 🔧
+
+For machine-specific packages that don't belong in the repo (work SDKs, vendor CLIs, experimental tools), create an optional local config file:
+
+```sh
+mkdir -p ~/.config/nix-config
+```
+
+```nix
+# ~/.config/nix-config/local.nix
+{ pkgs, ... }:
+
+{
+  home.packages = with pkgs; [
+    dotnet-sdk_8
+    azure-cli
+  ];
+}
+```
+
+This is a standard home-manager module — any option from `programs.*`, `home.file`, `home.sessionVariables`, etc. works here. See [`examples/local.nix`](examples/local.nix) for a starter template.
+
+To apply it, pass `IMPURE=1`:
+
+```sh
+make switch IMPURE=1
+```
+
+Without `IMPURE=1`, the local file is silently ignored — pure evaluation cannot read paths outside the Nix store. This is intentional: CI and `nix flake check` always run in pure mode and are unaffected.
+
+> For config that should be reproducible across reinstalls, consider extracting it into a separate flake (e.g. an org-level dev environment) instead of using local.nix.
+
 ## Prerequisites 📋
 
 1. **Install Nix** — we recommend the [Determinate Nix Installer](https://github.com/DeterminateSystems/nix-installer):
@@ -144,6 +176,7 @@ nix-config/
 │   ├── tools/                   # CLI toolkit, direnv, fzf
 │   └── claude/                  # Claude Code + statusline script
 │
+├── examples/                    # Templates (local.nix, etc.)
 ├── .githooks/                   # Repo-local git hooks (pre-push)
 ├── .envrc                       # direnv config (auto-enters dev shell)
 ├── files/                       # Raw config files sourced by modules
@@ -225,6 +258,7 @@ CI also validates both Linux and macOS on every PR.
 | Task | Command |
 |------|---------|
 | Apply config (base + personal) | `make switch` |
+| Apply with machine-local config | `make switch IMPURE=1` |
 | Apply config (base only) | `make switch-base` |
 | Validate without applying | `make check` |
 | Format all Nix files | `make fmt` |
