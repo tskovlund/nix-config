@@ -22,7 +22,7 @@ This file documents how this repo is structured and how to extend it.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
-- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, runs first deploy.
+- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, generates/migrates age key, runs first deploy. On NixOS-WSL, handles two-phase build when the bootstrap user (e.g. `nixos`) differs from the target user — builds base first to create the user, migrates config files, then builds the full personal config.
 - **scripts/**: Support scripts (not Nix modules). Currently contains `post-bootstrap.sh` for post-deploy initialization.
 - **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
@@ -192,6 +192,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `bootstrap.sh` — new-machine bootstrap (installs Nix, clones, deploys)
 - `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
 - `make switch` — apply base + personal config (auto-detects macOS / Linux / NixOS-WSL)
+- `make switch REFRESH=1` — same, but bypass Nix's input cache (useful after pushing to personal flake)
 - `make switch-base` — apply base only config (auto-detects platform)
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
@@ -220,7 +221,7 @@ The memory server binary is Nix-managed (`home/claude/default.nix`). MCP registr
 Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module. The architecture splits across two repos:
 
 - **nix-config** (public): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/`.
-- **nix-config-personal** (private): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
+- **nix-config-personal** (public — `.age` files are encrypted, safe to share): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
 
 ### How it works
 

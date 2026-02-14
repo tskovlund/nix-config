@@ -4,27 +4,41 @@ Fully declarative, cross-platform environment — shell, editor, git, CLI tools,
 
 This is a [template repo](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository). Hit **Use this template**, swap in your identity, deploy. Or fork it and make it yours. One command reproduces the entire setup on a new machine.
 
-- **macOS** — system settings + user config via nix-darwin and home-manager
-- **NixOS** — full system + user config via nixos-rebuild and home-manager
-- **Linux** — user config via standalone home-manager (works on any distro, including WSL)
+- **macOS** — nix-darwin + home-manager (system + user config)
+- **Linux / WSL** — standalone home-manager (user config)
+- **NixOS-WSL** — nixos-rebuild + home-manager (full system; generic NixOS targets planned)
 
 ## Quick start 🚀
 
+If you already have an age key from another machine, copy it before running bootstrap so your secrets can decrypt on the first deploy:
+
 ```sh
-# macOS, Linux, or NixOS — the script detects your platform
+mkdir -p ~/.config/agenix
+cp /path/to/age-key.txt ~/.config/agenix/age-key.txt
+```
+
+Then run bootstrap:
+
+```sh
 curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
-The script installs what's needed (Nix, Homebrew on macOS — skips what's already present), walks you through profile selection and identity setup, generates an age key for secrets, and runs the first deploy. After it finishes:
+The script handles everything: installs Nix and Homebrew if needed, detects your platform, sets up identity, and runs the first deploy.
 
-```sh
-cd ~/repos/nix-config
-make bootstrap    # GitHub CLI auth, Claude Code settings, SSH key upload, cleanup
-```
-
+> **NixOS-WSL?** Stock NixOS doesn't ship git or curl. Get them first: `nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git nixpkgs#curl`, then run bootstrap. The script detects NixOS-WSL automatically and handles user migration when the bootstrap user (`nixos`) differs from your target user.
+>
+> **No age key yet?** The script generates a new one. You'll need to add its public key to your personal flake's `secrets.nix` before secrets can decrypt.
+>
 > **Prefer to review first?** `curl -fsSL ... -o bootstrap.sh && less bootstrap.sh && bash bootstrap.sh`
 >
 > **Want full manual control?** See [Manual setup](#manual-setup) below.
+
+After bootstrap completes:
+
+```sh
+cd ~/repos/nix-config
+make bootstrap    # GitHub CLI auth, Claude Code settings, SSH key upload
+```
 
 ## Highlights ✨
 
@@ -160,8 +174,8 @@ Your personal flake needs a `flake.nix` that exports `identity` and `homeModules
 
 ### Why a separate repo?
 
-- **Forkable** — use this template, create your own identity flake, deploy. No grep-and-replace.
-- **Private** — your identity repo can be private while nix-config stays public.
+- **Forkable** — use this template, create your own personal flake, deploy. No grep-and-replace.
+- **Safe to share** — secrets are age-encrypted (`.age` files), so the personal flake can be public. Private repos also work.
 - **Per-machine** — different machines can point to different identity flakes (personal vs work).
 - **Extensible** — export `homeModules` for secrets, SSH keys, and personal dotfiles.
 
@@ -170,7 +184,7 @@ Your personal flake needs a `flake.nix` that exports `identity` and `homeModules
 For machine-specific packages that don't belong in the repo (work SDKs, vendor CLIs, experimental tools):
 
 ```nix
--- ~/.config/nix-config/local.nix
+# ~/.config/nix-config/local.nix
 { pkgs, ... }:
 
 {
@@ -236,10 +250,12 @@ For full manual control instead of the bootstrap script:
 
 | Task | Command |
 |------|---------|
-| Apply config (personal) | `make switch` |
-| Apply config (base only) | `make switch-base` |
-| Apply with local overrides | `make switch IMPURE=1` |
+| Bootstrap a new machine | `bash bootstrap.sh` (or curl-pipe, see Quick start) |
 | Post-deploy setup | `make bootstrap` |
+| Apply config (base + personal) | `make switch` |
+| Apply config (base only) | `make switch-base` |
+| Apply with machine-local config | `make switch IMPURE=1` |
+| Force re-fetch all inputs | `make switch REFRESH=1` |
 | Validate without applying | `make check` |
 | Format Nix files | `make fmt` |
 | Lint Nix files | `make lint` |

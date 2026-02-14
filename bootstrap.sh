@@ -66,6 +66,14 @@ prompt_yes_no() {
 command_exists() { command -v "$1" >/dev/null 2>&1; }
 is_macos() { [ "$(uname -s)" = "Darwin" ]; }
 is_linux() { [ "$(uname -s)" = "Linux" ]; }
+is_nixos() { [ -e /etc/NIXOS ]; }
+is_wsl() { [ -n "${WSL_DISTRO_NAME:-}" ] || [ -d /run/WSL ] || grep -qi microsoft /proc/version 2>/dev/null; }
+
+# Ensure flakes work even on stock NixOS where they're not enabled by default.
+# This is a no-op on Determinate Nix (macOS, most Linux) where flakes are built-in.
+NIX_FLAGS=(--extra-experimental-features "nix-command flakes")
+# Also set NIX_CONFIG for tools like nixos-rebuild that don't take NIX_FLAGS directly
+export NIX_CONFIG="experimental-features = nix-command flakes"
 
 # --- Pre-flight checks --------------------------------------------------------
 
@@ -74,7 +82,13 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 PLATFORM="$(uname -s)"
-info "Detected platform: $PLATFORM"
+if is_nixos && is_wsl; then
+  info "Detected platform: NixOS-WSL"
+elif is_nixos; then
+  info "Detected platform: NixOS"
+else
+  info "Detected platform: $PLATFORM"
+fi
 
 # Check required commands
 missing=()
@@ -145,6 +159,10 @@ case "$PROFILE_CHOICE" in
     PROFILE="base"
     if is_macos; then
       FLAKE_TARGET="darwin-base"
+    elif is_nixos && is_wsl; then
+      FLAKE_TARGET="nixos-wsl-base"
+    elif is_nixos; then
+      error "Generic NixOS bootstrap not yet supported. Use NixOS-WSL or add a target for your host."
     else
       FLAKE_TARGET="linux-base"
     fi
@@ -154,6 +172,10 @@ case "$PROFILE_CHOICE" in
     PROFILE="personal"
     if is_macos; then
       FLAKE_TARGET="darwin"
+    elif is_nixos && is_wsl; then
+      FLAKE_TARGET="nixos-wsl"
+    elif is_nixos; then
+      error "Generic NixOS bootstrap not yet supported. Use NixOS-WSL or add a target for your host."
     else
       FLAKE_TARGET="linux"
     fi
@@ -316,12 +338,12 @@ elif [ "$PROFILE" = "personal" ]; then
   mkdir -p "$(dirname "$AGE_KEY_PATH")"
   chmod 700 "$(dirname "$AGE_KEY_PATH")"
 
-  nix run nixpkgs#age-keygen -- -o "$AGE_KEY_PATH" 2>/dev/null \
-    || nix shell nixpkgs#age -c age-keygen -o "$AGE_KEY_PATH"
+  nix "${NIX_FLAGS[@]}" run nixpkgs#age-keygen -- -o "$AGE_KEY_PATH" 2>/dev/null \
+    || nix "${NIX_FLAGS[@]}" shell nixpkgs#age -c age-keygen -o "$AGE_KEY_PATH"
   chmod 600 "$AGE_KEY_PATH"
 
-  AGE_PUB_KEY="$(nix run nixpkgs#age-keygen -- -y "$AGE_KEY_PATH" 2>/dev/null \
-    || nix shell nixpkgs#age -c age-keygen -y "$AGE_KEY_PATH")"
+  AGE_PUB_KEY="$(nix "${NIX_FLAGS[@]}" run nixpkgs#age-keygen -- -y "$AGE_KEY_PATH" 2>/dev/null \
+    || nix "${NIX_FLAGS[@]}" shell nixpkgs#age -c age-keygen -y "$AGE_KEY_PATH")"
   ok "Age key generated"
   echo ""
   echo "  Public key (add to secrets.nix in your personal flake):"
@@ -340,11 +362,37 @@ fi
 cd "$NIX_CONFIG_DIR"
 
 # Build override flags (same logic as Makefile)
+# During bootstrap, SSH keys may not exist yet. Convert GitHub SSH/HTTPS URLs
+# to the github: shorthand (uses unauthenticated tarball download for public repos).
+# The SSH URL stays in personal-input for future make switch runs.
+github_shorthand() {
+  local url="$1"
+  local owner_repo
+  # git+ssh://git@github.com/OWNER/REPO → github:OWNER/REPO
+  owner_repo="${url#git+ssh://git@github.com/}"
+  if [ "$owner_repo" != "$url" ]; then
+    printf 'github:%s' "${owner_repo%.git}"
+    return
+  fi
+  # git+https://github.com/OWNER/REPO → github:OWNER/REPO
+  owner_repo="${url#git+https://github.com/}"
+  if [ "$owner_repo" != "$url" ]; then
+    printf 'github:%s' "${owner_repo%.git}"
+    return
+  fi
+  # Already github: or non-GitHub URL — use as-is
+  printf '%s' "$url"
+}
+
 OVERRIDE_FLAGS=""
 if [ -f "$PERSONAL_INPUT_FILE" ]; then
   override_url="$(tr -d '[:space:]' < "$PERSONAL_INPUT_FILE")"
   if [ -n "$override_url" ]; then
-    OVERRIDE_FLAGS="--override-input personal $override_url"
+    bootstrap_url="$(github_shorthand "$override_url")"
+    if [ "$bootstrap_url" != "$override_url" ]; then
+      info "Using $bootstrap_url for bootstrap (SSH not available yet)"
+    fi
+    OVERRIDE_FLAGS="--override-input personal $bootstrap_url"
   fi
 fi
 
@@ -357,17 +405,127 @@ if is_macos; then
   # macOS: nix-darwin bootstrap — darwin-rebuild isn't on PATH yet
   info "Building nix-darwin system..."
   # shellcheck disable=SC2086
-  nix build ".#darwinConfigurations.${FLAKE_TARGET}.system" $OVERRIDE_FLAGS
+  nix "${NIX_FLAGS[@]}" build ".#darwinConfigurations.${FLAKE_TARGET}.system" $OVERRIDE_FLAGS
 
   info "Activating nix-darwin (requires sudo)..."
   # shellcheck disable=SC2086
   sudo ./result/sw/bin/darwin-rebuild switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
 
+elif is_nixos; then
+  # NixOS: nixos-rebuild is already on PATH.
+  # The identity flake may define a different username than the current bootstrap
+  # user (e.g. bootstrapping as "nixos" but the config creates "thomas"). When
+  # that happens we need a two-phase build:
+  #   1. Base build — creates the target user, deploys base config (no secrets)
+  #   2. Migrate age key + config to the target user's home
+  #   3. Full build — secrets can now decrypt against the migrated age key
+
+  # Resolve the target username from the personal identity flake
+  TARGET_USER=""
+  if [ -n "${override_url:-}" ]; then
+    eval_url="${bootstrap_url:-$override_url}"
+    info "Resolving target username from: ${eval_url}#identity.username"
+    # stderr goes to terminal (visible for debugging), stdout captured into TARGET_USER
+    if TARGET_USER=$(nix "${NIX_FLAGS[@]}" eval --raw "${eval_url}#identity.username"); then
+      info "Resolved target user: '$TARGET_USER'"
+    else
+      warn "Could not resolve target username — falling back to single-phase build"
+      TARGET_USER=""
+    fi
+  else
+    info "No personal override URL — skipping user migration check"
+  fi
+
+  CURRENT_USER="$(whoami)"
+  NEEDS_MIGRATION=false
+  if [ -n "$TARGET_USER" ] && [ "$TARGET_USER" != "$CURRENT_USER" ]; then
+    NEEDS_MIGRATION=true
+    info "Target user '$TARGET_USER' differs from bootstrap user '$CURRENT_USER' — will migrate files after initial build"
+  elif [ -n "$TARGET_USER" ]; then
+    info "Target user '$TARGET_USER' matches current user — no migration needed"
+  fi
+
+  if [ "$NEEDS_MIGRATION" = true ] && [ "$PROFILE" = "personal" ]; then
+    # Phase 1: base build to create the target user (no secrets to decrypt)
+    BASE_FLAKE_TARGET="${FLAKE_TARGET}-base"
+    info "Phase 1: Building base NixOS system (creating user $TARGET_USER)..."
+    # shellcheck disable=SC2086
+    sudo nixos-rebuild switch --flake ".#${BASE_FLAKE_TARGET}" $OVERRIDE_FLAGS
+
+    # Phase 2: migrate bootstrap files to the target user's home
+    TARGET_HOME="/home/$TARGET_USER"
+    info "Migrating bootstrap files to $TARGET_USER..."
+
+    # Age key
+    if [ -f "$AGE_KEY_PATH" ]; then
+      sudo mkdir -p "$TARGET_HOME/.config/agenix"
+      sudo cp "$AGE_KEY_PATH" "$TARGET_HOME/.config/agenix/age-key.txt"
+      sudo chmod 700 "$TARGET_HOME/.config/agenix"
+      sudo chmod 600 "$TARGET_HOME/.config/agenix/age-key.txt"
+    fi
+
+    # Personal input config
+    if [ -f "$PERSONAL_INPUT_FILE" ]; then
+      sudo mkdir -p "$TARGET_HOME/.config/nix-config"
+      sudo cp "$PERSONAL_INPUT_FILE" "$TARGET_HOME/.config/nix-config/personal-input"
+    fi
+
+    # Clone nix-config into target user's home (as target user to avoid ownership issues)
+    if [ ! -d "$TARGET_HOME/repos/nix-config" ]; then
+      sudo mkdir -p "$TARGET_HOME/repos"
+      sudo chown "${TARGET_USER}:users" "$TARGET_HOME/repos"
+      sudo -u "$TARGET_USER" git clone "$NIX_CONFIG_REPO" "$TARGET_HOME/repos/nix-config"
+    fi
+
+    # Fix ownership of migrated config files
+    sudo chown -R "${TARGET_USER}:users" "$TARGET_HOME/.config"
+
+    ok "Files migrated to $TARGET_HOME"
+
+    # Phase 3: full personal build — secrets can now decrypt
+    NIX_CONFIG_DIR="$TARGET_HOME/repos/nix-config"
+    info "Phase 3: Building personal NixOS system (with secrets)..."
+    # shellcheck disable=SC2086
+    sudo nixos-rebuild switch --flake "${NIX_CONFIG_DIR}#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+
+  elif [ "$NEEDS_MIGRATION" = true ]; then
+    # Base profile with different user — single build (no secrets), then migrate config
+    info "Building base NixOS system..."
+    # shellcheck disable=SC2086
+    sudo nixos-rebuild switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+
+    TARGET_HOME="/home/$TARGET_USER"
+    info "Migrating bootstrap files to $TARGET_USER..."
+
+    if [ -f "$PERSONAL_INPUT_FILE" ]; then
+      sudo mkdir -p "$TARGET_HOME/.config/nix-config"
+      sudo cp "$PERSONAL_INPUT_FILE" "$TARGET_HOME/.config/nix-config/personal-input"
+    fi
+
+    # Clone as target user to avoid ownership issues
+    if [ ! -d "$TARGET_HOME/repos/nix-config" ]; then
+      sudo mkdir -p "$TARGET_HOME/repos"
+      sudo chown "${TARGET_USER}:users" "$TARGET_HOME/repos"
+      sudo -u "$TARGET_USER" git clone "$NIX_CONFIG_REPO" "$TARGET_HOME/repos/nix-config"
+    fi
+
+    sudo chown -R "${TARGET_USER}:users" "$TARGET_HOME/.config"
+
+    ok "Files migrated to $TARGET_HOME"
+    NIX_CONFIG_DIR="$TARGET_HOME/repos/nix-config"
+
+  else
+    # No migration needed — current user matches target user
+    info "Building NixOS system..."
+    # shellcheck disable=SC2086
+    sudo nixos-rebuild switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+  fi
+
 elif is_linux; then
-  # Linux: home-manager bootstrap — home-manager isn't on PATH yet
+  # Generic Linux: home-manager bootstrap — home-manager isn't on PATH yet
   info "Building and activating home-manager..."
   # shellcheck disable=SC2086
-  nix run home-manager -- switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+  nix "${NIX_FLAGS[@]}" run home-manager -- switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
 
 else
   error "Unsupported platform: $PLATFORM"
@@ -378,13 +536,28 @@ ok "Build complete!"
 # --- Done ---------------------------------------------------------------------
 
 echo ""
-printf '%s%sBootstrap complete!%s\n' "${GREEN}" "${BOLD}" "${RESET}"
+ok "Bootstrap complete!"
 echo ""
-echo "  Next steps:"
-echo "    cd $NIX_CONFIG_DIR"
-echo "    make bootstrap    # Post-deploy setup (gh auth, Claude settings, etc.)"
+
+if [ "${NEEDS_MIGRATION:-false}" = true ]; then
+  echo "  Your config created user '$TARGET_USER'. Restart your shell to switch:"
+  if is_wsl; then
+    echo "    Exit WSL, then re-open it — you'll land as $TARGET_USER automatically."
+  else
+    echo "    Log out and log back in as $TARGET_USER."
+  fi
+  echo ""
+  echo "  Then finish setup:"
+  echo "    cd ~/repos/nix-config"
+  echo "    make bootstrap    # Post-deploy setup (gh auth, Claude settings, etc.)"
+else
+  echo "  Next steps:"
+  echo "    cd $NIX_CONFIG_DIR"
+  echo "    make bootstrap    # Post-deploy setup (gh auth, Claude settings, etc.)"
+fi
 echo ""
 echo "  For subsequent config changes:"
 echo "    make switch            # Apply config"
 echo "    make switch IMPURE=1   # Apply with machine-local config"
+echo "    make switch REFRESH=1  # Force re-fetch of all inputs (after pushing to personal flake)"
 echo ""
