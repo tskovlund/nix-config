@@ -10,41 +10,35 @@ Nix flakes + [nix-darwin](https://github.com/LnL7/nix-darwin) + [home-manager](h
 
 ## Quick start 🚀
 
-### macOS / Linux
+If you already have an age key from another machine, copy it before running bootstrap so your secrets can decrypt on the first deploy:
+
+```sh
+mkdir -p ~/.config/agenix
+cp /path/to/age-key.txt ~/.config/agenix/age-key.txt
+```
+
+Then run bootstrap:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
-### NixOS-WSL
+The script handles everything: installs Nix and Homebrew if needed, detects your platform, sets up identity, and runs the first deploy.
 
-On a fresh NixOS-WSL install, three steps:
-
-```sh
-# 1. Copy your age key (for secrets decryption — skip if you don't have one yet)
-mkdir -p ~/.config/agenix && cp /mnt/USB/age-key.txt ~/.config/agenix/age-key.txt
-
-# 2. Get git and curl (not available by default on stock NixOS)
-nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git nixpkgs#curl
-
-# 3. Run bootstrap
-curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
-```
-
-The script detects NixOS-WSL automatically and handles user migration when the bootstrap user (`nixos`) differs from your target user — building in two phases, migrating your age key and config, then deploying the full system with secrets.
-
-### After bootstrap
-
-```sh
-cd ~/repos/nix-config
-make bootstrap    # GitHub CLI auth, Claude Code settings, SSH key upload
-```
-
+> **NixOS-WSL?** Stock NixOS doesn't ship git or curl. Get them first: `nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git nixpkgs#curl`, then run bootstrap. The script detects NixOS-WSL automatically and handles user migration when the bootstrap user (`nixos`) differs from your target user.
+>
 > **No age key yet?** The script generates a new one. You'll need to add its public key to your personal flake's `secrets.nix` before secrets can decrypt.
 >
 > **Prefer to review first?** `curl -fsSL ... -o bootstrap.sh && less bootstrap.sh && bash bootstrap.sh`
 >
 > **Prefer full manual control?** See [Manual setup](#manual-setup) in the setup guide below.
+
+After bootstrap completes:
+
+```sh
+cd ~/repos/nix-config
+make bootstrap    # GitHub CLI auth, Claude Code settings, SSH key upload
+```
 
 ## Highlights ✨
 
