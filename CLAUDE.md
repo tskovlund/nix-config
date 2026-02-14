@@ -239,7 +239,7 @@ Keys follow `id_ed25519_<purpose>`:
 ### Adding a new secret
 
 1. Add the `.age` file entry to `secrets/secrets.nix` in nix-config-personal
-2. Encrypt: `agenix -e secrets/<name>.age` (or use `age -r <pubkey> -o <file>`)
+2. Encrypt: `agenix -e secrets/<name>.age` (or manually: `age -r <pubkey> -o <file>`)
 3. Declare `age.secrets.<name>` in a home-manager module under nix-config-personal's `home/`
 4. Reference the decrypted path via `config.age.secrets.<name>.path`
 

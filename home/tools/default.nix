@@ -74,6 +74,10 @@
     # Terminal
     tmux # terminal multiplexer (also required for Claude Code agent teams split-pane mode)
 
+    # Secrets
+    age # age encryption tool
+    agenix # CLI for editing/re-encrypting agenix secrets (agenix -e)
+
     # CLI toolkit
     yq # YAML processor (jq for YAML)
     coreutils # GNU coreutils (timeout, realpath, etc.)

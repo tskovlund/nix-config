@@ -78,7 +78,12 @@
           system = "aarch64-darwin";
           modules = [
             ./hosts/darwin
-            { nixpkgs.overlays = [ mcp-servers-nix.overlays.default ]; }
+            {
+              nixpkgs.overlays = [
+                mcp-servers-nix.overlays.default
+                agenix.overlays.default
+              ];
+            }
             home-manager.darwinModules.home-manager
             {
               system.primaryUser = username;
@@ -111,7 +116,10 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             system = "x86_64-linux";
-            overlays = [ mcp-servers-nix.overlays.default ];
+            overlays = [
+              mcp-servers-nix.overlays.default
+              agenix.overlays.default
+            ];
             config.allowUnfreePredicate =
               pkg:
               builtins.elem (nixpkgs.lib.getName pkg) [
@@ -146,7 +154,12 @@
           inherit system;
           modules = [
             ./hosts/nixos
-            { nixpkgs.overlays = [ mcp-servers-nix.overlays.default ]; }
+            {
+              nixpkgs.overlays = [
+                mcp-servers-nix.overlays.default
+                agenix.overlays.default
+              ];
+            }
             home-manager.nixosModules.home-manager
             (
               { pkgs, ... }:
