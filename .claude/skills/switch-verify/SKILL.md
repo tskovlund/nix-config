@@ -60,6 +60,10 @@ Useful after pushing to the personal flake remote — forces Nix to re-fetch.
 make switch PERSONAL_INPUT=path:$HOME/repos/nix-config-personal IMPURE=1
 ```
 
+## Troubleshooting
+
+If `make check` or `make switch` fails, use `/nix-debug` for debugging strategies (eval errors, build failures, flake issues).
+
 ## Rollback
 
 Nix config is declarative — to roll back, just fix the issue and re-switch. No manual rollback commands needed.
