@@ -4,3 +4,9 @@ result-*
 
 # agenix encrypted secrets will be tracked, but never plaintext
 secrets/*.age.key
+
+# Track Claude Code skills (overrides global .claude/ ignore)
+!.claude/
+.claude/*
+!.claude/skills/
+!.claude/settings.local.json
