@@ -20,7 +20,7 @@
 
 UNAME := $(shell uname -s)
 IS_NIXOS := $(shell [ -e /etc/NIXOS ] && echo 1 || echo 0)
-IS_WSL := $(shell [ -f /proc/sys/fs/binfmt_misc/WSLInterop ] && echo 1 || echo 0)
+IS_WSL := $(shell [ -n "$$WSL_DISTRO_NAME" ] && echo 1 || (grep -qi microsoft /proc/version 2>/dev/null && echo 1 || echo 0))
 
 # Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
 IMPURE_FLAG := $(if $(IMPURE),--impure,)
