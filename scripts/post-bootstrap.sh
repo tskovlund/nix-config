@@ -198,7 +198,7 @@ fi
 # --- Step 6: Manual steps checklist -------------------------------------------
 
 echo ""
-printf '%sManual steps remaining%s\n' "${BOLD}" "${RESET}"
+printf "${BOLD}Manual steps remaining${RESET}\n"
 echo ""
 echo "  These still require manual intervention:"
 echo ""
