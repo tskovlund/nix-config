@@ -71,9 +71,6 @@
     # Nix tooling
     home-manager # CLI for generations, packages, etc. (programs.home-manager.enable is a no-op in module mode)
 
-    # Terminal
-    tmux # terminal multiplexer (also required for Claude Code agent teams split-pane mode)
-
     # Secrets
     age # age encryption tool
     agenix # CLI for editing/re-encrypting agenix secrets (agenix -e)

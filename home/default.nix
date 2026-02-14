@@ -8,6 +8,7 @@
     ./editor
     ./claude
     ./ssh
+    ./tmux
   ];
 
   # Agenix identity — the age key used to decrypt secrets during activation.
