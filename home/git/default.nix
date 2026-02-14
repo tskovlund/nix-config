@@ -102,11 +102,9 @@
     };
   };
 
-  # GitHub CLI (credential helper enabled by default)
-  programs.gh = {
-    enable = true;
-    # Don't use `settings` — it creates a read-only Nix store symlink for
-    # config.yml, which breaks `gh auth login` (needs to write config.yml).
-    # git_protocol is set during `gh auth login` interactively.
-  };
+  # GitHub CLI — installed as a package, NOT via programs.gh.
+  # programs.gh.enable creates a read-only Nix store symlink for config.yml,
+  # which breaks `gh auth login` (it needs to write git_protocol to config.yml).
+  # Installing as a package lets gh manage its own config freely.
+  home.packages = [ pkgs.gh ];
 }
