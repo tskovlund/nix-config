@@ -106,6 +106,7 @@
   # GitHub CLI (credential helper enabled by default)
   programs.gh = {
     enable = true;
-    settings.git_protocol = lib.mkDefault "https";
+    # Don't set `settings` here — gh auth login needs to write config.yml,
+    # which home-manager would make read-only. Let gh manage its own config.
   };
 }
