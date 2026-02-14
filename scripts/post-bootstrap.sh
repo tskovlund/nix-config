@@ -42,7 +42,21 @@ else
   warn "GitHub CLI (gh) not found — skipping auth setup."
 fi
 
-# --- Step 2: Upload SSH public keys to GitHub ---------------------------------
+# --- Step 2: Ensure agenix secrets are decrypted ------------------------------
+# On NixOS, nixos-rebuild activates the system but doesn't start user services.
+# The agenix home-manager module registers a systemd user service that decrypts
+# secrets (SSH keys, etc.). Start it now so they're available for the next step.
+
+if command_exists systemctl && systemctl --user list-unit-files agenix.service >/dev/null 2>&1; then
+  if systemctl --user start agenix 2>/dev/null; then
+    ok "Agenix secrets decrypted"
+  else
+    warn "Failed to start agenix service — secrets may not be available."
+    echo "  Try manually: systemctl --user start agenix"
+  fi
+fi
+
+# --- Step 3: Upload SSH public keys to GitHub ---------------------------------
 
 if command_exists gh && gh auth status >/dev/null 2>&1; then
   # Find SSH public keys deployed by agenix (named id_ed25519_*)
@@ -76,7 +90,7 @@ if command_exists gh && gh auth status >/dev/null 2>&1; then
   fi
 fi
 
-# --- Step 3: Claude Code settings ---------------------------------------------
+# --- Step 4: Claude Code settings ---------------------------------------------
 
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 
@@ -128,7 +142,7 @@ JSON
   ok "Claude Code settings written to $CLAUDE_SETTINGS"
 fi
 
-# --- Step 4: home-manager backup cleanup --------------------------------------
+# --- Step 5: home-manager backup cleanup --------------------------------------
 
 hm_backups="$(find "$HOME" -maxdepth 3 -name "*.hm-backup" 2>/dev/null || true)"
 
@@ -152,7 +166,7 @@ else
   ok "No home-manager backup files found"
 fi
 
-# --- Step 5: Stale dotfile cleanup --------------------------------------------
+# --- Step 6: Stale dotfile cleanup --------------------------------------------
 
 stale_files=(
   "$HOME/.zshrc.old"
@@ -195,7 +209,7 @@ else
   ok "No stale dotfiles found"
 fi
 
-# --- Step 6: Manual steps checklist -------------------------------------------
+# --- Step 7: Manual steps checklist -------------------------------------------
 
 echo ""
 printf "${BOLD}Manual steps remaining${RESET}\n"

@@ -37,13 +37,27 @@ REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 PERSONAL_INPUT_FILE := $(HOME)/.config/nix-config/personal-input
 OVERRIDE_FLAGS :=
 
-ifdef PERSONAL_INPUT
-  OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
-else ifneq ($(wildcard $(PERSONAL_INPUT_FILE)),)
-  PERSONAL_INPUT := $(strip $(shell cat $(PERSONAL_INPUT_FILE)))
-  ifneq ($(PERSONAL_INPUT),)
-    OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
+ifndef PERSONAL_INPUT
+  ifneq ($(wildcard $(PERSONAL_INPUT_FILE)),)
+    PERSONAL_INPUT := $(strip $(shell cat $(PERSONAL_INPUT_FILE)))
   endif
+endif
+
+# SSH fallback: SSH keys are agenix secrets deployed by the build itself,
+# creating a chicken-and-egg on fresh installs. When the personal input is a
+# GitHub SSH URL and no SSH identity files exist yet, fall back to the github:
+# shorthand (unauthenticated tarball download). Same as bootstrap.sh's
+# github_shorthand().
+ifneq ($(findstring git+ssh://git@github.com/,$(PERSONAL_INPUT)),)
+  ifeq ($(wildcard $(HOME)/.ssh/id_ed25519_*),)
+    _ORIG_URL := $(PERSONAL_INPUT)
+    PERSONAL_INPUT := $(patsubst git+ssh://git@github.com/%,github:%,$(patsubst %.git,%,$(_ORIG_URL)))
+    $(info ==> No SSH keys found — using $(PERSONAL_INPUT) instead of $(_ORIG_URL))
+  endif
+endif
+
+ifneq ($(strip $(PERSONAL_INPUT)),)
+  OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
 endif
 
 .PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
@@ -85,9 +99,11 @@ else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
 switch: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	@systemctl --user start agenix 2>/dev/null || true
 
 switch-base: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	@systemctl --user start agenix 2>/dev/null || true
 else
 switch:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
@@ -123,9 +139,11 @@ switch-linux-base: .check-identity
 
 switch-nixos-wsl: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	@systemctl --user start agenix 2>/dev/null || true
 
 switch-nixos-wsl-base: .check-identity
 	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	@systemctl --user start agenix 2>/dev/null || true
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
 bootstrap:
