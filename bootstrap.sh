@@ -515,7 +515,7 @@ ok "Build complete!"
 # --- Done ---------------------------------------------------------------------
 
 echo ""
-printf '%s%sBootstrap complete!%s\n' "${GREEN}" "${BOLD}" "${RESET}"
+printf "${GREEN}${BOLD}Bootstrap complete!${RESET}\n"
 echo ""
 
 if [ "${NEEDS_MIGRATION:-false}" = true ]; then
