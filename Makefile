@@ -28,6 +28,10 @@ IMPURE_FLAG := $(if $(IMPURE),--impure,)
 # Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs)
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 
+# --no-write-lock-file prevents switch from modifying flake.lock when
+# --override-input is used (the override is transient, not a lock change).
+# Update the lock explicitly with `make update`.
+
 # --- Personal identity override ---
 
 PERSONAL_INPUT_FILE := $(HOME)/.config/nix-config/personal-input

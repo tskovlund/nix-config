@@ -369,13 +369,13 @@ github_shorthand() {
   # git+ssh://git@github.com/OWNER/REPO → github:OWNER/REPO
   owner_repo="${url#git+ssh://git@github.com/}"
   if [ "$owner_repo" != "$url" ]; then
-    printf 'github:%s' "$owner_repo"
+    printf 'github:%s' "${owner_repo%.git}"
     return
   fi
   # git+https://github.com/OWNER/REPO → github:OWNER/REPO
   owner_repo="${url#git+https://github.com/}"
   if [ "$owner_repo" != "$url" ]; then
-    printf 'github:%s' "$owner_repo"
+    printf 'github:%s' "${owner_repo%.git}"
     return
   fi
   # Already github: or non-GitHub URL — use as-is

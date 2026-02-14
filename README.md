@@ -11,7 +11,7 @@ Nix flakes + [nix-darwin](https://github.com/LnL7/nix-darwin) + [home-manager](h
 ## Quick start 🚀
 
 ```sh
-# macOS / Linux / NixOS — works everywhere
+# macOS / Linux / NixOS-WSL
 curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
