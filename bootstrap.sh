@@ -69,6 +69,10 @@ is_linux() { [ "$(uname -s)" = "Linux" ]; }
 is_nixos() { [ -e /etc/NIXOS ]; }
 is_wsl() { [ -f /proc/sys/fs/binfmt_misc/WSLInterop ]; }
 
+# Ensure flakes work even on stock NixOS where they're not enabled by default.
+# This is a no-op on Determinate Nix (macOS, most Linux) where flakes are built-in.
+NIX_FLAGS=(--extra-experimental-features "nix-command flakes")
+
 # --- Pre-flight checks --------------------------------------------------------
 
 if [ "$(id -u)" -eq 0 ]; then
@@ -332,12 +336,12 @@ elif [ "$PROFILE" = "personal" ]; then
   mkdir -p "$(dirname "$AGE_KEY_PATH")"
   chmod 700 "$(dirname "$AGE_KEY_PATH")"
 
-  nix run nixpkgs#age-keygen -- -o "$AGE_KEY_PATH" 2>/dev/null \
-    || nix shell nixpkgs#age -c age-keygen -o "$AGE_KEY_PATH"
+  nix "${NIX_FLAGS[@]}" run nixpkgs#age-keygen -- -o "$AGE_KEY_PATH" 2>/dev/null \
+    || nix "${NIX_FLAGS[@]}" shell nixpkgs#age -c age-keygen -o "$AGE_KEY_PATH"
   chmod 600 "$AGE_KEY_PATH"
 
-  AGE_PUB_KEY="$(nix run nixpkgs#age-keygen -- -y "$AGE_KEY_PATH" 2>/dev/null \
-    || nix shell nixpkgs#age -c age-keygen -y "$AGE_KEY_PATH")"
+  AGE_PUB_KEY="$(nix "${NIX_FLAGS[@]}" run nixpkgs#age-keygen -- -y "$AGE_KEY_PATH" 2>/dev/null \
+    || nix "${NIX_FLAGS[@]}" shell nixpkgs#age -c age-keygen -y "$AGE_KEY_PATH")"
   ok "Age key generated"
   echo ""
   echo "  Public key (add to secrets.nix in your personal flake):"
@@ -399,7 +403,7 @@ if is_macos; then
   # macOS: nix-darwin bootstrap — darwin-rebuild isn't on PATH yet
   info "Building nix-darwin system..."
   # shellcheck disable=SC2086
-  nix build ".#darwinConfigurations.${FLAKE_TARGET}.system" $OVERRIDE_FLAGS
+  nix "${NIX_FLAGS[@]}" build ".#darwinConfigurations.${FLAKE_TARGET}.system" $OVERRIDE_FLAGS
 
   info "Activating nix-darwin (requires sudo)..."
   # shellcheck disable=SC2086
@@ -417,7 +421,7 @@ elif is_nixos; then
   # Resolve the target username from the personal identity flake
   TARGET_USER=""
   if [ -n "${override_url:-}" ]; then
-    TARGET_USER=$(nix eval --raw "${bootstrap_url:-$override_url}#identity.username" 2>/dev/null || echo "")
+    TARGET_USER=$(nix "${NIX_FLAGS[@]}" eval --raw "${bootstrap_url:-$override_url}#identity.username" 2>/dev/null || echo "")
   fi
 
   CURRENT_USER="$(whoami)"
@@ -504,7 +508,7 @@ elif is_linux; then
   # Generic Linux: home-manager bootstrap — home-manager isn't on PATH yet
   info "Building and activating home-manager..."
   # shellcheck disable=SC2086
-  nix run home-manager -- switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+  nix "${NIX_FLAGS[@]}" run home-manager -- switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
 
 else
   error "Unsupported platform: $PLATFORM"
