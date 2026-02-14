@@ -106,7 +106,6 @@
   # GitHub CLI (credential helper enabled by default)
   programs.gh = {
     enable = true;
-    # Don't set `settings` here — gh auth login needs to write config.yml,
-    # which home-manager would make read-only. Let gh manage its own config.
+    settings.git_protocol = "ssh";
   };
 }
