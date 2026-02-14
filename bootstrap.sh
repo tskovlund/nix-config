@@ -72,6 +72,8 @@ is_wsl() { [ -f /proc/sys/fs/binfmt_misc/WSLInterop ]; }
 # Ensure flakes work even on stock NixOS where they're not enabled by default.
 # This is a no-op on Determinate Nix (macOS, most Linux) where flakes are built-in.
 NIX_FLAGS=(--extra-experimental-features "nix-command flakes")
+# Also set NIX_CONFIG for tools like nixos-rebuild that don't take NIX_FLAGS directly
+export NIX_CONFIG="experimental-features = nix-command flakes"
 
 # --- Pre-flight checks --------------------------------------------------------
 

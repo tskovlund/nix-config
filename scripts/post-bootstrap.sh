@@ -56,7 +56,7 @@ if command_exists gh && gh auth status >/dev/null 2>&1; then
     for pub in "${ssh_pub_keys[@]}"; do
       key_name="$(basename "$pub" .pub)"
       key_fingerprint="$(ssh-keygen -lf "$pub" 2>/dev/null | awk '{print $2}')"
-      if echo "$existing_keys" | grep -q "$key_fingerprint" 2>/dev/null; then
+      if [ -n "$key_fingerprint" ] && echo "$existing_keys" | grep -q "$key_fingerprint" 2>/dev/null; then
         ok "SSH key already on GitHub: $key_name"
       else
         info "Uploading SSH key to GitHub: $key_name"

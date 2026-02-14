@@ -6,25 +6,41 @@ Nix flakes + [nix-darwin](https://github.com/LnL7/nix-darwin) + [home-manager](h
 
 - **macOS** — nix-darwin + home-manager (system + user config)
 - **Linux / WSL** — standalone home-manager (user config)
-- **NixOS / NixOS-WSL** — nixos-rebuild + home-manager (full system)
+- **NixOS-WSL** — nixos-rebuild + home-manager (full system; generic NixOS targets planned)
 
 ## Quick start 🚀
 
+### macOS / Linux
+
 ```sh
-# macOS / Linux / NixOS-WSL
 curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
-The bootstrap script handles everything: installs Nix and Homebrew if needed (skips what's already present), detects your platform (macOS, Linux, NixOS-WSL), selects your profile, sets up identity, generates an age key for secrets, and runs the first deploy. On NixOS-WSL, it automatically handles the user migration when the bootstrap user differs from the target user. After it completes:
+### NixOS-WSL
+
+On a fresh NixOS-WSL install, three steps:
+
+```sh
+# 1. Copy your age key (for secrets decryption — skip if you don't have one yet)
+mkdir -p ~/.config/agenix && cp /mnt/USB/age-key.txt ~/.config/agenix/age-key.txt
+
+# 2. Get git and curl (not available by default on stock NixOS)
+nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git nixpkgs#curl
+
+# 3. Run bootstrap
+curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
+```
+
+The script detects NixOS-WSL automatically and handles user migration when the bootstrap user (`nixos`) differs from your target user — building in two phases, migrating your age key and config, then deploying the full system with secrets.
+
+### After bootstrap
 
 ```sh
 cd ~/repos/nix-config
-make bootstrap    # GitHub CLI auth, Claude Code settings, cleanup
+make bootstrap    # GitHub CLI auth, Claude Code settings, SSH key upload
 ```
 
-> **Existing secrets?** If you already have an age key from another machine, copy it to `~/.config/agenix/age-key.txt` before running bootstrap. Otherwise, the script generates a new one.
->
-> **NixOS-WSL?** On a fresh NixOS-WSL install, get `git` and `curl` first: `nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git nixpkgs#curl`, then run bootstrap. The script detects NixOS-WSL automatically.
+> **No age key yet?** The script generates a new one. You'll need to add its public key to your personal flake's `secrets.nix` before secrets can decrypt.
 >
 > **Prefer to review first?** `curl -fsSL ... -o bootstrap.sh && less bootstrap.sh && bash bootstrap.sh`
 >
