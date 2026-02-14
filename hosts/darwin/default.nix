@@ -245,7 +245,7 @@
   # Exclude /nix from Time Machine and Spotlight (immutable, reproducible, huge)
   system.activationScripts.extraActivation.text = ''
     /usr/bin/tmutil addexclusion -p /nix/store 2>/dev/null || true
-    /usr/bin/mdutil -i off /nix 2>/dev/null || true
+    /usr/bin/mdutil -i off /nix >/dev/null 2>&1 || true
   '';
 
   # State version for nix-darwin. Set once on first build, never change.

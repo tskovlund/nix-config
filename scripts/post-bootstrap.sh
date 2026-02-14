@@ -42,7 +42,41 @@ else
   warn "GitHub CLI (gh) not found — skipping auth setup."
 fi
 
-# --- Step 2: Claude Code settings ---------------------------------------------
+# --- Step 2: Upload SSH public keys to GitHub ---------------------------------
+
+if command_exists gh && gh auth status >/dev/null 2>&1; then
+  # Find SSH public keys deployed by agenix (named id_ed25519_*)
+  ssh_pub_keys=()
+  for pub in "$HOME"/.ssh/id_ed25519_*.pub; do
+    [ -f "$pub" ] && ssh_pub_keys+=("$pub")
+  done
+
+  if [ ${#ssh_pub_keys[@]} -gt 0 ]; then
+    existing_keys="$(gh ssh-key list 2>/dev/null || true)"
+    for pub in "${ssh_pub_keys[@]}"; do
+      key_name="$(basename "$pub" .pub)"
+      key_fingerprint="$(ssh-keygen -lf "$pub" 2>/dev/null | awk '{print $2}')"
+      if [ -n "$key_fingerprint" ] && echo "$existing_keys" | grep -q "$key_fingerprint" 2>/dev/null; then
+        ok "SSH key already on GitHub: $key_name"
+      else
+        info "Uploading SSH key to GitHub: $key_name"
+        if gh ssh-key add "$pub" --title "$key_name" --type authentication; then
+          ok "SSH authentication key uploaded: $key_name"
+        else
+          warn "Failed to upload authentication key: $key_name (add manually with: gh ssh-key add $pub --type authentication)"
+        fi
+        # Also add as signing key for verified commits
+        if gh ssh-key add "$pub" --title "$key_name" --type signing; then
+          ok "SSH signing key uploaded: $key_name"
+        else
+          warn "Failed to upload signing key: $key_name (add manually with: gh ssh-key add $pub --type signing)"
+        fi
+      fi
+    done
+  fi
+fi
+
+# --- Step 3: Claude Code settings ---------------------------------------------
 
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 
@@ -94,7 +128,7 @@ JSON
   ok "Claude Code settings written to $CLAUDE_SETTINGS"
 fi
 
-# --- Step 3: home-manager backup cleanup --------------------------------------
+# --- Step 4: home-manager backup cleanup --------------------------------------
 
 hm_backups="$(find "$HOME" -maxdepth 3 -name "*.hm-backup" 2>/dev/null || true)"
 
@@ -118,7 +152,7 @@ else
   ok "No home-manager backup files found"
 fi
 
-# --- Step 4: Stale dotfile cleanup --------------------------------------------
+# --- Step 5: Stale dotfile cleanup --------------------------------------------
 
 stale_files=(
   "$HOME/.zshrc.old"
@@ -161,10 +195,10 @@ else
   ok "No stale dotfiles found"
 fi
 
-# --- Step 5: Manual steps checklist -------------------------------------------
+# --- Step 6: Manual steps checklist -------------------------------------------
 
 echo ""
-printf '%sManual steps remaining%s\n' "${BOLD}" "${RESET}"
+printf "${BOLD}Manual steps remaining${RESET}\n"
 echo ""
 echo "  These still require manual intervention:"
 echo ""

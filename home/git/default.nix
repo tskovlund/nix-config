@@ -1,4 +1,8 @@
-{ pkgs, identity, ... }:
+{
+  pkgs,
+  identity,
+  ...
+}:
 
 {
   programs.git = {
@@ -101,6 +105,8 @@
   # GitHub CLI (credential helper enabled by default)
   programs.gh = {
     enable = true;
-    settings.git_protocol = "https";
+    # Don't use `settings` — it creates a read-only Nix store symlink for
+    # config.yml, which breaks `gh auth login` (needs to write config.yml).
+    # git_protocol is set during `gh auth login` interactively.
   };
 }

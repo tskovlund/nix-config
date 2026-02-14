@@ -34,7 +34,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Personal identity (private). Default: stub with placeholder values.
+    # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
   };
@@ -54,6 +54,7 @@
     }:
     let
       inherit (personal) identity;
+      personalHomeModules = personal.homeModules or [ ];
       inherit (identity) username;
 
       # Optional machine-local home-manager config (outside the repo).
@@ -90,7 +91,10 @@
                 imports =
                   homeModules
                   ++ darwinHomeModules
-                  ++ [ nixvim.homeModules.nixvim ]
+                  ++ [
+                    nixvim.homeModules.nixvim
+                    agenix.homeManagerModules.default
+                  ]
                   ++ localModules "/Users/${username}";
                 home.username = username;
                 home.homeDirectory = "/Users/${username}";
@@ -120,6 +124,7 @@
             ++ localModules "/home/${username}"
             ++ [
               nixvim.homeModules.nixvim
+              agenix.homeManagerModules.default
               {
                 home.username = username;
                 home.homeDirectory = "/home/${username}";
@@ -163,7 +168,10 @@
                   imports =
                     homeModules
                     ++ nixosHomeModules
-                    ++ [ nixvim.homeModules.nixvim ]
+                    ++ [
+                      nixvim.homeModules.nixvim
+                      agenix.homeManagerModules.default
+                    ]
                     ++ localModules "/home/${username}";
                   home.username = username;
                   home.homeDirectory = "/home/${username}";
@@ -198,7 +206,7 @@
       # macOS — base + personal (default for personal machines)
       # Apply with: darwin-rebuild switch --flake .#darwin
       darwinConfigurations."darwin" = makeDarwin {
-        homeModules = personalModules;
+        homeModules = personalModules ++ personalHomeModules;
         darwinModules = [ ./hosts/darwin/personal.nix ];
       };
 
@@ -210,7 +218,7 @@
 
       # Linux — base + personal
       # Apply with: home-manager switch --flake .#linux
-      homeConfigurations."linux" = makeLinux personalModules;
+      homeConfigurations."linux" = makeLinux (personalModules ++ personalHomeModules);
 
       # Linux — base only
       # Apply with: home-manager switch --flake .#linux-base
@@ -221,7 +229,7 @@
       nixosConfigurations."nixos-wsl" = makeNixOS {
         system = "x86_64-linux";
         hostname = "nixos-wsl";
-        homeModules = personalModules;
+        homeModules = personalModules ++ personalHomeModules;
         nixosModules = [
           ./hosts/nixos-wsl
           nixos-wsl.nixosModules.wsl

@@ -22,7 +22,7 @@ This file documents how this repo is structured and how to extend it.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
-- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, runs first deploy.
+- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, generates/migrates age key, runs first deploy. On NixOS-WSL, handles two-phase build when the bootstrap user (e.g. `nixos`) differs from the target user — builds base first to create the user, migrates config files, then builds the full personal config.
 - **scripts/**: Support scripts (not Nix modules). Currently contains `post-bootstrap.sh` for post-deploy initialization.
 - **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
@@ -33,10 +33,12 @@ This repo contains no personal information. Identity (username, name, email) com
 
 - **`inputs.personal`** defaults to `path:./stubs/personal` — a stub with placeholder values and `isStub = true`.
 - On real machines, `make switch` reads `~/.config/nix-config/personal-input` and passes `--override-input personal <url>` to the rebuild command.
-- The personal flake exports `identity = { isStub, username, fullName, email }`.
+- The personal flake exports two things:
+  - `identity = { isStub, username, fullName, email }` — consumed by `flake.nix` and `home/git/default.nix`
+  - `homeModules` — list of home-manager modules for personal config (secrets, SSH, dotfiles). Imported by personal targets via `personalHomeModules` in `flake.nix`.
 - In `flake.nix`, `username` is derived from `identity.username` and flows through to all system/user config via closures.
 - Home-manager modules receive `identity` via `extraSpecialArgs`. Use `{ identity, ... }:` in the module args to access it. Currently only `home/git/default.nix` uses `identity.fullName` and `identity.email`.
-- `nix flake check` in CI uses the stub (no override needed) and passes because stub values are valid strings.
+- `nix flake check` in CI uses the stub (no override needed) and passes because stub values are valid strings. The stub exports `homeModules = []`.
 - `make switch` without identity configured prints a clear error message.
 
 ## Profiles: base vs personal
@@ -190,6 +192,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `bootstrap.sh` — new-machine bootstrap (installs Nix, clones, deploys)
 - `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
 - `make switch` — apply base + personal config (auto-detects macOS / Linux / NixOS-WSL)
+- `make switch REFRESH=1` — same, but bypass Nix's input cache (useful after pushing to personal flake)
 - `make switch-base` — apply base only config (auto-detects platform)
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
@@ -213,6 +216,31 @@ See global CLAUDE.md for full MCP memory guidelines (proactive querying, what to
 
 The memory server binary is Nix-managed (`home/claude/default.nix`). MCP registration is a one-time manual step — see `docs/manual-setup.md`.
 
-## Secrets
+## Secrets and SSH
 
-Secrets use agenix (age-encrypted). Never commit plaintext secrets, API keys, or private SSH keys. The `secrets/` directory will contain `.age` files only.
+Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module. The architecture splits across two repos:
+
+- **nix-config** (public): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/`.
+- **nix-config-personal** (public — `.age` files are encrypted, safe to share): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
+
+### How it works
+
+1. A single **age key** (`~/.config/agenix/age-key.txt`) is the decryption identity. It's portable — the same key is copied to every machine. No passphrase.
+2. Secrets are encrypted against this key's public key and stored as `.age` files in nix-config-personal.
+3. `make switch` activates the agenix home-manager module, which decrypts secrets to a per-user temp directory and symlinks them to their declared paths (e.g. `~/.ssh/id_ed25519_github`).
+4. On macOS, `UseKeychain yes` + `AddKeysToAgent yes` means SSH key passphrases are stored in Keychain after first use.
+
+### SSH key naming convention
+
+Keys follow `id_ed25519_<purpose>`:
+- `id_ed25519_github` — GitHub authentication + commit signing
+- Future: `id_ed25519_server`, `id_ed25519_work`, etc.
+
+### Adding a new secret
+
+1. Add the `.age` file entry to `secrets/secrets.nix` in nix-config-personal
+2. Encrypt: `agenix -e secrets/<name>.age` (or use `age -r <pubkey> -o <file>`)
+3. Declare `age.secrets.<name>` in a home-manager module under nix-config-personal's `home/`
+4. Reference the decrypted path via `config.age.secrets.<name>.path`
+
+Never commit plaintext secrets, API keys, or private SSH keys to either repo.
