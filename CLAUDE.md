@@ -22,7 +22,7 @@ This file documents how this repo is structured and how to extend it.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
-- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, runs first deploy.
+- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, generates/migrates age key, runs first deploy. On NixOS-WSL, handles two-phase build when the bootstrap user (e.g. `nixos`) differs from the target user — builds base first to create the user, migrates config files, then builds the full personal config.
 - **scripts/**: Support scripts (not Nix modules). Currently contains `post-bootstrap.sh` for post-deploy initialization.
 - **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
 - **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
