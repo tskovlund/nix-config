@@ -468,14 +468,15 @@ elif is_nixos; then
       sudo cp "$PERSONAL_INPUT_FILE" "$TARGET_HOME/.config/nix-config/personal-input"
     fi
 
-    # Clone nix-config into target user's home
+    # Clone nix-config into target user's home (as target user to avoid ownership issues)
     if [ ! -d "$TARGET_HOME/repos/nix-config" ]; then
       sudo mkdir -p "$TARGET_HOME/repos"
-      sudo git clone "$NIX_CONFIG_REPO" "$TARGET_HOME/repos/nix-config"
+      sudo chown "${TARGET_USER}:users" "$TARGET_HOME/repos"
+      sudo -u "$TARGET_USER" git clone "$NIX_CONFIG_REPO" "$TARGET_HOME/repos/nix-config"
     fi
 
-    # Fix ownership of all migrated files
-    sudo chown -R "${TARGET_USER}:users" "$TARGET_HOME/.config" "$TARGET_HOME/repos"
+    # Fix ownership of migrated config files
+    sudo chown -R "${TARGET_USER}:users" "$TARGET_HOME/.config"
 
     ok "Files migrated to $TARGET_HOME"
 
@@ -499,12 +500,14 @@ elif is_nixos; then
       sudo cp "$PERSONAL_INPUT_FILE" "$TARGET_HOME/.config/nix-config/personal-input"
     fi
 
+    # Clone as target user to avoid ownership issues
     if [ ! -d "$TARGET_HOME/repos/nix-config" ]; then
       sudo mkdir -p "$TARGET_HOME/repos"
-      sudo git clone "$NIX_CONFIG_REPO" "$TARGET_HOME/repos/nix-config"
+      sudo chown "${TARGET_USER}:users" "$TARGET_HOME/repos"
+      sudo -u "$TARGET_USER" git clone "$NIX_CONFIG_REPO" "$TARGET_HOME/repos/nix-config"
     fi
 
-    sudo chown -R "${TARGET_USER}:users" "$TARGET_HOME/.config" "$TARGET_HOME/repos"
+    sudo chown -R "${TARGET_USER}:users" "$TARGET_HOME/.config"
 
     ok "Files migrated to $TARGET_HOME"
     NIX_CONFIG_DIR="$TARGET_HOME/repos/nix-config"
