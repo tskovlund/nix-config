@@ -356,11 +356,37 @@ fi
 cd "$NIX_CONFIG_DIR"
 
 # Build override flags (same logic as Makefile)
+# During bootstrap, SSH keys may not exist yet. Convert GitHub SSH/HTTPS URLs
+# to the github: shorthand (uses unauthenticated tarball download for public repos).
+# The SSH URL stays in personal-input for future make switch runs.
+github_shorthand() {
+  local url="$1"
+  local owner_repo
+  # git+ssh://git@github.com/OWNER/REPO → github:OWNER/REPO
+  owner_repo="${url#git+ssh://git@github.com/}"
+  if [ "$owner_repo" != "$url" ]; then
+    printf 'github:%s' "$owner_repo"
+    return
+  fi
+  # git+https://github.com/OWNER/REPO → github:OWNER/REPO
+  owner_repo="${url#git+https://github.com/}"
+  if [ "$owner_repo" != "$url" ]; then
+    printf 'github:%s' "$owner_repo"
+    return
+  fi
+  # Already github: or non-GitHub URL — use as-is
+  printf '%s' "$url"
+}
+
 OVERRIDE_FLAGS=""
 if [ -f "$PERSONAL_INPUT_FILE" ]; then
   override_url="$(tr -d '[:space:]' < "$PERSONAL_INPUT_FILE")"
   if [ -n "$override_url" ]; then
-    OVERRIDE_FLAGS="--override-input personal $override_url"
+    bootstrap_url="$(github_shorthand "$override_url")"
+    if [ "$bootstrap_url" != "$override_url" ]; then
+      info "Using $bootstrap_url for bootstrap (SSH not available yet)"
+    fi
+    OVERRIDE_FLAGS="--override-input personal $bootstrap_url"
   fi
 fi
 
@@ -391,7 +417,7 @@ elif is_nixos; then
   # Resolve the target username from the personal identity flake
   TARGET_USER=""
   if [ -n "${override_url:-}" ]; then
-    TARGET_USER=$(nix eval --raw "${override_url}#identity.username" 2>/dev/null || echo "")
+    TARGET_USER=$(nix eval --raw "${bootstrap_url:-$override_url}#identity.username" 2>/dev/null || echo "")
   fi
 
   CURRENT_USER="$(whoami)"
