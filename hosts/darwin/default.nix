@@ -243,9 +243,12 @@
   };
 
   # Exclude /nix from Time Machine and Spotlight (immutable, reproducible, huge)
+  # iTerm2: Shift+Enter sends CSI u escape sequence so apps (Claude Code) can
+  # distinguish it from plain Enter. Uses -dict-add to merge into existing GlobalKeyMap.
   system.activationScripts.extraActivation.text = ''
     /usr/bin/tmutil addexclusion -p /nix/store 2>/dev/null || true
     /usr/bin/mdutil -i off /nix >/dev/null 2>&1 || true
+    defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add "0xd-0x20000" '<dict><key>Action</key><integer>10</integer><key>Text</key><string>[13;2u</string></dict>'
   '';
 
   # State version for nix-darwin. Set once on first build, never change.
