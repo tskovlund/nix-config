@@ -67,7 +67,7 @@ command_exists() { command -v "$1" >/dev/null 2>&1; }
 is_macos() { [ "$(uname -s)" = "Darwin" ]; }
 is_linux() { [ "$(uname -s)" = "Linux" ]; }
 is_nixos() { [ -e /etc/NIXOS ]; }
-is_wsl() { [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; }
+is_wsl() { [ -n "${WSL_DISTRO_NAME:-}" ] || [ -d /run/WSL ] || grep -qi microsoft /proc/version 2>/dev/null; }
 
 # Ensure flakes work even on stock NixOS where they're not enabled by default.
 # This is a no-op on Determinate Nix (macOS, most Linux) where flakes are built-in.
