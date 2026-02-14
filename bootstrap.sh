@@ -421,7 +421,17 @@ elif is_nixos; then
   # Resolve the target username from the personal identity flake
   TARGET_USER=""
   if [ -n "${override_url:-}" ]; then
-    TARGET_USER=$(nix "${NIX_FLAGS[@]}" eval --raw "${bootstrap_url:-$override_url}#identity.username" 2>/dev/null || echo "")
+    eval_url="${bootstrap_url:-$override_url}"
+    info "Resolving target username from: ${eval_url}#identity.username"
+    # stderr goes to terminal (visible for debugging), stdout captured into TARGET_USER
+    if TARGET_USER=$(nix "${NIX_FLAGS[@]}" eval --raw "${eval_url}#identity.username"); then
+      info "Resolved target user: '$TARGET_USER'"
+    else
+      warn "Could not resolve target username — falling back to single-phase build"
+      TARGET_USER=""
+    fi
+  else
+    info "No personal override URL — skipping user migration check"
   fi
 
   CURRENT_USER="$(whoami)"
@@ -429,6 +439,8 @@ elif is_nixos; then
   if [ -n "$TARGET_USER" ] && [ "$TARGET_USER" != "$CURRENT_USER" ]; then
     NEEDS_MIGRATION=true
     info "Target user '$TARGET_USER' differs from bootstrap user '$CURRENT_USER' — will migrate files after initial build"
+  elif [ -n "$TARGET_USER" ]; then
+    info "Target user '$TARGET_USER' matches current user — no migration needed"
   fi
 
   if [ "$NEEDS_MIGRATION" = true ] && [ "$PROFILE" = "personal" ]; then
