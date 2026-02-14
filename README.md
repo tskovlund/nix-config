@@ -15,13 +15,17 @@ Nix flakes + [nix-darwin](https://github.com/LnL7/nix-darwin) + [home-manager](h
 curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
-The bootstrap script handles everything: installs Nix and Homebrew if needed (skips what's already present), selects your profile, sets up identity, generates an age key for secrets, and runs the first deploy. After it completes:
+The bootstrap script handles everything: installs Nix and Homebrew if needed (skips what's already present), detects your platform (macOS, Linux, NixOS-WSL), selects your profile, sets up identity, generates an age key for secrets, and runs the first deploy. On NixOS-WSL, it automatically handles the user migration when the bootstrap user differs from the target user. After it completes:
 
 ```sh
 cd ~/repos/nix-config
 make bootstrap    # GitHub CLI auth, Claude Code settings, cleanup
 ```
 
+> **Existing secrets?** If you already have an age key from another machine, copy it to `~/.config/agenix/age-key.txt` before running bootstrap. Otherwise, the script generates a new one.
+>
+> **NixOS-WSL?** On a fresh NixOS-WSL install, get `git` and `curl` first: `nix --extra-experimental-features "nix-command flakes" shell nixpkgs#git nixpkgs#curl`, then run bootstrap. The script detects NixOS-WSL automatically.
+>
 > **Prefer to review first?** `curl -fsSL ... -o bootstrap.sh && less bootstrap.sh && bash bootstrap.sh`
 >
 > **Prefer full manual control?** See [Manual setup](#manual-setup) in the setup guide below.
@@ -155,7 +159,7 @@ Your personal flake needs a `flake.nix` that exports `identity` and `homeModules
 #### Why a separate repo?
 
 - **Forkable** — fork nix-config, create your own personal flake, deploy. No grep-and-replace.
-- **Private** — your identity repo can be private while nix-config stays public.
+- **Safe to share** — secrets are age-encrypted (`.age` files), so the personal flake can be public. Private repos also work.
 - **Per-machine** — different machines can point to different identity flakes (personal vs work).
 - **Extensible** — the personal flake exports `homeModules` for secrets, SSH keys, and personal dotfiles.
 
@@ -271,7 +275,7 @@ User config lives in `home/` as home-manager modules, split into two composable 
 - **base** (`home/default.nix`) — dev environment essentials: shell, editor, git, CLI tools. Everything you'd want on any dev machine, including a work laptop.
 - **personal** (`home/personal.nix`) — personal additions layered on top of base. Personal aliases, fun tools, etc.
 
-The personal flake can also export `homeModules` — additional home-manager modules for secrets, SSH keys, and personal dotfiles that live in the private repo.
+The personal flake can also export `homeModules` — additional home-manager modules for secrets, SSH keys, and personal dotfiles that live in the personal repo.
 
 ### How everything composes
 
@@ -389,6 +393,7 @@ nix-config/
 | Post-deploy setup | `make bootstrap` |
 | Apply config (base + personal) | `make switch` |
 | Apply with machine-local config | `make switch IMPURE=1` |
+| Force re-fetch all inputs | `make switch REFRESH=1` |
 | Apply config (base only) | `make switch-base` |
 | Validate without applying | `make check` |
 | Format all Nix files | `make fmt` |

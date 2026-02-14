@@ -192,6 +192,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `bootstrap.sh` — new-machine bootstrap (installs Nix, clones, deploys)
 - `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
 - `make switch` — apply base + personal config (auto-detects macOS / Linux / NixOS-WSL)
+- `make switch REFRESH=1` — same, but bypass Nix's input cache (useful after pushing to personal flake)
 - `make switch-base` — apply base only config (auto-detects platform)
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
@@ -220,7 +221,7 @@ The memory server binary is Nix-managed (`home/claude/default.nix`). MCP registr
 Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module. The architecture splits across two repos:
 
 - **nix-config** (public): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/`.
-- **nix-config-personal** (private): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
+- **nix-config-personal** (public — `.age` files are encrypted, safe to share): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
 
 ### How it works
 

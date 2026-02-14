@@ -34,7 +34,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Personal identity (private). Default: stub with placeholder values.
+    # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
   };
