@@ -66,27 +66,47 @@ if command_exists gh && gh auth status >/dev/null 2>&1; then
   done
 
   if [ ${#ssh_pub_keys[@]} -gt 0 ]; then
-    existing_keys="$(gh ssh-key list 2>/dev/null || true)"
-    for pub in "${ssh_pub_keys[@]}"; do
-      key_name="$(basename "$pub" .pub)"
-      key_fingerprint="$(ssh-keygen -lf "$pub" 2>/dev/null | awk '{print $2}')"
-      if [ -n "$key_fingerprint" ] && echo "$existing_keys" | grep -q "$key_fingerprint" 2>/dev/null; then
-        ok "SSH key already on GitHub: $key_name"
+    # Try to list existing keys — requires admin:public_key scope
+    has_key_scope=true
+    existing_keys="$(gh ssh-key list 2>&1)" || has_key_scope=false
+
+    if ! $has_key_scope; then
+      # Check if the failure is a scope issue
+      if echo "$existing_keys" | grep -qi "scope\|404\|Not Found" 2>/dev/null; then
+        warn "Cannot check/upload SSH keys — missing GitHub OAuth scopes."
+        echo "  To fix: gh auth refresh -h github.com -s admin:public_key -s admin:ssh_signing_key"
+        echo "  Then re-run: make bootstrap"
+        echo ""
+        echo "  If your SSH keys are already on GitHub (portable key setup), this is safe to skip."
+        existing_keys=""
       else
-        info "Uploading SSH key to GitHub: $key_name"
-        if gh ssh-key add "$pub" --title "$key_name" --type authentication; then
-          ok "SSH authentication key uploaded: $key_name"
-        else
-          warn "Failed to upload authentication key: $key_name (add manually with: gh ssh-key add $pub --type authentication)"
-        fi
-        # Also add as signing key for verified commits
-        if gh ssh-key add "$pub" --title "$key_name" --type signing; then
-          ok "SSH signing key uploaded: $key_name"
-        else
-          warn "Failed to upload signing key: $key_name (add manually with: gh ssh-key add $pub --type signing)"
-        fi
+        warn "Failed to list SSH keys from GitHub: $existing_keys"
+        existing_keys=""
       fi
-    done
+    fi
+
+    if $has_key_scope; then
+      for pub in "${ssh_pub_keys[@]}"; do
+        key_name="$(basename "$pub" .pub)"
+        key_fingerprint="$(ssh-keygen -lf "$pub" 2>/dev/null | awk '{print $2}')"
+        if [ -n "$key_fingerprint" ] && echo "$existing_keys" | grep -q "$key_fingerprint" 2>/dev/null; then
+          ok "SSH key already on GitHub: $key_name"
+        else
+          info "Uploading SSH key to GitHub: $key_name"
+          if gh ssh-key add "$pub" --title "$key_name" --type authentication; then
+            ok "SSH authentication key uploaded: $key_name"
+          else
+            warn "Failed to upload authentication key: $key_name (add manually with: gh ssh-key add $pub --type authentication)"
+          fi
+          # Also add as signing key for verified commits
+          if gh ssh-key add "$pub" --title "$key_name" --type signing; then
+            ok "SSH signing key uploaded: $key_name"
+          else
+            warn "Failed to upload signing key: $key_name (add manually with: gh ssh-key add $pub --type signing)"
+          fi
+        fi
+      done
+    fi
   fi
 fi
 
