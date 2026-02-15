@@ -18,6 +18,8 @@
 #   echo "git+ssh://git@github.com/YOUR_USER/nix-config-personal" > ~/.config/nix-config/personal-input
 # Or pass it directly: make switch PERSONAL_INPUT=path:/path/to/nix-config-personal
 
+SHELL := bash
+
 UNAME := $(shell uname -s)
 IS_NIXOS := $(shell [ -e /etc/NIXOS ] && echo 1 || echo 0)
 IS_WSL := $(shell [ -n "$$WSL_DISTRO_NAME" ] && echo 1 || (grep -qi microsoft /proc/version 2>/dev/null && echo 1 || echo 0))
@@ -56,9 +58,37 @@ ifneq ($(findstring git+ssh://git@github.com/,$(PERSONAL_INPUT)),)
   endif
 endif
 
+# Sudo SSH fallback: sudo targets (NixOS, darwin) run as root, which may not
+# have access to the user's SSH keys. Pre-compute a github: fallback URL so
+# sudo-rebuild can retry on SSH auth failure. Only set when PERSONAL_INPUT is
+# still a GitHub SSH URL (i.e. the bootstrap fallback above didn't trigger).
+_FALLBACK_FLAGS :=
+ifneq ($(findstring git+ssh://git@github.com/,$(PERSONAL_INPUT)),)
+  _FALLBACK_PERSONAL := $(patsubst git+ssh://git@github.com/%,github:%,$(patsubst %.git,%,$(PERSONAL_INPUT)))
+  _FALLBACK_FLAGS := --override-input personal $(_FALLBACK_PERSONAL)
+endif
+
 ifneq ($(strip $(PERSONAL_INPUT)),)
   OVERRIDE_FLAGS += --override-input personal $(PERSONAL_INPUT)
 endif
+
+# Runs a sudo rebuild with SSH fallback for GitHub URLs. Pipes output through
+# tee so the user sees real-time progress. If the build fails due to SSH auth
+# errors (root can't access user's SSH keys) and a github: fallback is
+# available, retries with the github: shorthand.
+# Usage: $(call sudo-rebuild,<rebuild-command>,<flake-target>)
+define sudo-rebuild
+@set -eo pipefail; _log=$$(mktemp); trap 'rm -f "$$_log"' EXIT; \
+if sudo $(1) --flake .#$(2) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG) 2>&1 | tee "$$_log"; then \
+  true; \
+elif grep -q "Permission denied (publickey)" "$$_log" && [ -n "$(_FALLBACK_FLAGS)" ]; then \
+  echo ""; \
+  echo "==> SSH to GitHub failed under sudo — retrying with github: shorthand..."; \
+  sudo $(1) --flake .#$(2) --no-write-lock-file $(_FALLBACK_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG); \
+else \
+  exit 1; \
+fi
+endef
 
 .PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
 .PHONY: switch-darwin switch-darwin-base
@@ -91,18 +121,18 @@ endif
 
 ifeq ($(UNAME),Darwin)
 switch: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,darwin-rebuild switch,darwin)
 
 switch-base: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,darwin-rebuild switch,darwin-base)
 else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
 switch: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl)
 	@systemctl --user start agenix 2>/dev/null || true
 
 switch-base: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
 	@systemctl --user start agenix 2>/dev/null || true
 else
 switch:
@@ -126,10 +156,10 @@ endif
 # --- Explicit platform targets ---
 
 switch-darwin: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,darwin-rebuild switch,darwin)
 
 switch-darwin-base: .check-identity
-	sudo darwin-rebuild switch --flake .#darwin-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,darwin-rebuild switch,darwin-base)
 
 switch-linux: .check-identity
 	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
@@ -138,11 +168,11 @@ switch-linux-base: .check-identity
 	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 switch-nixos-wsl: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl)
 	@systemctl --user start agenix 2>/dev/null || true
 
 switch-nixos-wsl-base: .check-identity
-	sudo nixos-rebuild switch --flake .#nixos-wsl-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
 	@systemctl --user start agenix 2>/dev/null || true
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
