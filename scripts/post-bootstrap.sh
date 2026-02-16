@@ -47,8 +47,29 @@ fi
 # The agenix home-manager module registers a systemd user service that decrypts
 # secrets (SSH keys, etc.). Start it now so they're available for the next step.
 
+AGE_KEY_PATH="$HOME/.config/agenix/age-key.txt"
+
+if [ ! -f "$AGE_KEY_PATH" ]; then
+  echo ""
+  warn "Age key not found at $AGE_KEY_PATH"
+  echo "  Agenix secrets (SSH keys, API tokens, etc.) cannot be decrypted without it."
+  echo ""
+  echo "  If this is a fresh machine, you need to copy the key from another machine:"
+  echo "    scp <other-machine>:~/.config/agenix/age-key.txt ~/.config/agenix/age-key.txt"
+  echo ""
+  echo "  Or generate a new one (you'll need to re-encrypt all secrets in nix-config-personal):"
+  echo "    mkdir -p ~/.config/agenix && age-keygen -o ~/.config/agenix/age-key.txt"
+  echo "    chmod 700 ~/.config/agenix && chmod 600 ~/.config/agenix/age-key.txt"
+  echo ""
+  echo "  After placing the key, run: make switch"
+  echo "  (On NixOS, this will start the agenix service and decrypt secrets.)"
+  echo ""
+fi
+
 if command_exists systemctl && systemctl --user list-unit-files agenix.service >/dev/null 2>&1; then
-  if systemctl --user start agenix 2>/dev/null; then
+  if [ ! -f "$AGE_KEY_PATH" ]; then
+    warn "Skipping agenix service start — no age key present."
+  elif systemctl --user start agenix 2>/dev/null; then
     ok "Agenix secrets decrypted"
   else
     warn "Failed to start agenix service — secrets may not be available."

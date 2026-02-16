@@ -90,6 +90,22 @@ else \
 fi
 endef
 
+# Warn if age key is missing (secrets won't decrypt without it).
+# Non-blocking: base profile doesn't need it, but the warning helps catch
+# the case where someone forgot to copy the key to a new machine.
+define warn-agenix
+@if [ ! -f "$(HOME)/.config/agenix/age-key.txt" ]; then \
+  echo ""; \
+  echo "==> WARNING: Age key not found at ~/.config/agenix/age-key.txt"; \
+  echo "  Agenix secrets (SSH keys, etc.) will NOT be decrypted."; \
+  echo "  If using the personal profile, copy the key from another machine:"; \
+  echo "    scp <other-machine>:~/.config/agenix/age-key.txt ~/.config/agenix/age-key.txt"; \
+  echo "  Or generate a new one (you'll need to re-encrypt secrets):"; \
+  echo "    mkdir -p ~/.config/agenix && age-keygen -o ~/.config/agenix/age-key.txt"; \
+  echo ""; \
+fi
+endef
+
 .PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
 .PHONY: switch-darwin switch-darwin-base
 .PHONY: switch-linux switch-linux-base
@@ -129,10 +145,12 @@ else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
 switch: .check-identity
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl)
+	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 
 switch-base: .check-identity
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
+	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 else
 switch:
@@ -148,31 +166,39 @@ endif
 else
 switch: .check-identity
 	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(warn-agenix)
 
 switch-base: .check-identity
 	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(warn-agenix)
 endif
 
 # --- Explicit platform targets ---
 
 switch-darwin: .check-identity
 	$(call sudo-rebuild,darwin-rebuild switch,darwin)
+	$(warn-agenix)
 
 switch-darwin-base: .check-identity
 	$(call sudo-rebuild,darwin-rebuild switch,darwin-base)
+	$(warn-agenix)
 
 switch-linux: .check-identity
 	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(warn-agenix)
 
 switch-linux-base: .check-identity
 	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	$(warn-agenix)
 
 switch-nixos-wsl: .check-identity
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl)
+	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 
 switch-nixos-wsl-base: .check-identity
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
+	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
