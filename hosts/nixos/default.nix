@@ -1,6 +1,9 @@
 { lib, ... }:
 
 {
+  imports = [
+    ./podman.nix
+  ];
   # Enable flakes and nix-command by default
   nix.settings.experimental-features = [
     "nix-command"
