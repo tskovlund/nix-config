@@ -160,12 +160,25 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 ## Machine-local config
 
+Two mechanisms allow per-machine customization without modifying the repo:
+
+### Nix packages (`local.nix`)
+
 Optional local config lives at `~/.config/nix-config/local.nix` (outside the repo). It's imported as a home-manager module by all targets (base and personal) when present and `--impure` is used. Without `--impure`, it's silently skipped.
 
 - Apply with: `make switch IMPURE=1`
 - The file is a standard home-manager module (receives `{ pkgs, ... }`)
 - `nix flake check` and CI are unaffected (pure evaluation = local.nix ignored)
 - See `examples/local.nix` for a starter template
+
+### SSH config (`config.local`)
+
+The SSH module includes `~/.ssh/config.local` at the top of the generated `~/.ssh/config` via an `Include` directive. SSH uses first-match-wins, so entries in `config.local` take priority over the managed config (including the personal flake's GitHub host entry).
+
+- The file is optional — SSH silently ignores missing includes
+- Use for work SSH keys, host aliases, or machine-specific SSH settings
+- No `--impure` needed — the `Include` is always present in the generated config
+- Example: override `Host github.com` with a work SSH key on a work machine
 
 ## State versions — never change these
 
@@ -220,7 +233,7 @@ The memory server binary is Nix-managed (`home/claude/default.nix`). MCP registr
 
 Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module. The architecture splits across two repos:
 
-- **nix-config** (public): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/`.
+- **nix-config** (public): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/` (includes `~/.ssh/config.local` for machine-local overrides).
 - **nix-config-personal** (public — `.age` files are encrypted, safe to share): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
 
 ### How it works
