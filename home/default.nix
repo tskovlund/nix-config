@@ -7,6 +7,7 @@
     ./tools
     ./editor
     ./claude
+    ./opencode
     ./ssh
     ./tmux
   ];
