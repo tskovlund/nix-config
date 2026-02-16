@@ -81,7 +81,7 @@ define sudo-rebuild
 @set -eo pipefail; _log=$$(mktemp); trap 'rm -f "$$_log"' EXIT; \
 if sudo $(1) --flake .#$(2) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG) 2>&1 | tee "$$_log"; then \
   true; \
-elif grep -q "Permission denied (publickey)" "$$_log" && [ -n "$(_FALLBACK_FLAGS)" ]; then \
+elif grep -qE "(Permission denied \(publickey\)|Host key verification failed)" "$$_log" && [ -n "$(_FALLBACK_FLAGS)" ]; then \
   echo ""; \
   echo "==> SSH to GitHub failed under sudo — retrying with github: shorthand..."; \
   sudo $(1) --flake .#$(2) --no-write-lock-file $(_FALLBACK_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG); \
