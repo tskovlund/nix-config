@@ -17,13 +17,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: DeterminateSystems/determinate-nix-action@89ab342bd48ff7318caf8d39d6a330c7b1df8f2f # v3
       - uses: DeterminateSystems/update-flake-lock@834c491b2ece4de0bbd00d85214bb5e83b4da5c6 # v28
-        id: update
         with:
           pr-title: "chore(deps): update flake.lock"
           pr-labels: dependencies
-      - name: Enable auto-merge
-        if: steps.update.outputs.pull-request-number
-        run: gh pr merge --auto --merge "$PR_NUMBER"
-        env:
-          PR_NUMBER: ${{ steps.update.outputs.pull-request-number }}
-          GH_TOKEN: ${{ github.token }}
