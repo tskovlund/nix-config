@@ -14,6 +14,7 @@
   ];
 
   # Boot — GRUB with BIOS boot (Hetzner Cloud x86 VPS)
+  # GRUB device is set automatically by disko's EF02 (BIOS boot) partition
   boot.loader.grub = {
     enable = true;
     efiSupport = false;

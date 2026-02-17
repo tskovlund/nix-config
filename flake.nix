@@ -284,7 +284,7 @@
       # miles — base only
       nixosConfigurations."miles-base" = makeNixOS {
         system = "x86_64-linux";
-        hostname = "miles-base";
+        hostname = "miles";
         homeModules = baseModules;
         nixosModules = [
           disko.nixosModules.disko

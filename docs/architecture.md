@@ -14,7 +14,7 @@ Everything else — helpers, host modules, home modules — is internal wiring d
 
 ## Targets
 
-The flake defines 6 targets:
+The flake defines 8 targets:
 
 | Target | Build tool | Profile | What it manages |
 |--------|-----------|---------|----------------|

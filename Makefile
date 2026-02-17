@@ -31,7 +31,7 @@ IMPURE_FLAG := $(if $(IMPURE),--impure,)
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 
 # Remote VPS host for deployment (override: make deploy-miles MILES_HOST=root@1.2.3.4)
-MILES_HOST ?= root@<miles-ip>
+MILES_HOST ?= root@MILES_IP_HERE
 
 # --no-write-lock-file prevents switch from modifying flake.lock when
 # --override-input is used (the override is transient, not a lock change).
@@ -218,13 +218,13 @@ switch-nixos-wsl-base: .check-identity
 
 # --- miles (Hetzner VPS) remote deployment ---
 # Initial install: nix run github:nix-community/nixos-anywhere -- --flake .#miles root@<ip>
-# Subsequent updates use these targets (builds on VPS, deploys on VPS):
+# Subsequent updates use these targets (builds on VPS via --build-host):
 
 deploy-miles: .check-identity
-	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 deploy-miles-base: .check-identity
-	nixos-rebuild switch --flake .#miles-base --target-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+	nixos-rebuild switch --flake .#miles-base --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
 bootstrap:
