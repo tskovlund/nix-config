@@ -174,7 +174,7 @@ switch:
 
 switch-base:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
-	@echo "Use an explicit target: make switch-nixos-wsl-base, make deploy-miles-base, etc."
+	@echo "Use an explicit target: make switch-nixos-wsl-base, etc."
 	@exit 1
 endif
 endif
