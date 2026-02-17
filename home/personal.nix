@@ -9,4 +9,8 @@
   #
   # Put personal aliases, fun tools, personal SSH hosts, etc. here.
   # If something would be useful on any dev machine, it belongs in default.nix instead.
+
+  home.packages = with pkgs; [
+    hcloud # Hetzner Cloud CLI
+  ];
 }
