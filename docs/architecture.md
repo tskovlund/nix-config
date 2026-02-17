@@ -14,7 +14,7 @@ Everything else — helpers, host modules, home modules — is internal wiring d
 
 ## Targets
 
-The flake defines 8 targets:
+The flake defines 7 targets:
 
 | Target | Build tool | Profile | What it manages |
 |--------|-----------|---------|----------------|
@@ -23,7 +23,6 @@ The flake defines 8 targets:
 | `nixos-wsl` | `nixos-rebuild` | personal | NixOS system + user config |
 | `nixos-wsl-base` | `nixos-rebuild` | base | NixOS system + user config |
 | `miles` | `nixos-rebuild` | personal | NixOS system + user config (Hetzner VPS) |
-| `miles-base` | `nixos-rebuild` | base | NixOS system + user config (Hetzner VPS) |
 | `linux` | `home-manager` | personal | User config only (any Linux distro) |
 | `linux-base` | `home-manager` | base | User config only (any Linux distro) |
 

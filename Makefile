@@ -113,7 +113,7 @@ endef
 .PHONY: switch-darwin switch-darwin-base
 .PHONY: switch-linux switch-linux-base
 .PHONY: switch-nixos-wsl switch-nixos-wsl-base
-.PHONY: deploy-miles deploy-miles-base
+.PHONY: deploy-miles
 
 # --- Identity check (only for switch targets) ---
 
@@ -163,9 +163,9 @@ switch: .check-identity
 	$(call sudo-rebuild,nixos-rebuild switch,miles)
 	$(warn-agenix)
 
-switch-base: .check-identity
-	$(call sudo-rebuild,nixos-rebuild switch,miles-base)
-	$(warn-agenix)
+switch-base:
+	@echo "Error: miles does not have a base-only profile. Use 'make switch' instead."
+	@exit 1
 else
 switch:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
@@ -222,9 +222,6 @@ switch-nixos-wsl-base: .check-identity
 
 deploy-miles: .check-identity
 	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
-
-deploy-miles-base: .check-identity
-	nixos-rebuild switch --flake .#miles-base --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
 bootstrap:

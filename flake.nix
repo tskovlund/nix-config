@@ -281,17 +281,6 @@
         ];
       };
 
-      # miles — base only
-      nixosConfigurations."miles-base" = makeNixOS {
-        system = "x86_64-linux";
-        hostname = "miles";
-        homeModules = baseModules;
-        nixosModules = [
-          disko.nixosModules.disko
-          ./hosts/miles
-        ];
-      };
-
       # Dev shell — enter with `nix develop` or automatically via direnv
       # Provides formatting/linting tools and sets up commit hooks
       devShells."aarch64-darwin".default = makeDevShell nixpkgs.legacyPackages.aarch64-darwin;

@@ -11,8 +11,7 @@ This file documents how this repo is structured and how to extend it.
   - `homeConfigurations."linux-base"` — Linux, base only
   - `nixosConfigurations."nixos-wsl"` — NixOS-WSL, base + personal
   - `nixosConfigurations."nixos-wsl-base"` — NixOS-WSL, base only
-  - `nixosConfigurations."miles"` — Hetzner VPS, base + personal
-  - `nixosConfigurations."miles-base"` — Hetzner VPS, base only
+  - `nixosConfigurations."miles"` — Hetzner VPS (always personal — no base variant)
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, NixOS settings, not user config)
   - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
@@ -214,7 +213,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
 - `make switch-nixos-wsl` / `switch-nixos-wsl-base` — explicit NixOS-WSL targets
-- `make deploy-miles` / `deploy-miles-base` — remote deployment to Hetzner VPS (builds on VPS)
+- `make deploy-miles` — remote deployment to Hetzner VPS (builds on VPS)
 - `make check` — validate flake (all platforms)
 - `make fmt` — format all Nix files with nixfmt
 - `make lint` — lint all Nix files with statix + deadnix
