@@ -40,9 +40,8 @@
     };
   };
 
-  # TODO: Replace with your id_ed25519_miles.pub before first deploy
   users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAA... TODO"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJWW14jBLp6lT6fQPSZ8nX5rDJsc2MU/iGWbc7ts4jzv miles"
   ];
 
   # QEMU guest agent — enables Hetzner console operations (shutdown, snapshots)

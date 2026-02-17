@@ -6,7 +6,8 @@ This is a [template repo](https://docs.github.com/en/repositories/creating-and-m
 
 - **macOS** — nix-darwin + home-manager (system + user config)
 - **Linux / WSL** — standalone home-manager (user config)
-- **NixOS-WSL** — nixos-rebuild + home-manager (full system; generic NixOS targets planned)
+- **NixOS-WSL** — nixos-rebuild + home-manager (full system)
+- **NixOS server** — nixos-rebuild + disko for cloud VPS / bare-metal deployment
 
 ## Quick start 🚀
 
@@ -123,6 +124,7 @@ Every deployment is a **target** — a specific combination of build tool and pr
 | `darwin-base` | macOS system + user config | base |
 | `nixos-wsl` | NixOS-WSL system + user config | personal |
 | `nixos-wsl-base` | NixOS-WSL system + user config | base |
+| `miles` | Hetzner VPS system + user config | personal |
 | `linux` | User config only (any Linux distro) | personal |
 | `linux-base` | User config only (any Linux distro) | base |
 
@@ -254,6 +256,7 @@ For full manual control instead of the bootstrap script:
 | Post-deploy setup | `make bootstrap` |
 | Apply config (base + personal) | `make switch` |
 | Apply config (base only) | `make switch-base` |
+| Deploy to VPS | `make deploy-miles MILES_HOST=root@<ip>` |
 | Apply with machine-local config | `make switch IMPURE=1` |
 | Force re-fetch all inputs | `make switch REFRESH=1` |
 | Validate without applying | `make check` |
@@ -299,6 +302,17 @@ For granular control: `nix flake update nixpkgs` or `nix flake update nixpkgs ho
 </details>
 
 <details>
+<summary><strong>NixOS server / VPS (nixos-rebuild + disko)</strong></summary>
+
+| Task | Command |
+|------|---------|
+| First-time deploy | `nix run github:nix-community/nixos-anywhere -- --flake .#miles root@<ip>` |
+| Update | `make deploy-miles MILES_HOST=root@<ip>` |
+| See what changed | SSH in, then `nix diff-closures /nix/var/nix/profiles/system $(readlink -f /nix/var/nix/profiles/system)` |
+
+</details>
+
+<details>
 <summary><strong>Linux / WSL (home-manager)</strong></summary>
 
 | Task | Command |
@@ -322,7 +336,8 @@ nix-config/
 │   ├── darwin/                  # macOS system (fonts, casks, defaults, Touch ID)
 │   ├── nixos/                   # Shared NixOS layer (user setup, flakes, zsh)
 │   ├── wsl/                     # WSL layer (interop, automount)
-│   └── nixos-wsl/               # NixOS-WSL entry point (imports wsl/)
+│   ├── nixos-wsl/               # NixOS-WSL entry point (imports wsl/)
+│   └── miles/                   # Hetzner VPS (boot, SSH, firewall, disko)
 │
 ├── home/                        # User config (home-manager modules)
 │   ├── default.nix              # Base profile entry point
@@ -366,6 +381,7 @@ This sets up commit hooks — pre-commit formats and lints `.nix` files, pre-pus
 | [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets |
 | [nixvim](https://github.com/nix-community/nixvim) | Neovim config as typed Nix |
 | [nixos-wsl](https://github.com/nix-community/NixOS-WSL) | NixOS on WSL integration |
+| [disko](https://github.com/nix-community/disko) | Declarative disk partitioning |
 | [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | MCP servers (persistent memory) |
 | personal (stub) | Your identity flake — see [Personal identity](#personal-identity-) |
 
