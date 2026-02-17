@@ -31,7 +31,7 @@ IMPURE_FLAG := $(if $(IMPURE),--impure,)
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 
 # Remote VPS host for deployment (override: make deploy-miles MILES_HOST=root@1.2.3.4)
-MILES_HOST ?= root@MILES_IP_HERE
+MILES_HOST ?= root@46.225.116.48
 
 # --no-write-lock-file prevents switch from modifying flake.lock when
 # --override-input is used (the override is transient, not a lock change).
