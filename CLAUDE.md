@@ -11,6 +11,8 @@ This file documents how this repo is structured and how to extend it.
   - `homeConfigurations."linux-base"` — Linux, base only
   - `nixosConfigurations."nixos-wsl"` — NixOS-WSL, base + personal
   - `nixosConfigurations."nixos-wsl-base"` — NixOS-WSL, base only
+  - `nixosConfigurations."miles"` — Hetzner VPS, base + personal
+  - `nixosConfigurations."miles-base"` — Hetzner VPS, base only
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
 - **hosts/**: Platform-specific *system* config (nix-darwin settings, NixOS settings, not user config)
   - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
@@ -19,6 +21,8 @@ This file documents how this repo is structured and how to extend it.
   - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, home-manager integration). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
   - `hosts/wsl/default.nix` — general WSL layer (interop, automount, start menu launchers). Reusable for any WSL distribution, not just NixOS-WSL.
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
+  - `hosts/miles/default.nix` — Hetzner Cloud VPS system config (SSH, firewall, boot, QEMU guest). Naming convention: jazz legends.
+  - `hosts/miles/disk-config.nix` — Disko declarative disk layout (BIOS/GPT, ext4, swap).
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
@@ -210,6 +214,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
 - `make switch-nixos-wsl` / `switch-nixos-wsl-base` — explicit NixOS-WSL targets
+- `make deploy-miles` / `deploy-miles-base` — remote deployment to Hetzner VPS (builds on VPS)
 - `make check` — validate flake (all platforms)
 - `make fmt` — format all Nix files with nixfmt
 - `make lint` — lint all Nix files with statix + deadnix
@@ -247,7 +252,8 @@ Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the h
 
 Keys follow `id_ed25519_<purpose>`:
 - `id_ed25519_github` — GitHub authentication + commit signing
-- Future: `id_ed25519_server`, `id_ed25519_work`, etc.
+- `id_ed25519_miles` — Hetzner VPS (miles) SSH access + deployment
+- Future: `id_ed25519_<hostname>` for additional hosts, `id_ed25519_work`, etc.
 
 ### Adding a new secret
 

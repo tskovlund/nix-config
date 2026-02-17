@@ -22,12 +22,14 @@ The flake defines 6 targets:
 | `darwin-base` | `darwin-rebuild` | base | macOS system + user config |
 | `nixos-wsl` | `nixos-rebuild` | personal | NixOS system + user config |
 | `nixos-wsl-base` | `nixos-rebuild` | base | NixOS system + user config |
+| `miles` | `nixos-rebuild` | personal | NixOS system + user config (Hetzner VPS) |
+| `miles-base` | `nixos-rebuild` | base | NixOS system + user config (Hetzner VPS) |
 | `linux` | `home-manager` | personal | User config only (any Linux distro) |
 | `linux-base` | `home-manager` | base | User config only (any Linux distro) |
 
 **macOS** and **NixOS** targets manage both system-level settings and user config. **Linux** targets manage user config only — there's no system-level management, which is why they work on any Linux distro (Ubuntu, Fedora, WSL, etc.) without modification.
 
-`make switch` auto-detects which target to use based on your OS. You can also use explicit targets: `make switch-darwin`, `make switch-linux`, `make switch-nixos-wsl`.
+`make switch` auto-detects which target to use based on your OS and hostname. You can also use explicit targets: `make switch-darwin`, `make switch-linux`, `make switch-nixos-wsl`. For remote VPS deployment: `make deploy-miles`.
 
 ## Profiles
 
@@ -101,8 +103,11 @@ hosts/
 │   └── default.nix       # Shared NixOS layer (always imported by makeNixOS)
 ├── wsl/
 │   └── default.nix       # WSL-specific config (interop, automount, start menu)
-└── nixos-wsl/
-    └── default.nix       # NixOS-WSL entry point (imports wsl/)
+├── nixos-wsl/
+│   └── default.nix       # NixOS-WSL entry point (imports wsl/)
+└── miles/
+    ├── default.nix       # Hetzner VPS system config (SSH, firewall, boot, qemu-guest)
+    └── disk-config.nix   # Disko disk layout (BIOS/GPT, ext4, swap)
 ```
 
 The key pattern: **builders auto-import shared layers, host entry points import specialized layers.**
@@ -128,18 +133,28 @@ Shared modules in `home/` stay platform-agnostic. If a small platform check is n
 
 ## Adding a new NixOS host
 
+Naming convention: **jazz legends** (miles, monk, mingus, coltrane, ...).
+
 To add a VPS, Raspberry Pi, or bare-metal NixOS host:
 
 1. Create `hosts/<hostname>/default.nix` with host-specific config (hardware, networking, services)
 2. **Do not** import `hosts/nixos/` — `makeNixOS` handles that automatically
-3. Add a target in `flake.nix`:
+3. For hosts that need disk management, create `hosts/<hostname>/disk-config.nix` using disko and add `disko.nixosModules.disko` to `nixosModules`
+4. Add a target in `flake.nix`:
    ```nix
    nixosConfigurations."<hostname>" = makeNixOS {
+     system = "x86_64-linux";
+     hostname = "<hostname>";
      homeModules = personalModules ++ personalHomeModules;
-     nixosModules = [ ./hosts/<hostname> ];
+     nixosModules = [
+       disko.nixosModules.disko  # only if using disko
+       ./hosts/<hostname>
+     ];
    };
    ```
-4. Apply: `sudo nixos-rebuild switch --flake .#<hostname>`
+5. For local hosts: `sudo nixos-rebuild switch --flake .#<hostname>`
+   For remote hosts: `nixos-rebuild switch --flake .#<hostname> --target-host root@<ip>`
+   For first-time remote installs: `nix run github:nix-community/nixos-anywhere -- --flake .#<hostname> root@<ip>`
 
 For non-WSL hosts, you must configure authentication in the host-specific config (e.g. `users.users.${username}.initialPassword` or `openssh.authorizedKeys.keys`). The NixOS builder does not set a password or SSH keys.
 

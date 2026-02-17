@@ -34,6 +34,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
@@ -49,6 +54,7 @@
       nixvim,
       mcp-servers-nix,
       nixos-wsl,
+      disko,
       personal,
       ...
     }:
@@ -260,6 +266,29 @@
           ./hosts/nixos-wsl
           nixos-wsl.nixosModules.wsl
           { wsl.defaultUser = username; }
+        ];
+      };
+
+      # miles (Hetzner VPS) — base + personal
+      # Initial deploy: nixos-anywhere. Updates: make deploy-miles
+      nixosConfigurations."miles" = makeNixOS {
+        system = "x86_64-linux";
+        hostname = "miles";
+        homeModules = personalModules ++ personalHomeModules;
+        nixosModules = [
+          disko.nixosModules.disko
+          ./hosts/miles
+        ];
+      };
+
+      # miles — base only
+      nixosConfigurations."miles-base" = makeNixOS {
+        system = "x86_64-linux";
+        hostname = "miles-base";
+        homeModules = baseModules;
+        nixosModules = [
+          disko.nixosModules.disko
+          ./hosts/miles
         ];
       };
 

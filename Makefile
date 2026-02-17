@@ -4,7 +4,7 @@
 #   darwin       — macOS via nix-darwin + home-manager (system + user config)
 #   linux        — any Linux distro via standalone home-manager (user config only)
 #   nixos-wsl    — NixOS on WSL via nixos-rebuild + home-manager module (full system)
-#   nixos        — generic NixOS via nixos-rebuild + home-manager module (future: VPS, bare-metal)
+#   miles        — Hetzner VPS via nixos-rebuild + home-manager module (remote deploy)
 #
 # `make switch` auto-detects the current platform.
 # Explicit targets (e.g. `make switch-darwin`) always work regardless of platform.
@@ -29,6 +29,9 @@ IMPURE_FLAG := $(if $(IMPURE),--impure,)
 
 # Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs)
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
+
+# Remote VPS host for deployment (override: make deploy-miles MILES_HOST=root@1.2.3.4)
+MILES_HOST ?= root@<miles-ip>
 
 # --no-write-lock-file prevents switch from modifying flake.lock when
 # --override-input is used (the override is transient, not a lock change).
@@ -110,6 +113,7 @@ endef
 .PHONY: switch-darwin switch-darwin-base
 .PHONY: switch-linux switch-linux-base
 .PHONY: switch-nixos-wsl switch-nixos-wsl-base
+.PHONY: deploy-miles deploy-miles-base
 
 # --- Identity check (only for switch targets) ---
 
@@ -153,15 +157,26 @@ switch-base: .check-identity
 	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 else
+HOSTNAME := $(shell hostname)
+ifeq ($(HOSTNAME),miles)
+switch: .check-identity
+	$(call sudo-rebuild,nixos-rebuild switch,miles)
+	$(warn-agenix)
+
+switch-base: .check-identity
+	$(call sudo-rebuild,nixos-rebuild switch,miles-base)
+	$(warn-agenix)
+else
 switch:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
-	@echo "Use an explicit target: make switch-nixos-wsl, etc."
+	@echo "Use an explicit target: make switch-nixos-wsl, make deploy-miles, etc."
 	@exit 1
 
 switch-base:
 	@echo "Error: NixOS detected but no specific host configured in auto-detect."
-	@echo "Use an explicit target: make switch-nixos-wsl-base, etc."
+	@echo "Use an explicit target: make switch-nixos-wsl-base, make deploy-miles-base, etc."
 	@exit 1
+endif
 endif
 else
 switch: .check-identity
@@ -200,6 +215,16 @@ switch-nixos-wsl-base: .check-identity
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
 	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
+
+# --- miles (Hetzner VPS) remote deployment ---
+# Initial install: nix run github:nix-community/nixos-anywhere -- --flake .#miles root@<ip>
+# Subsequent updates use these targets (builds on VPS, deploys on VPS):
+
+deploy-miles: .check-identity
+	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
+
+deploy-miles-base: .check-identity
+	nixos-rebuild switch --flake .#miles-base --target-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
 bootstrap:
