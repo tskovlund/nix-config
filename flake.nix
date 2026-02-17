@@ -215,6 +215,7 @@
             nixfmt
             statix
             deadnix
+            nixos-rebuild
           ];
           shellHook = ''
             git config core.hooksPath .githooks
