@@ -86,19 +86,19 @@
       reverse_proxy localhost:3001
     '';
     virtualHosts."uptime.miles.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:3001
+      redir https://uptime.skovlund.dev{uri}
     '';
     virtualHosts."status.skovlund.dev".extraConfig = ''
       reverse_proxy localhost:3001
     '';
     virtualHosts."status.miles.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:3001
+      redir https://status.skovlund.dev{uri}
     '';
     virtualHosts."ntfy.skovlund.dev".extraConfig = ''
       reverse_proxy localhost:2586
     '';
     virtualHosts."ntfy.miles.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:2586
+      redir https://ntfy.skovlund.dev{uri}
     '';
   };
 
