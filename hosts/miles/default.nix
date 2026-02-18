@@ -1,7 +1,7 @@
-# Hetzner Cloud CX32 VPS — "miles" (Miles Davis)
+# Hetzner Cloud CX33 VPS — "miles" (Miles Davis)
 #
 # Naming convention: jazz legends (miles, monk, mingus, coltrane, ...)
-# Hardware: x86, 4 vCPU, 8GB RAM, 80GB NVMe, Falkenstein (fsn1)
+# Hardware: x86, 4 vCPU, 8GB RAM, 80GB NVMe, Nuremberg (nbg1)
 #
 # This module is NOT responsible for importing hosts/nixos/ — makeNixOS
 # handles that automatically. See docs/architecture.md.
@@ -66,13 +66,49 @@
     "net.ipv4.conf.all.log_martians" = 1; # log spoofed/misrouted packets
   };
 
+  # Automatic upgrades — rebuilds from the flake weekly on Wednesday 04:00 UTC.
+  # Offset from the Monday flake.lock update PR to give time for review + merge.
+  system.autoUpgrade = {
+    enable = true;
+    flake = "github:tskovlund/nix-config#miles";
+    dates = "Wed *-*-* 04:00:00";
+    allowReboot = true;
+    rebootWindow = {
+      lower = "03:00";
+      upper = "05:00";
+    };
+  };
+
+  # Caddy — reverse proxy with automatic HTTPS (Let's Encrypt)
+  services.caddy = {
+    enable = true;
+    virtualHosts."uptime.skovlund.dev".extraConfig = ''
+      reverse_proxy localhost:3001
+    '';
+    virtualHosts."uptime.miles.skovlund.dev".extraConfig = ''
+      reverse_proxy localhost:3001
+    '';
+  };
+
+  # Uptime Kuma — self-hosted service availability monitoring
+  services.uptime-kuma = {
+    enable = true;
+    settings = {
+      PORT = "3001";
+    };
+  };
+
   # QEMU guest agent — enables Hetzner console operations (shutdown, snapshots)
   services.qemuGuest.enable = true;
 
-  # Firewall — SSH only (more ports added by TSK-20/21)
+  # Firewall — SSH + HTTP/HTTPS (Caddy)
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 22 ];
+    allowedTCPPorts = [
+      22
+      80
+      443
+    ];
   };
 
   # Emergency access tools (regular tooling comes from home-manager)

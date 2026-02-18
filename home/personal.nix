@@ -12,5 +12,6 @@
 
   home.packages = with pkgs; [
     hcloud # Hetzner Cloud CLI
+    flarectl # Cloudflare DNS management
   ];
 }

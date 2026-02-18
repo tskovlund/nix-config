@@ -20,8 +20,9 @@ This file documents how this repo is structured and how to extend it.
   - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, home-manager integration). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
   - `hosts/wsl/default.nix` — general WSL layer (interop, automount, start menu launchers). Reusable for any WSL distribution, not just NixOS-WSL.
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
-  - `hosts/miles/default.nix` — Hetzner Cloud VPS system config (SSH, firewall, boot, QEMU guest). Naming convention: jazz legends.
+  - `hosts/miles/default.nix` — Hetzner Cloud VPS system config (SSH, firewall, fail2ban, sysctl hardening, auto-upgrade, Caddy, Uptime Kuma, QEMU guest). Naming convention: jazz legends.
   - `hosts/miles/disk-config.nix` — Disko declarative disk layout (BIOS/GPT, ext4, swap).
+- **docs/miles.md**: Operational runbook for the miles VPS (specs, Hetzner resources, DNS, security, deployment, disaster recovery).
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
 - **files/**: Raw config files that modules source or symlink
