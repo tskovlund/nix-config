@@ -135,7 +135,7 @@
       # Scrolling & trackpad
       "com.apple.swipescrolldirection" = true; # Natural scrolling
       "com.apple.trackpad.forceClick" = true;
-      "com.apple.trackpad.scaling" = 1.0;
+      "com.apple.trackpad.scaling" = 0.6875;
 
       # Spring loading (drag-hover to open folders)
       "com.apple.springing.enabled" = true;
