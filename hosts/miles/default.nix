@@ -126,6 +126,7 @@ in
       "behind-proxy" = true;
       "auth-default-access" = "deny-all";
       "enable-login" = true;
+      "upstream-base-url" = "https://ntfy.sh"; # relay to ntfy.sh for iOS/Android push via APNs/FCM
     };
   };
 
