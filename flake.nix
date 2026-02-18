@@ -158,6 +158,7 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
+          specialArgs = { inherit username; };
           modules = [
             ./hosts/nixos
             {

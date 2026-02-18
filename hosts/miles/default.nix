@@ -5,8 +5,16 @@
 #
 # This module is NOT responsible for importing hosts/nixos/ — makeNixOS
 # handles that automatically. See docs/architecture.md.
-{ modulesPath, pkgs, ... }:
+{
+  modulesPath,
+  pkgs,
+  username,
+  ...
+}:
 
+let
+  milesKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJWW14jBLp6lT6fQPSZ8nX5rDJsc2MU/iGWbc7ts4jzv miles";
+in
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
@@ -40,12 +48,8 @@
     };
   };
 
-  users.users.root = {
-    shell = pkgs.zsh;
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJWW14jBLp6lT6fQPSZ8nX5rDJsc2MU/iGWbc7ts4jzv miles"
-    ];
-  };
+  users.users.root.openssh.authorizedKeys.keys = [ milesKey ];
+  users.users.${username}.openssh.authorizedKeys.keys = [ milesKey ];
 
   # fail2ban — ban IPs after repeated SSH auth failures
   services.fail2ban = {
