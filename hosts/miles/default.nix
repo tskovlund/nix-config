@@ -125,6 +125,7 @@ in
       "base-url" = "https://ntfy.skovlund.dev";
       "behind-proxy" = true;
       "auth-default-access" = "deny-all";
+      "enable-login" = true;
     };
   };
 
