@@ -30,8 +30,9 @@ IMPURE_FLAG := $(if $(IMPURE),--impure,)
 # Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs)
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 
-# Remote VPS host for deployment (override: make deploy-miles MILES_HOST=root@1.2.3.4)
-MILES_HOST ?= root@46.225.116.48
+# Remote VPS host for deployment — uses SSH alias from personal config
+# (override: make deploy-miles MILES_HOST=root@1.2.3.4)
+MILES_HOST ?= miles
 
 # --no-write-lock-file prevents switch from modifying flake.lock when
 # --override-input is used (the override is transient, not a lock change).
