@@ -86,7 +86,19 @@
       reverse_proxy localhost:3001
     '';
     virtualHosts."uptime.miles.skovlund.dev".extraConfig = ''
+      redir https://uptime.skovlund.dev{uri}
+    '';
+    virtualHosts."status.skovlund.dev".extraConfig = ''
       reverse_proxy localhost:3001
+    '';
+    virtualHosts."status.miles.skovlund.dev".extraConfig = ''
+      redir https://status.skovlund.dev{uri}
+    '';
+    virtualHosts."ntfy.skovlund.dev".extraConfig = ''
+      reverse_proxy localhost:2586
+    '';
+    virtualHosts."ntfy.miles.skovlund.dev".extraConfig = ''
+      redir https://ntfy.skovlund.dev{uri}
     '';
   };
 
@@ -95,6 +107,17 @@
     enable = true;
     settings = {
       PORT = "3001";
+    };
+  };
+
+  # Ntfy — self-hosted push notifications
+  # After deploy, create admin user: ssh root@miles "ntfy user add --role=admin admin"
+  services.ntfy-sh = {
+    enable = true;
+    settings = {
+      "base-url" = "https://ntfy.skovlund.dev";
+      "behind-proxy" = true;
+      "auth-default-access" = "deny-all";
     };
   };
 

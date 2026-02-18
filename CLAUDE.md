@@ -87,7 +87,7 @@ When adding new config, put it in base unless it's obviously personal. When in d
 5. **Review loop — iterate until clean:**
    - Wait for CI and Copilot review (Copilot auto-reviews via the "Protect main" ruleset)
    - Read all Copilot comments: `gh api repos/tskovlund/nix-config/pulls/<N>/comments`
-   - Address each comment: fix the code, or reply explaining why no change is needed
+   - Address each comment: fix the code AND reply to the comment on GitHub confirming the fix (e.g. "Fixed in abc123."). If no change is needed, reply explaining why.
    - Push fixes, then check for new comments — repeat until no unresolved comments remain
    - This loop is part of the definition of done. A PR is not ready for human review until CI passes and all automated review comments are resolved.
 6. Once CI passes and comments are resolved, notify Thomas for final review
