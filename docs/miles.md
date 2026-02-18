@@ -37,6 +37,9 @@ Records:
 miles.skovlund.dev        A       46.225.116.48
 *.miles.skovlund.dev      A       46.225.116.48
 uptime.skovlund.dev       CNAME   miles.skovlund.dev
+status.skovlund.dev       CNAME   miles.skovlund.dev
+ntfy.skovlund.dev         CNAME   miles.skovlund.dev
+notify.skovlund.dev       — (Resend-managed, email sending only)
 ```
 
 Additional CNAMEs added as services come online (matrix, openclaw, etc.).
@@ -66,6 +69,10 @@ Additional hardening:
 | SSH | 22 | — | Remote access + deployment |
 | Caddy | 80, 443 | — | Reverse proxy, automatic HTTPS |
 | Uptime Kuma | 3001 (localhost) | `uptime.skovlund.dev` | Service availability monitoring |
+| Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
+| Ntfy | 2586 (localhost) | `ntfy.skovlund.dev` | Push notifications |
+
+Namespaced URLs (`*.miles.skovlund.dev`) redirect to the canonical short URL.
 
 ## Automatic upgrades
 
@@ -84,9 +91,9 @@ make deploy-miles
 # First-time install (wipes disk, installs NixOS)
 nix run github:nix-community/nixos-anywhere -- --flake .#miles -i ~/.ssh/id_ed25519_miles root@<ip>
 
-# SSH access
-ssh -i ~/.ssh/id_ed25519_miles root@46.225.116.48
-ssh -i ~/.ssh/id_ed25519_miles thomas@46.225.116.48
+# SSH access (personal SSH config maps `miles` to the IP + key)
+ssh miles          # as thomas (full shell/tools)
+ssh root@miles     # as root (admin tasks)
 ```
 
 ## Disaster recovery
@@ -103,8 +110,18 @@ To rebuild from scratch:
 
 All state is either in the nix-config repo (declarative) or encrypted in nix-config-personal (secrets). Nothing on the server is irreplaceable.
 
+## Notifications
+
+| Channel | Service | Purpose |
+|---------|---------|---------|
+| Ntfy | `ntfy.skovlund.dev` | Push notifications to phone (iOS/Android app) |
+| Resend | `notify.skovlund.dev` | Transactional email (SMTP-compatible, 100/day free) |
+
+Both are configured as Uptime Kuma notification channels. Ntfy relays through ntfy.sh for APNs/FCM push delivery.
+
 ## Monitoring
 
 - **Hetzner Dashboard:** CPU, RAM, disk, network graphs (built-in, no setup needed)
 - **Uptime Kuma:** service availability monitoring at `uptime.skovlund.dev`
+- **Status pages:** `status.skovlund.dev/status/all`, `status.skovlund.dev/status/rbb`
 - **Future:** Grafana Cloud / OpenTelemetry when multiple services warrant deeper observability
