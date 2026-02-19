@@ -1,4 +1,7 @@
-# nix-config ❄️
+# nix-config
+
+[![Check](https://github.com/tskovlund/nix-config/workflows/Check/badge.svg)](https://github.com/tskovlund/nix-config/actions/workflows/check.yml)
+[![CodeQL](https://github.com/tskovlund/nix-config/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/tskovlund/nix-config/actions/workflows/codeql.yml)
 
 Fully declarative, cross-platform environment — shell, editor, git, CLI tools, system preferences, secrets, apps — all defined as code.
 
