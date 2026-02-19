@@ -71,6 +71,7 @@ Additional hardening:
 | Uptime Kuma | 3001 (localhost) | `uptime.skovlund.dev` | Service availability monitoring |
 | Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
 | Ntfy | 2586 (localhost) | `ntfy.skovlund.dev` | Push notifications |
+| ZeroClaw | — (daemon) | — | AI assistant (Telegram, OpenRouter) |
 
 Namespaced URLs (`*.miles.skovlund.dev`) redirect to the canonical short URL.
 
@@ -109,6 +110,52 @@ To rebuild from scratch:
 7. Commit IP changes, push
 
 All state is either in the nix-config repo (declarative) or encrypted in nix-config-personal (secrets). Nothing on the server is irreplaceable.
+
+## ZeroClaw (AI assistant)
+
+ZeroClaw is the primary LLM gateway — provider routing, memory, and channel integrations.
+
+- **Config:** `hosts/miles/zeroclaw.nix` (NixOS module + package from source)
+- **Data:** `/var/lib/zeroclaw/.zeroclaw/` (SQLite memory DB, auth profiles, config)
+- **User:** `zeroclaw` system user
+
+### First-time setup (after deploy)
+
+```sh
+# 1. Set up OpenRouter provider
+sudo -u zeroclaw zeroclaw onboard --api-key <openrouter-api-key> --provider openrouter
+
+# 2. Create a Telegram bot via @BotFather, get the token, then:
+sudo -u zeroclaw zeroclaw channel bind-telegram <telegram-chat-id>
+
+# 3. Verify
+sudo -u zeroclaw zeroclaw status
+sudo -u zeroclaw zeroclaw auth status
+sudo -u zeroclaw zeroclaw channel doctor
+```
+
+### Common operations
+
+```sh
+# Check service status
+systemctl status zeroclaw
+
+# View logs
+journalctl -u zeroclaw -f
+
+# Restart after config changes
+systemctl restart zeroclaw
+
+# Run diagnostics
+sudo -u zeroclaw zeroclaw doctor
+```
+
+### Routing strategy
+
+ZeroClaw is the default gateway for LLM interactions. Direct API only when there's a clear reason.
+
+- **Through ZeroClaw:** Chat, research, website content, alerts, Cambr batch analysis
+- **Direct API:** Cambr strategy evaluation (latency-sensitive), CI/CD tasks, Claude Code
 
 ## Notifications
 
