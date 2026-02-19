@@ -16,13 +16,16 @@ let
       owner = "zeroclaw-labs";
       repo = "zeroclaw";
       rev = "v${version}";
-      hash = lib.fakeHash; # TODO: update after first build attempt on x86_64-linux
+      hash = "sha256-p8YJOzYL8aMeu7AaZEz3PWUJwh7epufKAHjJKetaGOU=";
     };
 
-    cargoHash = lib.fakeHash; # TODO: update after first build attempt on x86_64-linux
+    cargoHash = "sha256-J7yAXEDFYL3banQNe/b8PzRpdRu67jU2W37nSf9Y7RY=";
 
     # Disable default "hardware" feature (USB/serial) — not needed on VPS
     buildNoDefaultFeatures = true;
+
+    # Some tests require git and network access, unavailable in the Nix sandbox
+    doCheck = false;
 
     nativeBuildInputs = with pkgs; [
       pkg-config
