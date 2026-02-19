@@ -19,6 +19,7 @@ in
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
+    ./zeroclaw.nix
   ];
 
   # Boot — GRUB with BIOS boot (Hetzner Cloud x86 VPS)
