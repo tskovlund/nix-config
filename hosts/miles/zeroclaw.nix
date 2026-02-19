@@ -43,16 +43,14 @@ let
     };
   };
 
-  dataDir = "/var/lib/zeroclaw";
-
   configFormat = pkgs.formats.toml { };
   configFile = configFormat.generate "zeroclaw-config.toml" {
     memory = {
       backend = "sqlite";
       auto_save = true;
       embedding_provider = "none";
-      vector_weight = 0.7;
-      keyword_weight = 0.3;
+      vector_weight = 0.0;
+      keyword_weight = 1.0;
     };
   };
 in
@@ -62,8 +60,7 @@ in
   users.users.zeroclaw = {
     isSystemUser = true;
     group = "zeroclaw";
-    home = dataDir;
-    createHome = true;
+    home = "/var/lib/zeroclaw";
   };
   users.groups.zeroclaw = { };
 
@@ -74,22 +71,23 @@ in
     wants = [ "network-online.target" ];
 
     environment = {
-      HOME = dataDir;
+      HOME = "/var/lib/zeroclaw";
     };
 
     # Deploy Nix-managed config on every start. ZeroClaw-managed files
     # (auth-profiles.json, memory.db, .secret_key) are untouched.
     preStart = ''
-      mkdir -p ${dataDir}/.zeroclaw
-      cp --remove-destination ${configFile} ${dataDir}/.zeroclaw/config.toml
-      chmod 644 ${dataDir}/.zeroclaw/config.toml
+      mkdir -p /var/lib/zeroclaw/.zeroclaw
+      cp --remove-destination ${configFile} /var/lib/zeroclaw/.zeroclaw/config.toml
+      chmod 644 /var/lib/zeroclaw/.zeroclaw/config.toml
     '';
 
     serviceConfig = {
       ExecStart = "${zeroclaw}/bin/zeroclaw daemon";
       User = "zeroclaw";
       Group = "zeroclaw";
-      WorkingDirectory = dataDir;
+      StateDirectory = "zeroclaw";
+      WorkingDirectory = "/var/lib/zeroclaw";
 
       # Restart on failure with backoff
       Restart = "on-failure";
@@ -97,10 +95,11 @@ in
 
       # Hardening
       ProtectSystem = "strict";
-      ReadWritePaths = [ dataDir ];
       ProtectHome = true;
       PrivateTmp = true;
+      PrivateDevices = true;
       NoNewPrivileges = true;
+      CapabilityBoundingSet = "";
       RestrictSUIDSGID = true;
       ProtectKernelTunables = true;
       ProtectKernelModules = true;
