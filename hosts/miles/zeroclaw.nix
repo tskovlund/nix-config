@@ -46,16 +46,6 @@ let
     };
   };
 
-  configFormat = pkgs.formats.toml { };
-  configFile = configFormat.generate "zeroclaw-config.toml" {
-    memory = {
-      backend = "sqlite";
-      auto_save = true;
-      embedding_provider = "none";
-      vector_weight = 0.0;
-      keyword_weight = 1.0;
-    };
-  };
 in
 {
   # System user — allows running CLI commands for setup:
@@ -77,14 +67,9 @@ in
       HOME = "/var/lib/zeroclaw";
     };
 
-    # Seed default config on first deploy only. After onboarding, the
-    # wizard-managed config.toml is the source of truth — never overwrite it.
+    # Ensure workspace directory exists. Config is created by `zeroclaw onboard`.
     preStart = ''
       mkdir -p /var/lib/zeroclaw/.zeroclaw
-      if [ ! -f /var/lib/zeroclaw/.zeroclaw/config.toml ]; then
-        cp ${configFile} /var/lib/zeroclaw/.zeroclaw/config.toml
-        chmod 600 /var/lib/zeroclaw/.zeroclaw/config.toml
-      fi
     '';
 
     serviceConfig = {
