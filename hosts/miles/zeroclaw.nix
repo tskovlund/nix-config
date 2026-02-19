@@ -77,12 +77,14 @@ in
       HOME = "/var/lib/zeroclaw";
     };
 
-    # Deploy Nix-managed config on every start. ZeroClaw-managed files
-    # (auth-profiles.json, memory.db, .secret_key) are untouched.
+    # Seed default config on first deploy only. After onboarding, the
+    # wizard-managed config.toml is the source of truth — never overwrite it.
     preStart = ''
       mkdir -p /var/lib/zeroclaw/.zeroclaw
-      cp --remove-destination ${configFile} /var/lib/zeroclaw/.zeroclaw/config.toml
-      chmod 644 /var/lib/zeroclaw/.zeroclaw/config.toml
+      if [ ! -f /var/lib/zeroclaw/.zeroclaw/config.toml ]; then
+        cp ${configFile} /var/lib/zeroclaw/.zeroclaw/config.toml
+        chmod 600 /var/lib/zeroclaw/.zeroclaw/config.toml
+      fi
     '';
 
     serviceConfig = {
