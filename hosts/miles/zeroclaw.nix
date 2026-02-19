@@ -63,6 +63,8 @@ in
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
 
+    path = [ pkgs.git ];
+
     environment = {
       HOME = "/var/lib/zeroclaw";
     };
