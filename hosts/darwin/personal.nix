@@ -11,6 +11,7 @@
       "discord"
       "signal"
       "slack"
+      "telegram"
 
       # Productivity
       "notion"
