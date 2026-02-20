@@ -21,6 +21,7 @@ in
     ./disk-config.nix
     ./zeroclaw.nix
     ./observability.nix
+    ./backups.nix
   ];
 
   # Boot — GRUB with BIOS boot (Hetzner Cloud x86 VPS)
