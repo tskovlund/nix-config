@@ -40,7 +40,7 @@
       "notesnook"
 
       # Networking
-      "tailscale"
+      "tailscale-app"
 
       # Utilities
       "qbittorrent"
