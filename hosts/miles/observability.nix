@@ -380,7 +380,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Error";
+                execErrState = "OK";
                 labels = {
                   severity = "warning";
                 };
@@ -434,7 +434,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Error";
+                execErrState = "OK";
                 labels = {
                   severity = "critical";
                 };
@@ -488,7 +488,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Error";
+                execErrState = "OK";
                 labels = {
                   severity = "warning";
                 };
@@ -542,7 +542,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Error";
+                execErrState = "OK";
                 labels = {
                   severity = "warning";
                 };
@@ -596,7 +596,7 @@ in
                 condition = "threshold";
                 for = "1m";
                 noDataState = "OK";
-                execErrState = "Error";
+                execErrState = "OK";
                 labels = {
                   severity = "critical";
                 };
@@ -650,7 +650,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "Alerting";
-                execErrState = "Error";
+                execErrState = "OK";
                 labels = {
                   severity = "critical";
                 };
