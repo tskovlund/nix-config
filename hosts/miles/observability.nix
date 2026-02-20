@@ -323,6 +323,13 @@ in
       # Contact points — Ntfy (primary) + Email/Resend (secondary)
       alerting.contactPoints.settings = {
         apiVersion = 1;
+        # Remove Grafana's built-in default contact point (unused — our policy routes to ntfy-and-email)
+        deleteContactPoints = [
+          {
+            orgId = 1;
+            uid = "";
+          }
+        ];
         contactPoints = [
           {
             orgId = 1;
