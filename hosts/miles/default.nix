@@ -112,6 +112,9 @@ in
     virtualHosts."grafana.skovlund.dev".extraConfig = ''
       reverse_proxy localhost:3002
     '';
+    virtualHosts."grafana.miles.skovlund.dev".extraConfig = ''
+      redir https://grafana.skovlund.dev{uri}
+    '';
   };
 
   # Uptime Kuma — self-hosted service availability monitoring
