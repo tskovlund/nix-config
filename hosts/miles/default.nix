@@ -153,11 +153,12 @@ in
   # QEMU guest agent — enables Hetzner console operations (shutdown, snapshots)
   services.qemuGuest.enable = true;
 
-  # Firewall — SSH + HTTP/HTTPS (Caddy)
+  # Firewall — HTTP/HTTPS only (Caddy). SSH is Tailscale-only.
+  # Emergency access: Hetzner Cloud Firewall still allows TCP 22. To restore
+  # public SSH, add 22 back here and deploy via Hetzner web console.
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [
-      22
       80
       443
     ];

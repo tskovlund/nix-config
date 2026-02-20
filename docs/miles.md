@@ -58,6 +58,7 @@ Both must allow a port for traffic to reach a service. Update both when adding s
 
 Additional hardening:
 
+- **Tailscale:** SSH is Tailscale-only — port 22 is not open on the NixOS firewall. See [Tailscale](#tailscale) section.
 - **SSH:** key-only auth, no root password, `PermitRootLogin = "prohibit-password"`
 - **fail2ban:** 5 retries, 1h ban, exponential backoff on repeat offenders
 - **sysctl:** dmesg_restrict, kptr_restrict, ptrace_scope, rp_filter, tcp_syncookies, log_martians
@@ -67,7 +68,8 @@ Additional hardening:
 
 | Service | Port | URL | Purpose |
 |---------|------|-----|---------|
-| SSH | 22 | — | Remote access + deployment |
+| Tailscale | UDP 41641 | — | Mesh VPN (WireGuard). SSH + internal services via tailnet |
+| SSH | 22 (Tailscale only) | — | Remote access + deployment |
 | Caddy | 80, 443, 2019 (localhost) | — | Reverse proxy, HTTPS, Prometheus metrics |
 | Uptime Kuma | 3001 (localhost) | `uptime.skovlund.dev` | Service availability monitoring |
 | Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
@@ -87,21 +89,58 @@ The server auto-upgrades from `github:tskovlund/nix-config#miles` every **Wednes
 
 Reboots are allowed within the 03:00–05:00 UTC window (only if a kernel update requires it).
 
-To disable temporarily: `ssh root@46.225.116.48 systemctl stop nixos-upgrade.timer`
+To disable temporarily: `ssh root@miles systemctl stop nixos-upgrade.timer`
 
 ## Deployment
 
 ```sh
-# Regular updates (from macOS or any machine with the repo)
+# Regular updates (via Tailscale — default)
 make deploy-miles
 
-# First-time install (wipes disk, installs NixOS)
+# Emergency deployment via public IP (requires port 22 re-enabled in NixOS firewall)
+make deploy-miles MILES_HOST=root@46.225.116.48
+
+# First-time install (wipes disk, installs NixOS — uses public IP before Tailscale exists)
 nix run github:nix-community/nixos-anywhere -- --flake .#miles -i ~/.ssh/id_ed25519_miles root@<ip>
 
-# SSH access (personal SSH config maps `miles` to the IP + key)
+# SSH access (personal SSH config maps `miles` to Tailscale IP + key)
 ssh miles          # as thomas (full shell/tools)
 ssh root@miles     # as root (admin tasks)
+ssh miles-direct   # emergency: via public IP (only works if port 22 is re-enabled)
 ```
+
+## Tailscale
+
+Mesh VPN (WireGuard-based) creating a private network between Thomas's devices.
+
+- **Config:** `hosts/miles/tailscale.nix`
+- **Tailscale IP:** `100.100.125.93`
+- **Public IP:** `46.225.116.48` (still exists, but SSH port closed in NixOS firewall)
+- **Auth:** GitHub OAuth (account: tskovlund)
+- **Interface:** `tailscale0` (trusted — all ports accessible via Tailscale)
+
+SSH and all internal services (Prometheus, Loki, Promtail, Grafana metrics endpoint, etc.) are only reachable via Tailscale. Public internet only reaches Caddy (ports 80/443).
+
+### Emergency SSH access
+
+If Tailscale is down and you need SSH access:
+
+1. Open Hetzner web console (cloud.hetzner.com → miles → Console)
+2. Add port 22 back to `networking.firewall.allowedTCPPorts` in `hosts/miles/default.nix`
+3. `nixos-rebuild switch` from the console
+4. SSH via public IP: `ssh miles-direct` or `make deploy-miles MILES_HOST=root@46.225.116.48`
+5. Fix Tailscale, then remove port 22 again
+
+The Hetzner Cloud Firewall (`miles-fw`) always allows TCP 22 — only the NixOS firewall blocks it.
+
+### Post-deploy setup (first time only)
+
+1. Create Tailscale account at https://login.tailscale.com (GitHub OAuth)
+2. Deploy: `make deploy-miles` (via public IP initially)
+3. SSH to miles: `tailscale up` — authenticate via browser link
+4. Verify: `tailscale status` shows both devices
+5. From MacBook: `ssh root@<tailscale-ip>` works
+6. Remove port 22 from `allowedTCPPorts`, redeploy via Tailscale IP
 
 ## Disaster recovery
 
@@ -113,7 +152,9 @@ To rebuild from scratch:
 4. Verify: `ssh -i ~/.ssh/id_ed25519_miles root@<new-ip>`
 5. Update DNS records in Cloudflare
 6. Update Hetzner firewall: `hcloud firewall apply-to-resource miles-fw --type server --server miles`
-7. Commit IP changes, push
+7. Authenticate Tailscale: `ssh root@<new-ip>` then `tailscale up`
+8. Update Tailscale IP in `Makefile` (`MILES_HOST`), `nix-config-personal/home/miles.nix`, and `docs/miles.md`
+9. Commit IP changes, push
 
 All state is either in the nix-config repo (declarative), encrypted in nix-config-personal (secrets), or backed up to Backblaze B2 (application data). See the Backups section for restore instructions.
 
