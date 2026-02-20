@@ -195,23 +195,9 @@ in
       echo "SQLite snapshots complete"
     '';
 
-    # Clean up snapshots and send success notification
+    # Clean up SQLite snapshots (runs on both success and failure via ExecStopPost)
     backupCleanupCommand = ''
       rm -rf ${snapshotDir}
-      echo "Backup completed successfully, sending notification..."
-      NTFY_PASS=$(cat /var/lib/restic/ntfy_password 2>/dev/null || echo "")
-      if [ -n "$NTFY_PASS" ]; then
-        ${pkgs.curl}/bin/curl \
-          --fail --silent --show-error \
-          --max-time 10 \
-          --retry 3 \
-          -u "backup-alerts:$NTFY_PASS" \
-          -H "Title: Backup OK: miles" \
-          -H "Priority: default" \
-          -H "Tags: white_check_mark" \
-          -d "Daily backup to B2 completed successfully." \
-          ${ntfyUrl} || echo "WARNING: ntfy notification failed"
-      fi
     '';
 
     # Daily at 02:30 UTC — before the 03:00-05:00 auto-upgrade window
@@ -229,9 +215,31 @@ in
     ];
   };
 
-  # --- Failure notification ---
+  # --- Notifications ---
 
-  # Triggered by OnFailure when the backup service fails.
+  # Success notification (triggered by OnSuccess)
+  systemd.services.restic-backup-notify-success = {
+    description = "Send ntfy notification on backup success";
+    serviceConfig.Type = "oneshot";
+    path = [ pkgs.curl ];
+    script = ''
+      NTFY_PASS=$(cat /var/lib/restic/ntfy_password 2>/dev/null || echo "")
+      if [ -n "$NTFY_PASS" ]; then
+        curl \
+          --fail --silent --show-error \
+          --max-time 10 \
+          --retry 3 \
+          -u "backup-alerts:$NTFY_PASS" \
+          -H "Title: Backup OK: miles" \
+          -H "Priority: default" \
+          -H "Tags: white_check_mark" \
+          -d "Daily backup to B2 completed successfully." \
+          ${ntfyUrl} || echo "WARNING: ntfy notification failed"
+      fi
+    '';
+  };
+
+  # Failure notification (triggered by OnFailure)
   systemd.services.restic-backup-notify-failure = {
     description = "Send ntfy notification on backup failure";
     serviceConfig.Type = "oneshot";
@@ -253,8 +261,9 @@ in
     '';
   };
 
-  # Wire OnFailure into the restic backup service
+  # Wire notifications into the restic backup service
   systemd.services.restic-backups-miles = {
+    unitConfig.OnSuccess = [ "restic-backup-notify-success.service" ];
     unitConfig.OnFailure = [ "restic-backup-notify-failure.service" ];
   };
 
