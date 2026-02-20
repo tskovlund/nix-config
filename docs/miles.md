@@ -68,7 +68,7 @@ Additional hardening:
 | Service | Port | URL | Purpose |
 |---------|------|-----|---------|
 | SSH | 22 | — | Remote access + deployment |
-| Caddy | 80, 443, 2019 | — | Reverse proxy, HTTPS, Prometheus metrics |
+| Caddy | 80, 443, 2019 (localhost) | — | Reverse proxy, HTTPS, Prometheus metrics |
 | Uptime Kuma | 3001 (localhost) | `uptime.skovlund.dev` | Service availability monitoring |
 | Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
 | Ntfy | 2586 (localhost) | `ntfy.skovlund.dev` | Push notifications |

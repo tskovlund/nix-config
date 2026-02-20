@@ -77,7 +77,7 @@ in
     script = ''
       DEST="/var/lib/grafana/smtp_password"
       SRC="/home/thomas/.config/resend/api-key"
-      if [ ! -f "$DEST" ]; then
+      if [ ! -f "$DEST" ] || grep -q "not-yet-configured" "$DEST" 2>/dev/null; then
         mkdir -p /var/lib/grafana
         if [ -f "$SRC" ]; then
           cp "$SRC" "$DEST"
@@ -116,7 +116,9 @@ in
         # Create ntfy user (ignore error if already exists).
         # ntfy reads auth-file location from /etc/ntfy-sh/server.yml automatically.
         printf '%s\n%s\n' "$PASSWORD" "$PASSWORD" \
-          | ntfy user add grafana-alerts 2>/dev/null || true
+          | ntfy user add grafana-alerts 2>/dev/null || \
+          printf '%s\n%s\n' "$PASSWORD" "$PASSWORD" \
+            | ntfy user change-pass grafana-alerts 2>/dev/null || true
         # Grant write-only access to the alerts topic
         ntfy access grafana-alerts alerts write-only 2>/dev/null || true
         printf '%s' "$PASSWORD" > "$PASSWORD_FILE"
