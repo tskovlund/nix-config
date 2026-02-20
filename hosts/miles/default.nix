@@ -95,6 +95,11 @@ in
   # Caddy — reverse proxy with automatic HTTPS (Let's Encrypt)
   services.caddy = {
     enable = true;
+    globalConfig = ''
+      servers {
+        metrics
+      }
+    '';
     virtualHosts."uptime.skovlund.dev".extraConfig = ''
       reverse_proxy localhost:3001
     '';
@@ -137,6 +142,7 @@ in
       "base-url" = "https://ntfy.skovlund.dev";
       "behind-proxy" = true;
       "auth-default-access" = "deny-all";
+      "auth-file" = "/var/lib/ntfy-sh/user.db";
       "enable-login" = true;
       "upstream-base-url" = "https://ntfy.sh"; # relay to ntfy.sh for iOS/Android push via APNs/FCM
     };

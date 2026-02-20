@@ -56,4 +56,27 @@
   home.activation.createClaudeMemoryDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p "$HOME/.local/share/claude-memory"
   '';
+
+  # MCP Grafana Server — observability integration for Claude Code.
+  # Connects to Grafana on miles VPS, providing tools for querying Prometheus/Loki,
+  # managing dashboards and alerts. Service account token from agenix (nix-config-personal).
+  # Registration: claude mcp add --transport stdio --scope user grafana -- ~/.local/bin/mcp-grafana
+  home.file.".local/bin/mcp-grafana" = {
+    executable = true;
+    text = ''
+      #!/bin/sh
+      export GRAFANA_URL="https://grafana.skovlund.dev"
+      TOKEN_FILE="$HOME/.config/grafana/service-account-token"
+      if [ -f "$TOKEN_FILE" ]; then
+        export GRAFANA_SERVICE_ACCOUNT_TOKEN="$(cat "$TOKEN_FILE")"
+      fi
+      exec ${pkgs.mcp-grafana}/bin/mcp-grafana \
+        --disable-oncall \
+        --disable-incident \
+        --disable-sift \
+        --disable-pyroscope \
+        --disable-rendering \
+        "$@"
+    '';
+  };
 }
