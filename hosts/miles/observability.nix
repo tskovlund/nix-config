@@ -380,7 +380,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Alerting";
+                execErrState = "Error";
                 labels = {
                   severity = "warning";
                 };
@@ -434,7 +434,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Alerting";
+                execErrState = "Error";
                 labels = {
                   severity = "critical";
                 };
@@ -488,7 +488,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Alerting";
+                execErrState = "Error";
                 labels = {
                   severity = "warning";
                 };
@@ -542,7 +542,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "NoData";
-                execErrState = "Alerting";
+                execErrState = "Error";
                 labels = {
                   severity = "warning";
                 };
@@ -596,7 +596,7 @@ in
                 condition = "threshold";
                 for = "1m";
                 noDataState = "OK";
-                execErrState = "Alerting";
+                execErrState = "Error";
                 labels = {
                   severity = "critical";
                 };
@@ -650,7 +650,7 @@ in
                 condition = "threshold";
                 for = "5m";
                 noDataState = "Alerting";
-                execErrState = "Alerting";
+                execErrState = "Error";
                 labels = {
                   severity = "critical";
                 };
@@ -667,7 +667,7 @@ in
                       to = 0;
                     };
                     model = {
-                      expr = "up == 0";
+                      expr = "up";
                       refId = "up";
                     };
                   }
@@ -685,8 +685,8 @@ in
                         {
                           type = "query";
                           evaluator = {
-                            type = "gt";
-                            params = [ 0 ];
+                            type = "lt";
+                            params = [ 1 ];
                           };
                           operator.type = "and";
                           query.params = [ "up" ];
