@@ -115,7 +115,7 @@ To rebuild from scratch:
 6. Update Hetzner firewall: `hcloud firewall apply-to-resource miles-fw --type server --server miles`
 7. Commit IP changes, push
 
-All state is either in the nix-config repo (declarative) or encrypted in nix-config-personal (secrets). Nothing on the server is irreplaceable.
+All state is either in the nix-config repo (declarative), encrypted in nix-config-personal (secrets), or backed up to Backblaze B2 (application data). See the Backups section for restore instructions.
 
 ## ZeroClaw (AI assistant)
 
@@ -220,3 +220,105 @@ Setup:
 2. Encrypt token: `agenix -e secrets/grafana-service-account-token.age` in nix-config-personal
 3. Deploy: `make switch` (to install the wrapper + decrypt the token)
 4. Register: `claude mcp add --transport stdio --scope user grafana -- ~/.local/bin/mcp-grafana`
+
+## Backups
+
+Config: `hosts/miles/backups.nix`
+
+| Property | Value |
+|----------|-------|
+| Backend | Backblaze B2 (`miles-backups` bucket) |
+| Tool | Restic (encrypted, deduplicated, incremental) |
+| Schedule | Daily at 02:30 UTC (before auto-upgrade window) |
+| Retention | 7 daily, 4 weekly, 6 monthly |
+| Notifications | Ntfy (`backups` topic, `backup-alerts` user) |
+
+### What's backed up
+
+| Directory | Content | SQLite snapshot? |
+|-----------|---------|-----------------|
+| `/var/lib/zeroclaw/` | ZeroClaw workspace (memory, config, markdown files, cron) | Yes (`brain.db`, `jobs.db`) |
+| `/var/lib/private/uptime-kuma/` | Uptime Kuma monitors, notifications, uploads | Yes (`kuma.db`) |
+| `/var/lib/grafana/` | Grafana config (mostly declarative, but includes manual changes) | Yes (`grafana.db`) |
+| `/var/lib/private/ntfy-sh/` | Ntfy user DB, cache | Yes (`user.db`, `cache-file.db`) |
+
+**Not backed up** (declarative or transient): Prometheus data, Loki chunks, Caddy certs (auto-renewed), Nix store (reproducible from flake), ZeroClaw `open-skills/` git clone.
+
+### SQLite safety
+
+The backup uses `sqlite3 .backup` to create crash-consistent snapshots before restic runs.
+Snapshots are staged in `/var/lib/restic/snapshots/` during the backup and cleaned up after.
+Services are NOT stopped — `.backup` uses SQLite's online backup API which is safe on active databases.
+
+### Common operations
+
+```sh
+# Manual backup
+systemctl start restic-backups-miles
+
+# Check backup status
+systemctl status restic-backups-miles
+journalctl -u restic-backups-miles --since today
+
+# List snapshots (run as root for access to env/password files)
+source /var/lib/restic/b2-env
+restic -r b2:miles-backups --password-file /var/lib/restic/password snapshots
+
+# Restore a specific snapshot
+restic -r b2:miles-backups --password-file /var/lib/restic/password \
+  restore latest --target /tmp/restore
+
+# Check repository integrity
+restic -r b2:miles-backups --password-file /var/lib/restic/password check
+
+# View backup size
+restic -r b2:miles-backups --password-file /var/lib/restic/password stats
+```
+
+### Post-deploy setup (first time only)
+
+1. Create Backblaze B2 account at backblaze.com
+2. Create bucket: `miles-backups` (private, default encryption, no lifecycle rules)
+3. Create application key scoped to that bucket
+4. In nix-config-personal: `agenix -e secrets/restic-b2-env.age` — add `B2_ACCOUNT_ID=...` and `B2_ACCOUNT_KEY=...`
+5. In nix-config-personal: `agenix -e secrets/restic-password.age` — add output of `openssl rand -base64 32`
+6. **Save the restic password in your password manager** — without it, backups cannot be restored
+7. Deploy: `make deploy-miles REFRESH=1`
+8. Verify: `systemctl start restic-backups-miles && journalctl -fu restic-backups-miles`
+9. Subscribe to the `backups` topic in the ntfy app: `ntfy.skovlund.dev/backups`
+
+### Restore after disaster recovery
+
+After rebuilding the server (see Disaster Recovery section):
+
+```sh
+# 1. Stop services that own the data
+systemctl stop zeroclaw uptime-kuma grafana ntfy-sh
+
+# 2. Restore from B2
+source /var/lib/restic/b2-env
+restic -r b2:miles-backups --password-file /var/lib/restic/password \
+  restore latest --target /tmp/restore
+
+# 3. Restore SQLite snapshots (crash-consistent copies)
+cp /tmp/restore/var/lib/restic/snapshots/zeroclaw-brain.db /var/lib/zeroclaw/.zeroclaw/workspace/memory/brain.db
+cp /tmp/restore/var/lib/restic/snapshots/zeroclaw-jobs.db /var/lib/zeroclaw/.zeroclaw/workspace/cron/jobs.db
+cp /tmp/restore/var/lib/restic/snapshots/grafana.db /var/lib/grafana/data/grafana.db
+cp /tmp/restore/var/lib/restic/snapshots/kuma.db /var/lib/private/uptime-kuma/kuma.db
+cp /tmp/restore/var/lib/restic/snapshots/ntfy-user.db /var/lib/private/ntfy-sh/user.db
+cp /tmp/restore/var/lib/restic/snapshots/ntfy-cache.db /var/lib/private/ntfy-sh/cache-file.db
+
+# 4. Restore non-DB files (configs, workspace markdown, uploads)
+cp -a /tmp/restore/var/lib/zeroclaw/.zeroclaw/ /var/lib/zeroclaw/.zeroclaw/
+cp -a /tmp/restore/var/lib/private/uptime-kuma/ /var/lib/private/uptime-kuma/
+cp -a /tmp/restore/var/lib/private/ntfy-sh/ /var/lib/private/ntfy-sh/
+
+# 5. Fix ownership
+chown -R zeroclaw:zeroclaw /var/lib/zeroclaw
+
+# 6. Restart services
+systemctl start zeroclaw uptime-kuma grafana ntfy-sh
+
+# 7. Clean up
+rm -rf /tmp/restore
+```

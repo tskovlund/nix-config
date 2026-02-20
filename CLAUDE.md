@@ -24,6 +24,7 @@ This file documents how this repo is structured and how to extend it.
   - `hosts/miles/disk-config.nix` — Disko declarative disk layout (BIOS/GPT, ext4, swap).
   - `hosts/miles/zeroclaw.nix` — ZeroClaw AI assistant (package from source, systemd service, config). Post-deploy setup required: OpenRouter onboarding + Telegram channel binding.
   - `hosts/miles/observability.nix` — Observability stack: Prometheus, Grafana (`grafana.skovlund.dev`), Loki, Promtail, node exporter. All localhost, Grafana via Caddy. Declaratively provisioned: datasources (with stable UIDs), Node Exporter Full dashboard, alert rules (disk/memory/CPU/systemd/scrape), contact points (Ntfy webhook + Resend email), notification policy. MCP integration via `mcp-grafana` (wrapper in `home/claude/`).
+  - `hosts/miles/backups.nix` — Restic backups to Backblaze B2. Daily at 02:30 UTC, SQLite-safe snapshots via `sqlite3 .backup`, ntfy notifications on success/failure. Backs up ZeroClaw (workspace, memory, config), Uptime Kuma, Grafana, Ntfy data.
 - **docs/miles.md**: Operational runbook for the miles VPS (specs, Hetzner resources, DNS, security, deployment, disaster recovery).
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
