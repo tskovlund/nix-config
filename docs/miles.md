@@ -262,7 +262,7 @@ systemctl status restic-backups-miles
 journalctl -u restic-backups-miles --since today
 
 # List snapshots (run as root for access to env/password files)
-source /var/lib/restic/b2-env
+set -a; source /var/lib/restic/b2-env; set +a
 restic -r b2:miles-backups --password-file /var/lib/restic/password snapshots
 
 # Restore a specific snapshot
