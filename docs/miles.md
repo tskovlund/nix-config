@@ -39,6 +39,7 @@ miles.skovlund.dev        A       46.225.116.48
 uptime.skovlund.dev       CNAME   miles.skovlund.dev
 status.skovlund.dev       CNAME   miles.skovlund.dev
 ntfy.skovlund.dev         CNAME   miles.skovlund.dev
+grafana.skovlund.dev      CNAME   miles.skovlund.dev
 notify.skovlund.dev       — (Resend-managed, email sending only)
 ```
 
@@ -72,6 +73,11 @@ Additional hardening:
 | Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
 | Ntfy | 2586 (localhost) | `ntfy.skovlund.dev` | Push notifications |
 | ZeroClaw | — (daemon) | — | AI assistant (Telegram, OpenRouter) |
+| Prometheus | 9090 (localhost) | — | Metrics storage and scraping |
+| Grafana | 3002 (localhost) | `grafana.skovlund.dev` | Dashboards and alerting |
+| Loki | 3100 (localhost) | — | Log aggregation |
+| Promtail | 9080 (localhost) | — | Ships journal logs to Loki |
+| Node exporter | 9100 (localhost) | — | System metrics (CPU, memory, disk) |
 
 Namespaced URLs (`*.miles.skovlund.dev`) redirect to the canonical short URL.
 
@@ -171,4 +177,25 @@ Both are configured as Uptime Kuma notification channels. Ntfy relays through nt
 - **Hetzner Dashboard:** CPU, RAM, disk, network graphs (built-in, no setup needed)
 - **Uptime Kuma:** service availability monitoring at `uptime.skovlund.dev`
 - **Status pages:** `status.skovlund.dev/status/all`, `status.skovlund.dev/status/rbb`
-- **Future:** Grafana Cloud / OpenTelemetry when multiple services warrant deeper observability
+- **Grafana:** dashboards and alerting at `grafana.skovlund.dev` (Prometheus + Loki datasources)
+
+### Observability stack
+
+Config: `hosts/miles/observability.nix`
+
+| Component | Role | Port |
+|-----------|------|------|
+| Prometheus | Metrics storage, scrapes node exporter every 15s | 9090 |
+| Node exporter | Exposes system metrics (CPU, memory, disk, systemd units) | 9100 |
+| Loki | Log aggregation (30d retention) | 3100 |
+| Promtail | Ships systemd journal → Loki | 9080 |
+| Grafana | Dashboards, alerting → Ntfy | 3002 |
+
+All services listen on localhost. Grafana is the only service exposed externally (via Caddy).
+
+**Post-deploy setup:**
+
+1. Add Cloudflare DNS: `grafana.skovlund.dev` CNAME → `miles.skovlund.dev`
+2. Open `grafana.skovlund.dev`, set password for `thomas` admin account
+3. Import Node Exporter Full dashboard (community ID `1860`)
+4. Configure alert rules → Ntfy webhook contact point (`https://ntfy.skovlund.dev/alerts`)

@@ -20,6 +20,7 @@ in
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
     ./zeroclaw.nix
+    ./observability.nix
   ];
 
   # Boot — GRUB with BIOS boot (Hetzner Cloud x86 VPS)
@@ -107,6 +108,9 @@ in
     '';
     virtualHosts."ntfy.miles.skovlund.dev".extraConfig = ''
       redir https://ntfy.skovlund.dev{uri}
+    '';
+    virtualHosts."grafana.skovlund.dev".extraConfig = ''
+      reverse_proxy localhost:3002
     '';
   };
 
