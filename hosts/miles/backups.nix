@@ -5,7 +5,7 @@
 # Sends push notifications via ntfy on success and failure.
 #
 # Post-deploy setup:
-#   1. Create B2 bucket "skovlund-miles-backups" (private, default encryption)
+#   1. Create B2 bucket "miles-backups" (private, default encryption)
 #   2. Create B2 application key scoped to that bucket
 #   3. Encrypt credentials: agenix -e secrets/restic-b2-env.age (in nix-config-personal)
 #   4. Encrypt repo password: agenix -e secrets/restic-password.age

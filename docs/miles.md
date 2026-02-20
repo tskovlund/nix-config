@@ -306,6 +306,7 @@ cp /tmp/restore/var/lib/restic/snapshots/zeroclaw-jobs.db /var/lib/zeroclaw/.zer
 cp /tmp/restore/var/lib/restic/snapshots/grafana.db /var/lib/grafana/data/grafana.db
 cp /tmp/restore/var/lib/restic/snapshots/kuma.db /var/lib/private/uptime-kuma/kuma.db
 cp /tmp/restore/var/lib/restic/snapshots/ntfy-user.db /var/lib/private/ntfy-sh/user.db
+cp /tmp/restore/var/lib/restic/snapshots/ntfy-cache.db /var/lib/private/ntfy-sh/cache-file.db
 
 # 4. Restore non-DB files (configs, workspace markdown, uploads)
 cp -a /tmp/restore/var/lib/zeroclaw/.zeroclaw/ /var/lib/zeroclaw/.zeroclaw/
