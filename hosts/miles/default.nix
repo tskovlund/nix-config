@@ -43,9 +43,12 @@ in
   # Network — Hetzner assigns IPs via DHCP
   networking.useDHCP = true;
 
-  # SSH — key-only auth, root login for remote deployment
+  # SSH — key-only auth, root login for remote deployment.
+  # openFirewall = false: SSH is Tailscale-only. Port 22 is NOT opened
+  # on the public interface. See tailscale.nix for access model.
   services.openssh = {
     enable = true;
+    openFirewall = false;
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;
