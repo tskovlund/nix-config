@@ -143,7 +143,7 @@ in
 
   services.restic.backups.miles = {
     initialize = true;
-    repository = "b2:skovlund-miles-backups";
+    repository = "b2:miles-backups";
     environmentFile = "/var/lib/restic/b2-env";
     passwordFile = "/var/lib/restic/password";
 

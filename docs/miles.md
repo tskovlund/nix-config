@@ -227,7 +227,7 @@ Config: `hosts/miles/backups.nix`
 
 | Property | Value |
 |----------|-------|
-| Backend | Backblaze B2 (`skovlund-miles-backups` bucket) |
+| Backend | Backblaze B2 (`miles-backups` bucket) |
 | Tool | Restic (encrypted, deduplicated, incremental) |
 | Schedule | Daily at 02:30 UTC (before auto-upgrade window) |
 | Retention | 7 daily, 4 weekly, 6 monthly |
@@ -262,23 +262,23 @@ journalctl -u restic-backups-miles --since today
 
 # List snapshots (run as root for access to env/password files)
 source /var/lib/restic/b2-env
-restic -r b2:skovlund-miles-backups --password-file /var/lib/restic/password snapshots
+restic -r b2:miles-backups --password-file /var/lib/restic/password snapshots
 
 # Restore a specific snapshot
-restic -r b2:skovlund-miles-backups --password-file /var/lib/restic/password \
+restic -r b2:miles-backups --password-file /var/lib/restic/password \
   restore latest --target /tmp/restore
 
 # Check repository integrity
-restic -r b2:skovlund-miles-backups --password-file /var/lib/restic/password check
+restic -r b2:miles-backups --password-file /var/lib/restic/password check
 
 # View backup size
-restic -r b2:skovlund-miles-backups --password-file /var/lib/restic/password stats
+restic -r b2:miles-backups --password-file /var/lib/restic/password stats
 ```
 
 ### Post-deploy setup (first time only)
 
 1. Create Backblaze B2 account at backblaze.com
-2. Create bucket: `skovlund-miles-backups` (private, default encryption, no lifecycle rules)
+2. Create bucket: `miles-backups` (private, default encryption, no lifecycle rules)
 3. Create application key scoped to that bucket
 4. In nix-config-personal: `agenix -e secrets/restic-b2-env.age` — add `B2_ACCOUNT_ID=...` and `B2_ACCOUNT_KEY=...`
 5. In nix-config-personal: `agenix -e secrets/restic-password.age` — add output of `openssl rand -base64 32`
@@ -297,7 +297,7 @@ systemctl stop zeroclaw uptime-kuma grafana ntfy-sh
 
 # 2. Restore from B2
 source /var/lib/restic/b2-env
-restic -r b2:skovlund-miles-backups --password-file /var/lib/restic/password \
+restic -r b2:miles-backups --password-file /var/lib/restic/password \
   restore latest --target /tmp/restore
 
 # 3. Restore SQLite snapshots (crash-consistent copies)
