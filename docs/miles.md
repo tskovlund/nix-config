@@ -189,7 +189,7 @@ Config: `hosts/miles/observability.nix`
 
 | Component | Role | Port |
 |-----------|------|------|
-| Prometheus | Metrics storage, scrapes node exporter + Caddy every 15s | 9090 |
+| Prometheus | Metrics storage, scrapes node exporter + Caddy every 15s (30d retention) | 9090 |
 | Node exporter | Exposes system metrics (CPU, memory, disk, systemd units) | 9100 |
 | Loki | Log aggregation (30d retention) | 3100 |
 | Promtail | Ships systemd journal → Loki | 9080 |
@@ -210,6 +210,7 @@ All services listen on localhost. Grafana is the only service exposed externally
 2. Open `grafana.skovlund.dev`, set password for `thomas` admin account
 3. Verify contact points: Alerting → Contact points → Test
 4. Create service account (Editor role) for MCP integration (see below)
+5. If SMTP email alerts don't work: secrets may not have been deployed before Grafana first started. Fix: `rm /var/lib/grafana/smtp_password && systemctl restart grafana-smtp-password grafana`
 
 ### MCP integration (mcp-grafana)
 
@@ -283,9 +284,10 @@ restic -r b2:miles-backups --password-file /var/lib/restic/password stats
 4. In nix-config-personal: `agenix -e secrets/restic-b2-env.age` — add `B2_ACCOUNT_ID=...` and `B2_ACCOUNT_KEY=...`
 5. In nix-config-personal: `agenix -e secrets/restic-password.age` — add output of `openssl rand -base64 32`
 6. **Save the restic password in your password manager** — without it, backups cannot be restored
-7. Deploy: `make deploy-miles REFRESH=1`
-8. Verify: `systemctl start restic-backups-miles && journalctl -fu restic-backups-miles`
-9. Subscribe to the `backups` topic in the ntfy app: `ntfy.skovlund.dev/backups`
+7. Deploy: `make deploy-miles REFRESH=1` (secrets decrypt to `~/.config/restic/b2-env` and `~/.config/restic/password` via agenix, then a oneshot copies them to `/var/lib/restic/`)
+8. If agenix secrets aren't picked up: `sudo systemctl --user -M thomas@ restart agenix`, then `systemctl restart restic-secrets`
+9. Verify: `systemctl start restic-backups-miles && journalctl -fu restic-backups-miles`
+10. Subscribe to the `backups` topic in the ntfy app: `ntfy.skovlund.dev/backups`
 
 ### Restore after disaster recovery
 
