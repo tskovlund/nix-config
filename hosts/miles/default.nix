@@ -52,6 +52,10 @@ in
   users.users.root.openssh.authorizedKeys.keys = [ milesKey ];
   users.users.${username}.openssh.authorizedKeys.keys = [ milesKey ];
 
+  # Sudo — passwordless for wheel. The security boundary is SSH key auth,
+  # not a Unix password (which isn't even set for the thomas account).
+  security.sudo.wheelNeedsPassword = false;
+
   # fail2ban — ban IPs after repeated SSH auth failures
   services.fail2ban = {
     enable = true;
