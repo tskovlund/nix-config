@@ -68,7 +68,7 @@ Additional hardening:
 | Service | Port | URL | Purpose |
 |---------|------|-----|---------|
 | SSH | 22 | — | Remote access + deployment |
-| Caddy | 80, 443 | — | Reverse proxy, automatic HTTPS |
+| Caddy | 80, 443, 2019 (localhost) | — | Reverse proxy, HTTPS, Prometheus metrics |
 | Uptime Kuma | 3001 (localhost) | `uptime.skovlund.dev` | Service availability monitoring |
 | Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
 | Ntfy | 2586 (localhost) | `ntfy.skovlund.dev` | Push notifications |
@@ -172,6 +172,10 @@ ZeroClaw is the default gateway for LLM interactions. Direct API only when there
 
 Both are configured as Uptime Kuma notification channels. Ntfy relays through ntfy.sh for APNs/FCM push delivery.
 
+Grafana alerting uses both channels:
+- **Ntfy** (`grafana-alerts` user, `alerts` topic) — primary, push to phone
+- **Email** (`grafana@notify.skovlund.dev` via Resend SMTP) — secondary
+
 ## Monitoring
 
 - **Hetzner Dashboard:** CPU, RAM, disk, network graphs (built-in, no setup needed)
@@ -185,17 +189,34 @@ Config: `hosts/miles/observability.nix`
 
 | Component | Role | Port |
 |-----------|------|------|
-| Prometheus | Metrics storage, scrapes node exporter every 15s | 9090 |
+| Prometheus | Metrics storage, scrapes node exporter + Caddy every 15s | 9090 |
 | Node exporter | Exposes system metrics (CPU, memory, disk, systemd units) | 9100 |
 | Loki | Log aggregation (30d retention) | 3100 |
 | Promtail | Ships systemd journal → Loki | 9080 |
-| Grafana | Dashboards, alerting → Ntfy | 3002 |
+| Grafana | Dashboards, alerting → Ntfy + email | 3002 |
 
 All services listen on localhost. Grafana is the only service exposed externally (via Caddy).
+
+**Provisioned declaratively:**
+- **Datasources:** Prometheus (`uid: prometheus`) + Loki (`uid: loki`)
+- **Dashboard:** Node Exporter Full (ID 1860, fetched at build time)
+- **Contact points:** Ntfy webhook (`grafana-alerts` user) + email (Resend SMTP)
+- **Alert rules:** disk >80%/90%, memory >85%, CPU >90% (5m), systemd failures, scrape targets down
+- **Notification policy:** all alerts → ntfy-and-email, grouped by alertname, 4h repeat
 
 **Post-deploy setup:**
 
 1. Add Cloudflare DNS: `grafana.skovlund.dev` CNAME → `miles.skovlund.dev`
 2. Open `grafana.skovlund.dev`, set password for `thomas` admin account
-3. Import Node Exporter Full dashboard (community ID `1860`)
-4. Configure alert rules → Ntfy webhook contact point (`https://ntfy.skovlund.dev/alerts`)
+3. Verify contact points: Alerting → Contact points → Test
+4. Create service account (Editor role) for MCP integration (see below)
+
+### MCP integration (mcp-grafana)
+
+Claude Code connects to Grafana via the `mcp-grafana` MCP server, providing tools for querying Prometheus/Loki, searching dashboards, and managing alerts.
+
+Setup:
+1. In Grafana: Administration → Service accounts → Add service account (Editor role) → Generate token
+2. Encrypt token: `agenix -e secrets/grafana-service-account-token.age` in nix-config-personal
+3. Deploy: `make switch` (to install the wrapper + decrypt the token)
+4. Register: `claude mcp add --transport stdio --scope user grafana -- ~/.local/bin/mcp-grafana`
