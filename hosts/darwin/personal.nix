@@ -39,6 +39,9 @@
       # Notes
       "notesnook"
 
+      # Networking
+      "tailscale"
+
       # Utilities
       "qbittorrent"
 
