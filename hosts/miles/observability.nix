@@ -260,8 +260,8 @@ in
     settings = {
       server = {
         http_port = 3002;
-        http_addr = "127.0.0.1";
-        root_url = "https://grafana.skovlund.dev";
+        http_addr = "0.0.0.0"; # Tailscale-only (firewall blocks public access to port 3002)
+        root_url = "http://miles:3002";
       };
       security = {
         admin_user = "thomas";
@@ -339,7 +339,7 @@ in
                 uid = "ntfy";
                 type = "webhook";
                 settings = {
-                  url = "https://ntfy.skovlund.dev/alerts";
+                  url = "http://localhost:2586/alerts";
                   httpMethod = "POST";
                   username = "grafana-alerts";
                   password = "$__file{/var/lib/grafana/ntfy_password}";

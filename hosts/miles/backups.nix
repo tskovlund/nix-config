@@ -12,7 +12,7 @@
 #   5. Save restic password in password manager (required for restore)
 #   6. Deploy: make deploy-miles REFRESH=1
 #   7. Verify: systemctl start restic-backups-miles && journalctl -fu restic-backups-miles
-#   8. Subscribe to ntfy.skovlund.dev/backups in the ntfy app
+#   8. Subscribe to the backups topic in the ntfy app (via Tailscale: http://miles:2586)
 {
   pkgs,
   username,
@@ -65,7 +65,7 @@ let
     '') sqliteDatabases
   );
 
-  ntfyUrl = "https://ntfy.skovlund.dev/backups";
+  ntfyUrl = "http://localhost:2586/backups";
 in
 {
   # --- Secrets ---

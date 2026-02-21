@@ -98,6 +98,10 @@ in
   };
 
   # Caddy — reverse proxy with automatic HTTPS (Let's Encrypt)
+  #
+  # Only the rbb status page is publicly exposed. All other services (Grafana,
+  # ntfy, Uptime Kuma admin) are Tailscale-only — accessed directly by port
+  # via the trusted tailscale0 interface.
   services.caddy = {
     enable = true;
     globalConfig = ''
@@ -105,47 +109,47 @@ in
         metrics
       }
     '';
-    virtualHosts."uptime.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:3001
-    '';
-    virtualHosts."uptime.miles.skovlund.dev".extraConfig = ''
-      redir https://uptime.skovlund.dev{uri}
-    '';
+    # Only the "rbb" status page is public. All other status pages, the admin UI,
+    # login, and all other routes return 404.
     virtualHosts."status.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:3001
-    '';
-    virtualHosts."status.miles.skovlund.dev".extraConfig = ''
-      redir https://status.skovlund.dev{uri}
-    '';
-    virtualHosts."ntfy.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:2586
-    '';
-    virtualHosts."ntfy.miles.skovlund.dev".extraConfig = ''
-      redir https://ntfy.skovlund.dev{uri}
-    '';
-    virtualHosts."grafana.skovlund.dev".extraConfig = ''
-      reverse_proxy localhost:3002
-    '';
-    virtualHosts."grafana.miles.skovlund.dev".extraConfig = ''
-      redir https://grafana.skovlund.dev{uri}
+      @public {
+        path /status/rbb
+        path /status/rbb/
+        path /status/rbb/*
+        path /api/status-page/*
+        path /assets/*
+        path /icon.svg
+        path /upload/*
+        path /socket.io/*
+        path /manifest.json
+      }
+      handle @public {
+        reverse_proxy localhost:3001
+      }
+      handle {
+        respond "Not Found" 404
+      }
     '';
   };
 
   # Uptime Kuma — self-hosted service availability monitoring
+  # Admin UI is Tailscale-only (http://miles:3001). Only the rbb status page
+  # is served publicly via Caddy at status.skovlund.dev/status/rbb.
   services.uptime-kuma = {
     enable = true;
     settings = {
       PORT = "3001";
+      HOST = "0.0.0.0"; # accessible via Tailscale (firewall blocks public access)
     };
   };
 
-  # Ntfy — self-hosted push notifications
+  # Ntfy — self-hosted push notifications (Tailscale-only)
   # After deploy, create admin user: ssh root@miles "ntfy user add --role=admin admin"
   services.ntfy-sh = {
     enable = true;
     settings = {
-      "base-url" = "https://ntfy.skovlund.dev";
-      "behind-proxy" = true;
+      "listen-http" = ":2586";
+      "base-url" = "http://miles:2586";
       "auth-default-access" = "deny-all";
       "auth-file" = "/var/lib/ntfy-sh/user.db";
       "enable-login" = true;

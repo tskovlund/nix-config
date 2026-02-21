@@ -65,7 +65,7 @@
     executable = true;
     text = ''
       #!/bin/sh
-      export GRAFANA_URL="https://grafana.skovlund.dev"
+      export GRAFANA_URL="http://miles:3002"
       TOKEN_FILE="$HOME/.config/grafana/service-account-token"
       if [ -f "$TOKEN_FILE" ]; then
         export GRAFANA_SERVICE_ACCOUNT_TOKEN="$(cat "$TOKEN_FILE")"

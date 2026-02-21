@@ -36,12 +36,11 @@ Records:
 ```
 miles.skovlund.dev        A       46.225.116.48
 *.miles.skovlund.dev      A       46.225.116.48
-uptime.skovlund.dev       CNAME   miles.skovlund.dev
 status.skovlund.dev       CNAME   miles.skovlund.dev
-ntfy.skovlund.dev         CNAME   miles.skovlund.dev
-grafana.skovlund.dev      CNAME   miles.skovlund.dev
 notify.skovlund.dev       — (Resend-managed, email sending only)
 ```
+
+Removed: `uptime.skovlund.dev`, `ntfy.skovlund.dev`, `grafana.skovlund.dev` — these services are now Tailscale-only. DNS records can be deleted from Cloudflare.
 
 Additional CNAMEs added as services come online (matrix, openclaw, etc.).
 
@@ -71,17 +70,16 @@ Additional hardening:
 | Tailscale | UDP 41641 | — | Mesh VPN (WireGuard). SSH + internal services via tailnet |
 | SSH | 22 (Tailscale only) | — | Remote access + deployment |
 | Caddy | 80, 443, 2019 (localhost) | — | Reverse proxy, HTTPS, Prometheus metrics |
-| Uptime Kuma | 3001 (localhost) | `uptime.skovlund.dev` | Service availability monitoring |
-| Uptime Kuma (status) | 3001 (localhost) | `status.skovlund.dev` | Public status pages |
-| Ntfy | 2586 (localhost) | `ntfy.skovlund.dev` | Push notifications |
+| Uptime Kuma | 3001 (0.0.0.0) | `status.skovlund.dev/status/rbb` (rbb only) | Service availability monitoring |
+| Ntfy | 2586 (0.0.0.0) | — (Tailscale: `http://miles:2586`) | Push notifications |
 | ZeroClaw | — (daemon) | — | AI assistant (Telegram, OpenRouter) |
 | Prometheus | 9090 (localhost) | — | Metrics storage and scraping |
-| Grafana | 3002 (localhost) | `grafana.skovlund.dev` | Dashboards and alerting |
+| Grafana | 3002 (0.0.0.0) | — (Tailscale: `http://miles:3002`) | Dashboards and alerting |
 | Loki | 3100 (localhost) | — | Log aggregation |
 | Promtail | 9080 (localhost) | — | Ships journal logs to Loki |
 | Node exporter | 9100 (localhost) | — | System metrics (CPU, memory, disk) |
 
-Namespaced URLs (`*.miles.skovlund.dev`) redirect to the canonical short URL.
+Most services are Tailscale-only. Only the rbb status page (`status.skovlund.dev/status/rbb`) is exposed to the internet. All other routes, including the admin UI, return 404.
 
 ## Automatic upgrades
 
@@ -208,7 +206,7 @@ ZeroClaw is the default gateway for LLM interactions. Direct API only when there
 
 | Channel | Service | Purpose |
 |---------|---------|---------|
-| Ntfy | `ntfy.skovlund.dev` | Push notifications to phone (iOS/Android app) |
+| Ntfy | `http://miles:2586` (Tailscale) | Push notifications to phone (iOS/Android app) |
 | Resend | `notify.skovlund.dev` | Transactional email (SMTP-compatible, 100/day free) |
 
 Both are configured as Uptime Kuma notification channels. Ntfy relays through ntfy.sh for APNs/FCM push delivery.
@@ -220,9 +218,9 @@ Grafana alerting uses both channels:
 ## Monitoring
 
 - **Hetzner Dashboard:** CPU, RAM, disk, network graphs (built-in, no setup needed)
-- **Uptime Kuma:** service availability monitoring at `uptime.skovlund.dev`
-- **Status pages:** `status.skovlund.dev/status/all`, `status.skovlund.dev/status/rbb`
-- **Grafana:** dashboards and alerting at `grafana.skovlund.dev` (Prometheus + Loki datasources)
+- **Uptime Kuma:** service availability monitoring at `http://miles:3001` (Tailscale)
+- **Public status page:** `status.skovlund.dev/status/rbb` (only this route is publicly exposed — admin UI is Tailscale-only)
+- **Grafana:** dashboards and alerting at `http://miles:3002` (Tailscale, Prometheus + Loki datasources)
 
 ### Observability stack
 
@@ -236,7 +234,7 @@ Config: `hosts/miles/observability.nix`
 | Promtail | Ships systemd journal → Loki | 9080 |
 | Grafana | Dashboards, alerting → Ntfy + email | 3002 |
 
-All services listen on localhost. Grafana is the only service exposed externally (via Caddy).
+All services listen on localhost or 0.0.0.0 (protected by firewall). Grafana, ntfy, and Uptime Kuma admin are Tailscale-only. Only the rbb status page is exposed via Caddy.
 
 **Provisioned declaratively:**
 - **Datasources:** Prometheus (`uid: prometheus`) + Loki (`uid: loki`)
@@ -247,8 +245,7 @@ All services listen on localhost. Grafana is the only service exposed externally
 
 **Post-deploy setup:**
 
-1. Add Cloudflare DNS: `grafana.skovlund.dev` CNAME → `miles.skovlund.dev`
-2. Open `grafana.skovlund.dev`, set password for `thomas` admin account
+1. Open `http://miles:3002` (via Tailscale), set password for `thomas` admin account
 3. Verify contact points: Alerting → Contact points → Test
 4. Create service account (Editor role) for MCP integration (see below)
 5. If SMTP email alerts don't work: secrets may not have been deployed before Grafana first started. Fix: `rm /var/lib/grafana/smtp_password && systemctl restart grafana-smtp-password grafana`
@@ -328,7 +325,7 @@ restic -r b2:miles-backups --password-file /var/lib/restic/password stats
 7. Deploy: `make deploy-miles REFRESH=1` (secrets decrypt to `~/.config/restic/b2-env` and `~/.config/restic/password` via agenix, then a oneshot copies them to `/var/lib/restic/`)
 8. If agenix secrets aren't picked up: `sudo systemctl --user -M thomas@ restart agenix`, then `systemctl restart restic-secrets`
 9. Verify: `systemctl start restic-backups-miles && journalctl -fu restic-backups-miles`
-10. Subscribe to the `backups` topic in the ntfy app: `ntfy.skovlund.dev/backups`
+10. Subscribe to the `backups` topic in the ntfy app: `http://miles:2586/backups` (requires Tailscale on phone)
 
 ### Restore after disaster recovery
 
