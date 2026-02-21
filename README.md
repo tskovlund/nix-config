@@ -3,6 +3,8 @@
 [![Check](https://github.com/tskovlund/nix-config/workflows/Check/badge.svg)](https://github.com/tskovlund/nix-config/actions/workflows/check.yml)
 [![CodeQL](https://github.com/tskovlund/nix-config/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/tskovlund/nix-config/actions/workflows/codeql.yml)
 [![NixOS](https://img.shields.io/badge/NixOS-unstable-5277C3?logo=nixos&logoColor=white)](https://nixos.org)
+[![Nix Flakes](https://img.shields.io/badge/Nix-Flakes-blue?logo=nixos&logoColor=white)](https://nixos.wiki/wiki/Flakes)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Fully declarative, cross-platform environment — shell, editor, git, CLI tools, system preferences, secrets, apps — all defined as code.
