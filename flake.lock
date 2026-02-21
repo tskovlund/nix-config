@@ -263,7 +263,8 @@
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "nixvim": "nixvim",
-        "personal": "personal"
+        "personal": "personal",
+        "zeroclaw-src": "zeroclaw-src"
       }
     },
     "systems": {
@@ -293,6 +294,23 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "zeroclaw-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771658936,
+        "narHash": "sha256-CE+kltmKxvkqJl5S3gI4XWXifVxMF6bOn7TRosiXjOs=",
+        "owner": "zeroclaw-labs",
+        "repo": "zeroclaw",
+        "rev": "89bff25c6d0c55af69b73852b7ddc730e11d1b15",
+        "type": "github"
+      },
+      "original": {
+        "owner": "zeroclaw-labs",
+        "ref": "v0.1.1",
+        "repo": "zeroclaw",
         "type": "github"
       }
     }

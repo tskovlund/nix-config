@@ -39,6 +39,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # ZeroClaw — AI assistant deployed on miles.
+    # Non-flake input pinned to release tag. To update:
+    #   change the tag below, then `nix flake update zeroclaw-src`
+    zeroclaw-src = {
+      url = "github:zeroclaw-labs/zeroclaw/v0.1.1";
+      flake = false;
+    };
+
     # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
@@ -55,6 +63,7 @@
       mcp-servers-nix,
       nixos-wsl,
       disko,
+      zeroclaw-src,
       personal,
       ...
     }:
@@ -159,7 +168,7 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit username; };
+          specialArgs = { inherit username zeroclaw-src; };
           modules = [
             ./hosts/nixos
             {

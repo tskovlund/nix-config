@@ -5,21 +5,21 @@
 #   sudo -u zeroclaw zeroclaw channel bind-telegram <chat-id>
 #
 # See docs/miles.md for full onboarding instructions.
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  zeroclaw-src,
+  ...
+}:
 
 let
-  zeroclaw = pkgs.rustPlatform.buildRustPackage rec {
+  zeroclaw = pkgs.rustPlatform.buildRustPackage {
     pname = "zeroclaw";
-    version = "0.1.0";
+    version = "0-unstable-${zeroclaw-src.shortRev or "unknown"}";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "zeroclaw-labs";
-      repo = "zeroclaw";
-      rev = "v${version}";
-      hash = "sha256-p8YJOzYL8aMeu7AaZEz3PWUJwh7epufKAHjJKetaGOU=";
-    };
+    src = zeroclaw-src;
 
-    cargoHash = "sha256-J7yAXEDFYL3banQNe/b8PzRpdRu67jU2W37nSf9Y7RY=";
+    cargoLock.lockFile = zeroclaw-src + "/Cargo.lock";
 
     # Disable default "hardware" feature (USB/serial) — not needed on VPS
     buildNoDefaultFeatures = true;
