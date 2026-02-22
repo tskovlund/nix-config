@@ -9,6 +9,7 @@
   lib,
   pkgs,
   zeroclaw-src,
+  eliza-config,
   ...
 }:
 
@@ -63,15 +64,44 @@ in
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
 
-    path = [ pkgs.git ];
+    path = with pkgs; [
+      git
+      gh # GitHub CLI
+      curl
+      wget
+      jq
+      yq-go
+      ripgrep
+      fd
+      nodejs
+      python3
+    ];
 
     environment = {
       HOME = "/var/lib/zeroclaw";
     };
 
-    # Ensure workspace directory exists. Config is created by `zeroclaw onboard`.
+    # Ensure workspace directory exists and deploy skills + workspace files from eliza-config.
+    # Config is created by `zeroclaw onboard`.
+    # Files are symlinked to the Nix store, making them genuinely immutable.
+    # Eliza must edit in the eliza-config repo and redeploy to change skills.
     preStart = ''
-      mkdir -p /var/lib/zeroclaw/.zeroclaw
+      mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
+
+      # Clean up stale skill symlinks
+      find /var/lib/zeroclaw/.zeroclaw/workspace/skills/ -maxdepth 1 -type l -delete 2>/dev/null || true
+
+      # Symlink each skill directory from the Nix store (immutable)
+      for skill in ${eliza-config}/skills/*/; do
+        skill_name=$(basename "$skill")
+        ln -sfn "$skill" "/var/lib/zeroclaw/.zeroclaw/workspace/skills/$skill_name"
+      done
+
+      # Symlink workspace identity files from the Nix store (immutable)
+      for file in ${eliza-config}/workspace/*.md; do
+        filename=$(basename "$file")
+        ln -sfn "$file" "/var/lib/zeroclaw/.zeroclaw/workspace/$filename"
+      done
     '';
 
     serviceConfig = {

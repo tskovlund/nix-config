@@ -47,6 +47,14 @@
       flake = false;
     };
 
+    # Eliza configuration — skills, workspace files, and personality.
+    # Non-flake input (plain directory). Uses SSH for private repo access.
+    # To update: nix flake update eliza-config
+    eliza-config = {
+      url = "git+ssh://git@github.com/tskovlund/eliza-config";
+      flake = false;
+    };
+
     # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
@@ -64,6 +72,7 @@
       nixos-wsl,
       disko,
       zeroclaw-src,
+      eliza-config,
       personal,
       ...
     }:
@@ -168,7 +177,7 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit username zeroclaw-src; };
+          specialArgs = { inherit username zeroclaw-src eliza-config; };
           modules = [
             ./hosts/nixos
             {

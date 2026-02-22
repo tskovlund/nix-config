@@ -65,6 +65,22 @@
         "type": "github"
       }
     },
+    "eliza-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771727412,
+        "narHash": "sha256-kS99qoD+ZZIZx5JH/7IHQ2Ua4ovarFyBdxBIZNucJnI=",
+        "ref": "refs/heads/main",
+        "rev": "07c865529eae39c60ef67fe8cfd857dad2efc193",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/tskovlund/eliza-config"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/tskovlund/eliza-config"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -257,6 +273,7 @@
       "inputs": {
         "agenix": "agenix",
         "disko": "disko",
+        "eliza-config": "eliza-config",
         "home-manager": "home-manager_2",
         "mcp-servers-nix": "mcp-servers-nix",
         "nix-darwin": "nix-darwin",
