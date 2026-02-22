@@ -84,6 +84,11 @@ in
         echo "WARNING: $SRC not found — git push will fail until key is deployed"
       fi
 
+      # GitHub host keys (pinned, avoids TOFU prompts)
+      ${pkgs.openssh}/bin/ssh-keyscan -t ed25519,rsa github.com > /var/lib/zeroclaw/.ssh/known_hosts 2>/dev/null
+      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh/known_hosts
+      chmod 644 /var/lib/zeroclaw/.ssh/known_hosts
+
       # SSH config — route GitHub through this key
       cat > /var/lib/zeroclaw/.ssh/config <<'SSHCONFIG'
       Host github.com
