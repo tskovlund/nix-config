@@ -119,7 +119,10 @@ in
     serviceConfig = {
       Type = "oneshot";
     };
-    path = [ pkgs.git ];
+    path = [
+      pkgs.git
+      pkgs.openssh # git fetch needs ssh for SSH remotes
+    ];
     script = ''
       set -euo pipefail
       CLONE="/var/lib/zeroclaw/repos/eliza-config"
@@ -129,7 +132,9 @@ in
       rm -f /var/lib/zeroclaw/.zeroclaw/redeploy-trigger
 
       # Pull latest from the local clone
-      # safe.directory: clone is owned by zeroclaw, this service runs as root
+      # - safe.directory: clone is owned by zeroclaw, this service runs as root
+      # - GIT_SSH_COMMAND: use zeroclaw's SSH key (service runs as root)
+      export GIT_SSH_COMMAND="ssh -i /var/lib/zeroclaw/.ssh/id_ed25519_github -o UserKnownHostsFile=/var/lib/zeroclaw/.ssh/known_hosts"
       git -c safe.directory='*' -C "$CLONE" fetch origin
       git -c safe.directory='*' -C "$CLONE" reset --hard origin/main
 
