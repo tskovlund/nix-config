@@ -24,6 +24,9 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: webfactory/ssh-agent@a6f90b1f127823b31a2e89158b639a29d5b9bdd3 # v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.ELIZA_CONFIG_DEPLOY_KEY }}
       - uses: DeterminateSystems/determinate-nix-action@89ab342bd48ff7318caf8d39d6a330c7b1df8f2f # v3
       - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39 # v13
         with:
