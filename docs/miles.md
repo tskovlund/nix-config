@@ -72,7 +72,7 @@ Additional hardening:
 | Caddy | 80, 443, 2019 (localhost) | — | Reverse proxy, HTTPS, Prometheus metrics |
 | Uptime Kuma | 3001 (0.0.0.0) | `status.skovlund.dev/status/rbb` (rbb only) | Service availability monitoring |
 | Ntfy | 2586 (0.0.0.0) | — (Tailscale: `http://miles:2586`) | Push notifications |
-| ZeroClaw | — (daemon) | — | AI assistant (Telegram, OpenRouter) |
+| ZeroClaw | 3000 (0.0.0.0) | — (Tailscale: `http://miles:3000`) | AI assistant + web dashboard (Telegram, OpenRouter) |
 | Prometheus | 9090 (localhost) | — | Metrics storage and scraping |
 | Grafana | 3002 (0.0.0.0) | — (Tailscale: `http://miles:3002`) | Dashboards and alerting |
 | Loki | 3100 (localhost) | — | Log aggregation |
@@ -160,9 +160,11 @@ All state is either in the nix-config repo (declarative), encrypted in nix-confi
 
 ZeroClaw is the primary LLM gateway — provider routing, memory, and channel integrations.
 
+- **Version:** v0.1.4
 - **Config:** `hosts/miles/zeroclaw.nix` (NixOS module + package from source)
 - **Data:** `/var/lib/zeroclaw/.zeroclaw/` (SQLite memory DB, auth profiles, config)
 - **User:** `zeroclaw` system user
+- **Dashboard:** `http://miles:3000` (Tailscale only, requires pairing code from service logs)
 
 ### First-time setup (after deploy)
 
