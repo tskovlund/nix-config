@@ -184,8 +184,9 @@ in
       "/var/lib/grafana/data/pdf"
       "/var/lib/grafana/data/log"
 
-      # ZeroClaw git clone (can be re-cloned)
+      # ZeroClaw git clones (can be re-cloned from remote)
       "/var/lib/zeroclaw/open-skills"
+      "/var/lib/zeroclaw/repos"
     ];
 
     # Create consistent SQLite snapshots before backup

@@ -8,6 +8,7 @@
 {
   lib,
   pkgs,
+  username,
   zeroclaw-src,
   eliza-config,
   ...
@@ -58,10 +59,98 @@ in
   };
   users.groups.zeroclaw = { };
 
+  # Copy SSH key from Thomas's home to zeroclaw's home for GitHub access.
+  # The id_ed25519_github key is decrypted by agenix to Thomas's ~/.ssh/ on deploy.
+  # Same pattern as restic-secrets in backups.nix.
+  systemd.services.zeroclaw-ssh-setup = {
+    description = "Deploy SSH key for ZeroClaw GitHub access";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "zeroclaw.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      mkdir -p /var/lib/zeroclaw/.ssh
+
+      # Private key
+      SRC="/home/${username}/.ssh/id_ed25519_github"
+      DEST="/var/lib/zeroclaw/.ssh/id_ed25519_github"
+      if [ -f "$SRC" ]; then
+        cp "$SRC" "$DEST"
+        chown zeroclaw:zeroclaw "$DEST"
+        chmod 600 "$DEST"
+      else
+        echo "WARNING: $SRC not found — git push will fail until key is deployed"
+      fi
+
+      # SSH config — route GitHub through this key
+      cat > /var/lib/zeroclaw/.ssh/config <<'SSHCONFIG'
+      Host github.com
+        IdentityFile /var/lib/zeroclaw/.ssh/id_ed25519_github
+        IdentitiesOnly yes
+      SSHCONFIG
+      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh/config
+      chmod 644 /var/lib/zeroclaw/.ssh/config
+    '';
+  };
+
+  # Watch for redeploy trigger file — hot-reloads skills and workspace files
+  # from the local eliza-config clone without a full nixos-rebuild.
+  # Eliza triggers this by: touch /var/lib/zeroclaw/.zeroclaw/redeploy-trigger
+  systemd.paths.eliza-redeploy = {
+    description = "Watch for Eliza redeploy trigger";
+    wantedBy = [ "multi-user.target" ];
+    pathConfig = {
+      PathExists = "/var/lib/zeroclaw/.zeroclaw/redeploy-trigger";
+      Unit = "eliza-redeploy.service";
+    };
+  };
+
+  systemd.services.eliza-redeploy = {
+    description = "Hot-reload Eliza config from local clone";
+    serviceConfig = {
+      Type = "oneshot";
+    };
+    path = [ pkgs.git ];
+    script = ''
+      set -euo pipefail
+      CLONE="/var/lib/zeroclaw/repos/eliza-config"
+      WORKSPACE="/var/lib/zeroclaw/.zeroclaw/workspace"
+
+      # Remove trigger first (so it can be re-created for next deploy)
+      rm -f /var/lib/zeroclaw/.zeroclaw/redeploy-trigger
+
+      # Pull latest from the local clone
+      git -C "$CLONE" fetch origin
+      git -C "$CLONE" reset --hard origin/main
+
+      # Hot reload: copy skills (replacing Nix store symlinks with real files)
+      rm -rf "$WORKSPACE/skills"
+      cp -r "$CLONE/skills" "$WORKSPACE/skills"
+
+      # Hot reload: copy workspace files
+      for file in "$CLONE"/workspace/*.md; do
+        filename=$(basename "$file")
+        rm -f "$WORKSPACE/$filename"
+        cp "$file" "$WORKSPACE/$filename"
+      done
+
+      # Fix ownership
+      chown -R zeroclaw:zeroclaw "$WORKSPACE"
+
+      # Restart ZeroClaw to pick up changes
+      systemctl restart zeroclaw.service
+    '';
+  };
+
   systemd.services.zeroclaw = {
     description = "ZeroClaw AI Assistant";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
+    after = [
+      "network-online.target"
+      "zeroclaw-ssh-setup.service"
+    ];
     wants = [ "network-online.target" ];
 
     path = with pkgs; [
@@ -107,6 +196,24 @@ in
     # Eliza must edit in the eliza-config repo and redeploy to change skills.
     preStart = ''
       mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
+
+      # Git identity — ZeroClaw's security policy blocks `git config` at runtime
+      # (hardcoded in is_args_safe()), so we create .gitconfig in preStart instead.
+      # Tracked upstream: https://github.com/zeroclaw-labs/zeroclaw/issues/1398
+      cat > /var/lib/zeroclaw/.gitconfig <<'GITCONFIG'
+      [user]
+        name = Eliza
+        email = eliza@skovlund.dev
+      GITCONFIG
+
+      # Persistent clone of eliza-config for self-modification.
+      # Eliza edits skills here, commits, pushes, then touches the redeploy trigger.
+      # Non-fatal: SSH key may not be available on first deploy.
+      if [ ! -d /var/lib/zeroclaw/repos/eliza-config/.git ]; then
+        mkdir -p /var/lib/zeroclaw/repos
+        ${pkgs.git}/bin/git clone git@github.com:tskovlund/eliza-config.git /var/lib/zeroclaw/repos/eliza-config || \
+          echo "WARNING: git clone failed — self-modification unavailable until key is deployed"
+      fi
 
       # Clean up stale skill entries (both symlinks and leftover directories)
       find /var/lib/zeroclaw/.zeroclaw/workspace/skills/ -maxdepth 1 -mindepth 1 -exec rm -rf {} + 2>/dev/null || true
