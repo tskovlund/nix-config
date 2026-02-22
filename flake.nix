@@ -43,7 +43,7 @@
     # Non-flake input pinned to release tag. To update:
     #   change the tag below, then `nix flake update zeroclaw-src`
     zeroclaw-src = {
-      url = "github:zeroclaw-labs/zeroclaw/v0.1.1";
+      url = "github:zeroclaw-labs/zeroclaw/v0.1.4";
       flake = false;
     };
 
