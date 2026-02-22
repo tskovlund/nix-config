@@ -160,11 +160,15 @@ All state is either in the nix-config repo (declarative), encrypted in nix-confi
 
 ZeroClaw is the primary LLM gateway — provider routing, memory, and channel integrations.
 
-- **Version:** v0.1.4
+- **Version:** v0.1.6
 - **Config:** `hosts/miles/zeroclaw.nix` (NixOS module + package from source)
+- **Config repo:** `git+ssh://git@github.com/tskovlund/eliza-config` (flake input, deployed declaratively)
+- **Skills:** 10 deployed as Nix store symlinks (morning-briefing, pr-review, self-improvement, skill-management, docs, linear-operations, system-health, memory-management, delegation, notification-routing)
+- **Workspace files:** 5 deployed as Nix store symlinks (SOUL.md, IDENTITY.md, AGENTS.md, TOOLS.md, USER.md)
 - **Data:** `/var/lib/zeroclaw/.zeroclaw/` (SQLite memory DB, auth profiles, config)
 - **User:** `zeroclaw` system user
 - **Dashboard:** `http://miles:3000` (Tailscale only, requires pairing code from service logs)
+- **Memory:** max_history_messages=30, archive_after_days=2, purge_after_days=30
 
 ### First-time setup (after deploy)
 
@@ -180,6 +184,12 @@ sudo -u zeroclaw zeroclaw status
 sudo -u zeroclaw zeroclaw auth status
 sudo -u zeroclaw zeroclaw channel doctor
 ```
+
+### Systemd sandbox
+
+The systemd unit provides the security boundary. Eliza can only write to `/var/lib/zeroclaw` (`StateDirectory`). Key constraints kept: `ProtectSystem=strict`, `ProtectHome`, `NoNewPrivileges`, `ProtectKernelModules`. ZeroClaw's internal sandbox is disabled (`backend = "none"`) to avoid double-jailing.
+
+Tools in PATH: git, gh, curl, wget, jq, yq-go, ripgrep, fd, nodejs, python3.
 
 ### Common operations
 

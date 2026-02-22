@@ -115,18 +115,15 @@ in
       Restart = "on-failure";
       RestartSec = "10s";
 
-      # Hardening
+      # Hardening — ProtectSystem + StateDirectory is the core boundary:
+      # Eliza can only write to /var/lib/zeroclaw, everything else is read-only.
+      # Other restrictions are kept where they don't impede agent work.
       ProtectSystem = "strict";
       ProtectHome = true;
       PrivateTmp = true;
-      PrivateDevices = true;
       NoNewPrivileges = true;
-      CapabilityBoundingSet = "";
       RestrictSUIDSGID = true;
-      ProtectKernelTunables = true;
       ProtectKernelModules = true;
-      ProtectControlGroups = true;
-      RestrictNamespaces = true;
       RestrictRealtime = true;
     };
   };
