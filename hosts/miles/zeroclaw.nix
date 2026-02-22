@@ -65,14 +65,34 @@ in
     wants = [ "network-online.target" ];
 
     path = with pkgs; [
+      # Core — ZeroClaw shell tool runs `sh -c` so needs a shell + basic utils
+      bash
+      coreutils
+      findutils
+      diffutils
+      gnugrep
+      gnused
+      gawk
+      gzip
+      util-linux # lsblk, etc.
+
+      # System monitoring
+      procps # ps, free, top, vmstat, pgrep, pkill
+      iproute2 # ip, ss
+      dnsutils # dig, nslookup
+
+      # Dev tools
       git
-      gh # GitHub CLI
+      gh
       curl
       wget
       jq
       yq-go
       ripgrep
       fd
+      gnumake
+      openssh
+      unzip
       nodejs
       python3
     ];
