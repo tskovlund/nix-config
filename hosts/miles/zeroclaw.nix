@@ -129,8 +129,9 @@ in
       rm -f /var/lib/zeroclaw/.zeroclaw/redeploy-trigger
 
       # Pull latest from the local clone
-      git -C "$CLONE" fetch origin
-      git -C "$CLONE" reset --hard origin/main
+      # safe.directory: clone is owned by zeroclaw, this service runs as root
+      git -c safe.directory='*' -C "$CLONE" fetch origin
+      git -c safe.directory='*' -C "$CLONE" reset --hard origin/main
 
       # Hot reload: copy skills (replacing Nix store symlinks with real files)
       rm -rf "$WORKSPACE/skills"
