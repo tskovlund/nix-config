@@ -88,8 +88,8 @@ in
     preStart = ''
       mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
 
-      # Clean up stale skill symlinks
-      find /var/lib/zeroclaw/.zeroclaw/workspace/skills/ -maxdepth 1 -type l -delete 2>/dev/null || true
+      # Clean up stale skill entries (both symlinks and leftover directories)
+      find /var/lib/zeroclaw/.zeroclaw/workspace/skills/ -maxdepth 1 -mindepth 1 -exec rm -rf {} + 2>/dev/null || true
 
       # Symlink each skill directory from the Nix store (immutable)
       for skill in ${eliza-config}/skills/*/; do
