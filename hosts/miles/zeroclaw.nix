@@ -72,6 +72,8 @@ in
     };
     script = ''
       mkdir -p /var/lib/zeroclaw/.ssh
+      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh
+      chmod 700 /var/lib/zeroclaw/.ssh
 
       # Private key
       SRC="/home/${username}/.ssh/id_ed25519_github"
