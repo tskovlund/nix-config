@@ -67,6 +67,7 @@ in
     description = "Deploy SSH key for ZeroClaw GitHub access";
     wantedBy = [ "multi-user.target" ];
     before = [ "zeroclaw.service" ];
+    path = [ pkgs.openssh ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
