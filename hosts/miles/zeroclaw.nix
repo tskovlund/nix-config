@@ -56,6 +56,7 @@ in
     isSystemUser = true;
     group = "zeroclaw";
     home = "/var/lib/zeroclaw";
+    extraGroups = [ "systemd-journal" ];
   };
   users.groups.zeroclaw = { };
 
