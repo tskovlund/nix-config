@@ -76,30 +76,19 @@ in
       chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh
       chmod 700 /var/lib/zeroclaw/.ssh
 
-      # SSH auth key (GitHub push access)
+      # SSH auth key (GitHub push access + commit signing)
       SRC="/home/${username}/.ssh/id_ed25519_github"
       DEST="/var/lib/zeroclaw/.ssh/id_ed25519_github"
       if [ -f "$SRC" ]; then
         cp "$SRC" "$DEST"
         chown zeroclaw:zeroclaw "$DEST"
         chmod 600 "$DEST"
+        # Public key needed for SSH commit signing (gpg.format=ssh)
+        ssh-keygen -y -f "$DEST" > "$DEST.pub"
+        chown zeroclaw:zeroclaw "$DEST.pub"
+        chmod 644 "$DEST.pub"
       else
         echo "WARNING: $SRC not found — git push will fail until key is deployed"
-      fi
-
-      # Commit signing key (separate identity for verified commits)
-      SRC_SIGN="/home/${username}/.ssh/id_ed25519_eliza_signing"
-      DEST_SIGN="/var/lib/zeroclaw/.ssh/id_ed25519_eliza_signing"
-      DEST_SIGN_PUB="/var/lib/zeroclaw/.ssh/id_ed25519_eliza_signing.pub"
-      if [ -f "$SRC_SIGN" ]; then
-        cp "$SRC_SIGN" "$DEST_SIGN"
-        chown zeroclaw:zeroclaw "$DEST_SIGN"
-        chmod 600 "$DEST_SIGN"
-      fi
-      if [ -f "$SRC_SIGN.pub" ]; then
-        cp "$SRC_SIGN.pub" "$DEST_SIGN_PUB"
-        chown zeroclaw:zeroclaw "$DEST_SIGN_PUB"
-        chmod 644 "$DEST_SIGN_PUB"
       fi
 
       # GitHub host keys (pinned, avoids TOFU prompts)
@@ -232,8 +221,8 @@ in
       cat > /var/lib/zeroclaw/.gitconfig <<'GITCONFIG'
       [user]
         name = Eliza
-        email = eliza@skovlund.dev
-        signingKey = /var/lib/zeroclaw/.ssh/id_ed25519_eliza_signing.pub
+        email = thomas@skovlund.dev
+        signingKey = /var/lib/zeroclaw/.ssh/id_ed25519_github.pub
       [gpg]
         format = ssh
       [commit]
