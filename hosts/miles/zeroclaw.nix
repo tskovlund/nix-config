@@ -584,59 +584,34 @@ in
   };
   users.groups.zeroclaw = { };
 
-  # Ensure workspace directories exist before agenix tries to symlink secrets.
-  # tmpfiles runs early in boot, before agenix activation.
-  systemd.tmpfiles.rules = [
-    "d /var/lib/zeroclaw/.zeroclaw/workspace 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/delegation 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/docs 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/linear-operations 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/memory-management 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/morning-briefing 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/notification-routing 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/pr-review 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/self-improvement 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/skill-management 0755 zeroclaw zeroclaw -"
-    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/system-health 0755 zeroclaw zeroclaw -"
-  ];
-
   # --- Agenix secrets: Eliza skills and workspace files ---
-  # Decrypted from eliza-config's encrypted .age files to the zeroclaw workspace.
+  # Decrypted to /run/agenix/ (default location), then copied to the zeroclaw
+  # workspace by zeroclaw-setup. We don't use custom `path` because agenix
+  # activation runs before the workspace directories exist.
   age.secrets =
     let
-      mkSkillSecret = name: {
-        file = "${eliza-config}/secrets/skill-${name}.age";
-        path = "/var/lib/zeroclaw/.zeroclaw/workspace/skills/${name}/SKILL.md";
-        owner = "zeroclaw";
-        group = "zeroclaw";
-        mode = "0644";
-      };
-      mkWorkspaceSecret = name: {
-        file = "${eliza-config}/secrets/workspace-${name}.age";
-        path = "/var/lib/zeroclaw/.zeroclaw/workspace/${name}.md";
-        owner = "zeroclaw";
-        group = "zeroclaw";
+      mkElizaSecret = name: {
+        file = "${eliza-config}/secrets/${name}.age";
         mode = "0644";
       };
     in
     {
-      eliza-skill-delegation = mkSkillSecret "delegation";
-      eliza-skill-docs = mkSkillSecret "docs";
-      eliza-skill-linear-operations = mkSkillSecret "linear-operations";
-      eliza-skill-memory-management = mkSkillSecret "memory-management";
-      eliza-skill-morning-briefing = mkSkillSecret "morning-briefing";
-      eliza-skill-notification-routing = mkSkillSecret "notification-routing";
-      eliza-skill-pr-review = mkSkillSecret "pr-review";
-      eliza-skill-self-improvement = mkSkillSecret "self-improvement";
-      eliza-skill-skill-management = mkSkillSecret "skill-management";
-      eliza-skill-system-health = mkSkillSecret "system-health";
+      eliza-skill-delegation = mkElizaSecret "skill-delegation";
+      eliza-skill-docs = mkElizaSecret "skill-docs";
+      eliza-skill-linear-operations = mkElizaSecret "skill-linear-operations";
+      eliza-skill-memory-management = mkElizaSecret "skill-memory-management";
+      eliza-skill-morning-briefing = mkElizaSecret "skill-morning-briefing";
+      eliza-skill-notification-routing = mkElizaSecret "skill-notification-routing";
+      eliza-skill-pr-review = mkElizaSecret "skill-pr-review";
+      eliza-skill-self-improvement = mkElizaSecret "skill-self-improvement";
+      eliza-skill-skill-management = mkElizaSecret "skill-skill-management";
+      eliza-skill-system-health = mkElizaSecret "skill-system-health";
 
-      eliza-workspace-AGENTS = mkWorkspaceSecret "AGENTS";
-      eliza-workspace-IDENTITY = mkWorkspaceSecret "IDENTITY";
-      eliza-workspace-SOUL = mkWorkspaceSecret "SOUL";
-      eliza-workspace-TOOLS = mkWorkspaceSecret "TOOLS";
-      eliza-workspace-USER = mkWorkspaceSecret "USER";
+      eliza-workspace-AGENTS = mkElizaSecret "workspace-AGENTS";
+      eliza-workspace-IDENTITY = mkElizaSecret "workspace-IDENTITY";
+      eliza-workspace-SOUL = mkElizaSecret "workspace-SOUL";
+      eliza-workspace-TOOLS = mkElizaSecret "workspace-TOOLS";
+      eliza-workspace-USER = mkElizaSecret "workspace-USER";
     };
 
   # Deploy SSH keys, config.toml, and .gitconfig for ZeroClaw.
@@ -718,6 +693,26 @@ in
       else
         echo "WARNING: $AGE_KEY_SRC not found — self-modification encryption will fail"
       fi
+
+      # --- Eliza skills and workspace files ---
+      # Agenix decrypts to /run/agenix/eliza-*. Copy to the workspace.
+
+      mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
+
+      for secret in /run/agenix/eliza-skill-*; do
+        [ -f "$secret" ] || continue
+        name=$(basename "$secret" | ${pkgs.gnused}/bin/sed 's/^eliza-skill-//')
+        mkdir -p "/var/lib/zeroclaw/.zeroclaw/workspace/skills/$name"
+        cp "$secret" "/var/lib/zeroclaw/.zeroclaw/workspace/skills/$name/SKILL.md"
+      done
+
+      for secret in /run/agenix/eliza-workspace-*; do
+        [ -f "$secret" ] || continue
+        name=$(basename "$secret" | ${pkgs.gnused}/bin/sed 's/^eliza-workspace-//')
+        cp "$secret" "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
+      done
+
+      chown -R zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/workspace
 
       # --- Config.toml ---
       # Base config from Nix store with secret placeholders.
