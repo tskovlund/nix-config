@@ -586,6 +586,7 @@ in
   systemd.services.zeroclaw-setup = {
     description = "Deploy keys and config for ZeroClaw";
     wantedBy = [ "multi-user.target" ];
+    after = [ "home-manager-thomas.service" ]; # agenix secrets must be decrypted first
     before = [ "zeroclaw.service" ];
     path = [ pkgs.openssh ];
     serviceConfig = {
