@@ -696,7 +696,9 @@ in
 
       # --- Eliza skills and workspace files ---
       # Agenix decrypts to /run/agenix/eliza-*. Copy to the workspace.
+      # Clean up any old Nix store symlinks from the previous deployment model.
 
+      rm -rf /var/lib/zeroclaw/.zeroclaw/workspace/skills
       mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
 
       for secret in /run/agenix/eliza-skill-*; do
