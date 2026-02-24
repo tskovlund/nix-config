@@ -162,13 +162,14 @@ ZeroClaw is the primary LLM gateway — provider routing, memory, and channel in
 
 - **Version:** v0.1.6
 - **Config:** `hosts/miles/zeroclaw.nix` (NixOS module + package from source)
-- **Config repo:** `git+ssh://git@github.com/tskovlund/eliza-config` (flake input, deployed declaratively)
-- **Skills:** 10 deployed as Nix store symlinks (morning-briefing, pr-review, self-improvement, skill-management, docs, linear-operations, system-health, memory-management, delegation, notification-routing)
-- **Workspace files:** 5 deployed as Nix store symlinks (SOUL.md, IDENTITY.md, AGENTS.md, TOOLS.md, USER.md)
+- **Config repo:** `github:tskovlund/eliza-config` (public, agenix-encrypted non-flake input)
+- **Skills:** 10 deployed, agenix-encrypted (morning-briefing, pr-review, self-improvement, skill-management, docs, linear-operations, system-health, memory-management, delegation, notification-routing)
+- **Workspace files:** 5 deployed, agenix-encrypted (SOUL.md, IDENTITY.md, AGENTS.md, TOOLS.md, USER.md)
 - **Data:** `/var/lib/zeroclaw/.zeroclaw/` (SQLite memory DB, auth profiles, config)
 - **User:** `zeroclaw` system user
 - **Dashboard:** `http://miles:3000` (Tailscale only, requires pairing code from service logs)
 - **Memory:** max_history_messages=30, archive_after_days=2, purge_after_days=30
+- **Self-modification:** ZeroClaw can decrypt, edit, re-encrypt, and push skill/workspace changes via age key
 
 ### Configuration
 
@@ -178,11 +179,23 @@ To change config: edit the `zeroclaw-config` attrset in `zeroclaw.nix`, then `ma
 
 To update secrets: `agenix -e secrets/zeroclaw-<name>.age` in nix-config-personal, then `make switch` (macOS) + `make deploy-miles`.
 
+### eliza-config (skills and workspace)
+
+The `eliza-config` repo is public on GitHub. All sensitive content (skills, workspace markdown) is agenix-encrypted at rest as `.age` files in `secrets/`. Git history was squashed before making the repo public.
+
+**Deployment chain:**
+1. nix-config imports eliza-config as a non-flake input (`github:tskovlund/eliza-config`)
+2. NixOS agenix module decrypts `.age` files to `/run/agenix/` at activation
+3. `zeroclaw-setup` oneshot copies decrypted files to workspace directories
+4. Age key is deployed to `/var/lib/zeroclaw/.config/agenix/age-key.txt` for self-modification
+
+**Self-modification flow:** ZeroClaw has `age` in PATH and can decrypt `.age` files, edit them, re-encrypt with `age -r <pubkey>`, commit, push, and touch a redeploy trigger. The `eliza-redeploy` systemd path unit watches for the trigger and hot-reloads changes.
+
 ### Systemd sandbox
 
 The systemd unit provides the security boundary. Eliza can only write to `/var/lib/zeroclaw` (`StateDirectory`). Key constraints kept: `ProtectSystem=strict`, `ProtectHome`, `NoNewPrivileges`, `ProtectKernelModules`. ZeroClaw's internal sandbox is disabled (`backend = "none"`) to avoid double-jailing.
 
-Tools in PATH: git, gh, curl, wget, jq, yq-go, ripgrep, fd, nodejs, python3.
+Tools in PATH: git, gh, curl, wget, jq, yq-go, ripgrep, fd, nodejs, python3, age.
 
 ### Common operations
 
