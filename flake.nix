@@ -48,10 +48,10 @@
     };
 
     # Eliza configuration — skills, workspace files, and personality.
-    # Non-flake input (plain directory). Uses SSH for private repo access.
+    # Non-flake input (plain directory). Secrets are agenix-encrypted.
     # To update: nix flake update eliza-config
     eliza-config = {
-      url = "git+ssh://git@github.com/tskovlund/eliza-config";
+      url = "github:tskovlund/eliza-config";
       flake = false;
     };
 
@@ -185,6 +185,10 @@
                 mcp-servers-nix.overlays.default
                 agenix.overlays.default
               ];
+            }
+            agenix.nixosModules.default
+            {
+              age.identityPaths = [ "/home/${username}/.config/agenix/age-key.txt" ];
             }
             home-manager.nixosModules.home-manager
             (

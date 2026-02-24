@@ -4,6 +4,9 @@
 # zeroclaw-setup oneshot service. Secrets (API key, Telegram token, gateway token)
 # are agenix-encrypted in nix-config-personal and injected at deploy time.
 #
+# Eliza skills and workspace files are agenix-encrypted in eliza-config and
+# decrypted by the NixOS agenix module to /var/lib/zeroclaw/.zeroclaw/workspace/.
+#
 # See docs/miles.md for operational runbook.
 {
   lib,
@@ -186,6 +189,7 @@ let
         "nix-build"
         "nix-shell"
         "openssl"
+        "age"
       ];
       forbidden_paths = [
         "/boot"
@@ -580,6 +584,44 @@ in
   };
   users.groups.zeroclaw = { };
 
+  # --- Agenix secrets: Eliza skills and workspace files ---
+  # Decrypted from eliza-config's encrypted .age files to the zeroclaw workspace.
+  age.secrets =
+    let
+      mkSkillSecret = name: {
+        file = "${eliza-config}/secrets/skill-${name}.age";
+        path = "/var/lib/zeroclaw/.zeroclaw/workspace/skills/${name}/SKILL.md";
+        owner = "zeroclaw";
+        group = "zeroclaw";
+        mode = "0644";
+      };
+      mkWorkspaceSecret = name: {
+        file = "${eliza-config}/secrets/workspace-${name}.age";
+        path = "/var/lib/zeroclaw/.zeroclaw/workspace/${name}.md";
+        owner = "zeroclaw";
+        group = "zeroclaw";
+        mode = "0644";
+      };
+    in
+    {
+      eliza-skill-delegation = mkSkillSecret "delegation";
+      eliza-skill-docs = mkSkillSecret "docs";
+      eliza-skill-linear-operations = mkSkillSecret "linear-operations";
+      eliza-skill-memory-management = mkSkillSecret "memory-management";
+      eliza-skill-morning-briefing = mkSkillSecret "morning-briefing";
+      eliza-skill-notification-routing = mkSkillSecret "notification-routing";
+      eliza-skill-pr-review = mkSkillSecret "pr-review";
+      eliza-skill-self-improvement = mkSkillSecret "self-improvement";
+      eliza-skill-skill-management = mkSkillSecret "skill-management";
+      eliza-skill-system-health = mkSkillSecret "system-health";
+
+      eliza-workspace-AGENTS = mkWorkspaceSecret "AGENTS";
+      eliza-workspace-IDENTITY = mkWorkspaceSecret "IDENTITY";
+      eliza-workspace-SOUL = mkWorkspaceSecret "SOUL";
+      eliza-workspace-TOOLS = mkWorkspaceSecret "TOOLS";
+      eliza-workspace-USER = mkWorkspaceSecret "USER";
+    };
+
   # Deploy SSH keys, config.toml, and .gitconfig for ZeroClaw.
   # Runs as root before zeroclaw.service — accesses Thomas's home for agenix secrets.
   # Same pattern as restic-secrets in backups.nix.
@@ -646,6 +688,20 @@ in
       GITCONFIG
       chown zeroclaw:zeroclaw /var/lib/zeroclaw/.gitconfig
 
+      # --- Age key (for self-modification: decrypt/encrypt skills) ---
+
+      AGE_KEY_SRC="/home/${username}/.config/agenix/age-key.txt"
+      AGE_KEY_DEST="/var/lib/zeroclaw/.config/agenix/age-key.txt"
+      mkdir -p /var/lib/zeroclaw/.config/agenix
+      if [ -f "$AGE_KEY_SRC" ]; then
+        cp "$AGE_KEY_SRC" "$AGE_KEY_DEST"
+        chown zeroclaw:zeroclaw /var/lib/zeroclaw/.config/agenix
+        chown zeroclaw:zeroclaw "$AGE_KEY_DEST"
+        chmod 600 "$AGE_KEY_DEST"
+      else
+        echo "WARNING: $AGE_KEY_SRC not found — self-modification encryption will fail"
+      fi
+
       # --- Config.toml ---
       # Base config from Nix store with secret placeholders.
       # Secrets are injected from agenix-decrypted paths in Thomas's home.
@@ -701,11 +757,13 @@ in
     path = [
       pkgs.git
       pkgs.openssh # git fetch needs ssh for SSH remotes
+      pkgs.age # decrypt .age files
     ];
     script = ''
       set -euo pipefail
       CLONE="/var/lib/zeroclaw/repos/eliza-config"
       WORKSPACE="/var/lib/zeroclaw/.zeroclaw/workspace"
+      AGE_KEY="/var/lib/zeroclaw/.config/agenix/age-key.txt"
 
       # Remove trigger first (so it can be re-created for next deploy)
       rm -f /var/lib/zeroclaw/.zeroclaw/redeploy-trigger
@@ -717,15 +775,21 @@ in
       git -c safe.directory='*' -C "$CLONE" fetch origin
       git -c safe.directory='*' -C "$CLONE" reset --hard origin/main
 
-      # Hot reload: copy skills (replacing Nix store symlinks with real files)
-      rm -rf "$WORKSPACE/skills"
-      cp -r "$CLONE/skills" "$WORKSPACE/skills"
+      # Hot reload: decrypt skills from .age files
+      for agefile in "$CLONE"/secrets/skill-*.age; do
+        [ -f "$agefile" ] || continue
+        name=$(basename "$agefile" .age)
+        skill_dir=$(echo "$name" | sed 's/^skill-//')
+        mkdir -p "$WORKSPACE/skills/$skill_dir"
+        age -d -i "$AGE_KEY" "$agefile" > "$WORKSPACE/skills/$skill_dir/SKILL.md"
+      done
 
-      # Hot reload: copy workspace files
-      for file in "$CLONE"/workspace/*.md; do
-        filename=$(basename "$file")
-        rm -f "$WORKSPACE/$filename"
-        cp "$file" "$WORKSPACE/$filename"
+      # Hot reload: decrypt workspace files from .age files
+      for agefile in "$CLONE"/secrets/workspace-*.age; do
+        [ -f "$agefile" ] || continue
+        name=$(basename "$agefile" .age)
+        md_name=$(echo "$name" | sed 's/^workspace-//')
+        age -d -i "$AGE_KEY" "$agefile" > "$WORKSPACE/$md_name.md"
       done
 
       # Fix ownership
@@ -776,17 +840,18 @@ in
       unzip
       nodejs
       python3
+      age # decrypt/encrypt agenix secrets for self-modification
     ];
 
     environment = {
       HOME = "/var/lib/zeroclaw";
     };
 
-    # Ensure workspace directory exists and deploy skills + workspace files from eliza-config.
-    # Files are symlinked to the Nix store, making them genuinely immutable.
-    # Eliza must edit in the eliza-config repo and redeploy to change skills.
+    # Ensure workspace directories exist. Skills and workspace files are deployed
+    # by the NixOS agenix module (age.secrets above), not by preStart.
     preStart = ''
       mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
+      mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills/{delegation,docs,linear-operations,memory-management,morning-briefing,notification-routing,pr-review,self-improvement,skill-management,system-health}
 
       # Persistent clone of eliza-config for self-modification.
       # Eliza edits skills here, commits, pushes, then touches the redeploy trigger.
@@ -796,21 +861,6 @@ in
         ${pkgs.git}/bin/git clone git@github.com:tskovlund/eliza-config.git /var/lib/zeroclaw/repos/eliza-config || \
           echo "WARNING: git clone failed — self-modification unavailable until key is deployed"
       fi
-
-      # Clean up stale skill entries (both symlinks and leftover directories)
-      find /var/lib/zeroclaw/.zeroclaw/workspace/skills/ -maxdepth 1 -mindepth 1 -exec rm -rf {} + 2>/dev/null || true
-
-      # Symlink each skill directory from the Nix store (immutable)
-      for skill in ${eliza-config}/skills/*/; do
-        skill_name=$(basename "$skill")
-        ln -sfn "$skill" "/var/lib/zeroclaw/.zeroclaw/workspace/skills/$skill_name"
-      done
-
-      # Symlink workspace identity files from the Nix store (immutable)
-      for file in ${eliza-config}/workspace/*.md; do
-        filename=$(basename "$file")
-        ln -sfn "$file" "/var/lib/zeroclaw/.zeroclaw/workspace/$filename"
-      done
     '';
 
     serviceConfig = {

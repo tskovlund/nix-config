@@ -68,17 +68,17 @@
     "eliza-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1771727412,
-        "narHash": "sha256-kS99qoD+ZZIZx5JH/7IHQ2Ua4ovarFyBdxBIZNucJnI=",
-        "ref": "refs/heads/main",
-        "rev": "07c865529eae39c60ef67fe8cfd857dad2efc193",
-        "revCount": 1,
-        "type": "git",
-        "url": "ssh://git@github.com/tskovlund/eliza-config"
+        "lastModified": 1771927517,
+        "narHash": "sha256-pvMLISt97dUyFLcv9wlLEjuWk8NEQHn65YKwZaeEp0c=",
+        "owner": "tskovlund",
+        "repo": "eliza-config",
+        "rev": "4b9afda3ea25dfe700a00f8baf39088f9e27b817",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/tskovlund/eliza-config"
+        "owner": "tskovlund",
+        "repo": "eliza-config",
+        "type": "github"
       }
     },
     "flake-compat": {
