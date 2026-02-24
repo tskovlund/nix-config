@@ -233,6 +233,7 @@ let
         "/nix"
         "/run"
         "/var/lib/zeroclaw/repos"
+        "/var/lib/zeroclaw/.config/agenix" # age key for self-modification
       ];
       non_cli_excluded_tools = [ ];
     };
