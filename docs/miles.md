@@ -170,20 +170,13 @@ ZeroClaw is the primary LLM gateway — provider routing, memory, and channel in
 - **Dashboard:** `http://miles:3000` (Tailscale only, requires pairing code from service logs)
 - **Memory:** max_history_messages=30, archive_after_days=2, purge_after_days=30
 
-### First-time setup (after deploy)
+### Configuration
 
-```sh
-# 1. Set up OpenRouter provider
-sudo -u zeroclaw zeroclaw onboard --api-key <openrouter-api-key> --provider openrouter
+Config.toml is declared as a Nix attrset in `zeroclaw.nix` and generated at deploy time. Secrets (API key, Telegram bot token, gateway pairing token) are agenix-encrypted in nix-config-personal and injected by the `zeroclaw-setup` oneshot service.
 
-# 2. Create a Telegram bot via @BotFather, get the token, then:
-sudo -u zeroclaw zeroclaw channel bind-telegram <telegram-chat-id>
+To change config: edit the `zeroclaw-config` attrset in `zeroclaw.nix`, then `make deploy-miles`.
 
-# 3. Verify
-sudo -u zeroclaw zeroclaw status
-sudo -u zeroclaw zeroclaw auth status
-sudo -u zeroclaw zeroclaw channel doctor
-```
+To update secrets: `agenix -e secrets/zeroclaw-<name>.age` in nix-config-personal, then `make switch` (macOS) + `make deploy-miles`.
 
 ### Systemd sandbox
 
