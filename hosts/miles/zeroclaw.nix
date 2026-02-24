@@ -584,6 +584,23 @@ in
   };
   users.groups.zeroclaw = { };
 
+  # Ensure workspace directories exist before agenix tries to symlink secrets.
+  # tmpfiles runs early in boot, before agenix activation.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/zeroclaw/.zeroclaw/workspace 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/delegation 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/docs 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/linear-operations 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/memory-management 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/morning-briefing 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/notification-routing 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/pr-review 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/self-improvement 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/skill-management 0755 zeroclaw zeroclaw -"
+    "d /var/lib/zeroclaw/.zeroclaw/workspace/skills/system-health 0755 zeroclaw zeroclaw -"
+  ];
+
   # --- Agenix secrets: Eliza skills and workspace files ---
   # Decrypted from eliza-config's encrypted .age files to the zeroclaw workspace.
   age.secrets =
@@ -847,12 +864,9 @@ in
       HOME = "/var/lib/zeroclaw";
     };
 
-    # Ensure workspace directories exist. Skills and workspace files are deployed
-    # by the NixOS agenix module (age.secrets above), not by preStart.
+    # Skills and workspace files are deployed by agenix (age.secrets above).
+    # Workspace directories are created by tmpfiles rules.
     preStart = ''
-      mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
-      mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills/{delegation,docs,linear-operations,memory-management,morning-briefing,notification-routing,pr-review,self-improvement,skill-management,system-health}
-
       # Persistent clone of eliza-config for self-modification.
       # Eliza edits skills here, commits, pushes, then touches the redeploy trigger.
       # Non-fatal: SSH key may not be available on first deploy.
