@@ -711,6 +711,7 @@ in
       for secret in /run/agenix/eliza-workspace-*; do
         [ -f "$secret" ] || continue
         name=$(basename "$secret" | ${pkgs.gnused}/bin/sed 's/^eliza-workspace-//')
+        rm -f "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
         cp "$secret" "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
       done
 
