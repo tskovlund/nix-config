@@ -68,6 +68,9 @@ in
     maxretry = 5;
     bantime = "1h";
     bantime-increment.enable = true; # exponential backoff on repeat offenders
+    ignoreIP = [
+      "100.64.0.0/10" # Tailscale CGNAT range — never ban our own devices
+    ];
   };
 
   # Kernel hardening — targeted sysctl settings that don't break containers.
