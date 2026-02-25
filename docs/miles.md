@@ -17,7 +17,7 @@ Operational runbook for the `miles` VPS (Miles Davis). See `hosts/miles/` for th
 ## Hetzner resources
 
 - **Server:** `miles` (ID: 121311252)
-- **Firewall:** `miles-fw` (ID: 10552211) — inbound TCP 22, 80, 443
+- **Firewall:** `miles-fw` (ID: 10552211) — inbound TCP 80, 443 (SSH via Tailscale only)
 - **SSH key:** `miles` (uploaded to Hetzner, corresponds to `id_ed25519_miles`)
 - **Protection:** delete + rebuild protection enabled
 
@@ -59,7 +59,7 @@ Additional hardening:
 
 - **Tailscale:** SSH is Tailscale-only — port 22 is not open on the NixOS firewall. See [Tailscale](#tailscale) section.
 - **SSH:** key-only auth, no root password, `PermitRootLogin = "prohibit-password"`
-- **fail2ban:** 5 retries, 1h ban, exponential backoff on repeat offenders
+- **fail2ban:** 5 retries, 1h ban, exponential backoff on repeat offenders. Tailscale CGNAT range (100.64.0.0/10) whitelisted via ignoreIP
 - **sysctl:** dmesg_restrict, kptr_restrict, ptrace_scope, rp_filter, tcp_syncookies, log_martians
 - **No hardened kernel** — breaks unprivileged user namespaces needed for rootless containers
 
@@ -106,6 +106,8 @@ ssh miles          # as thomas (full shell/tools)
 ssh root@miles     # as root (admin tasks)
 ssh miles-direct   # emergency: via public IP (only works if port 22 is re-enabled)
 ```
+
+`deploy-miles` automatically updates the `eliza-config` flake input (commits and pushes the lock change) before building, so Eliza's pushed skill changes are always included.
 
 ## Tailscale
 
@@ -160,7 +162,7 @@ All state is either in the nix-config repo (declarative), encrypted in nix-confi
 
 ZeroClaw is the primary LLM gateway — provider routing, memory, and channel integrations.
 
-- **Version:** v0.1.6
+- **Version:** built from source (`zeroclaw-src` flake input)
 - **Config:** `hosts/miles/zeroclaw.nix` (NixOS module + package from source)
 - **Config repo:** `github:tskovlund/eliza-config` (public, agenix-encrypted non-flake input)
 - **Skills:** 10 deployed, agenix-encrypted (morning-briefing, pr-review, self-improvement, skill-management, docs, linear-operations, system-health, memory-management, delegation, notification-routing)
