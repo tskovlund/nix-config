@@ -20,6 +20,9 @@
   # Enable zsh system-wide
   programs.zsh.enable = true;
 
+  # Enable nix-ld for running dynamically linked binaries (e.g. NuGet's Grpc.Tools protoc)
+  programs.nix-ld.enable = true;
+
   # State version for NixOS. Set once on first build, never change.
   # This doesn't affect which packages you get — it controls state format
   # migrations. Changing it can trigger irreversible data migrations.
