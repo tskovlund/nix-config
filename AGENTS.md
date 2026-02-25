@@ -168,7 +168,7 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 ## Machine-local config
 
-Two mechanisms allow per-machine customization without modifying the repo:
+Three mechanisms allow per-machine customization without modifying the repo:
 
 ### Nix packages (`local.nix`)
 
@@ -178,6 +178,16 @@ Optional local config lives at `~/.config/nix-config/local.nix` (outside the rep
 - The file is a standard home-manager module (receives `{ pkgs, ... }`)
 - `nix flake check` and CI are unaffected (pure evaluation = local.nix ignored)
 - See `examples/local.nix` for a starter template
+
+### NixOS system config (`local-system.nix`)
+
+Optional local NixOS system config lives at `~/.config/nix-config/local-system.nix` (outside the repo). It's imported as a NixOS module by all NixOS targets when present and `--impure` is used. Without `--impure`, it's silently skipped. Use this for system-level options that can't go in home-manager (e.g. `security.pki`, `networking`, `services`).
+
+- Apply with: `make switch IMPURE=1`
+- The file is a standard NixOS module (receives `{ pkgs, ... }`)
+- Only applies to NixOS targets (not Darwin or standalone Linux)
+- `nix flake check` and CI are unaffected (pure evaluation = local-system.nix ignored)
+- See `examples/local-system.nix` for a starter template
 
 ### SSH config (`config.local`)
 

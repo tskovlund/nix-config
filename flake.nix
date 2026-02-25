@@ -90,6 +90,16 @@
         in
         if builtins.pathExists path then [ path ] else [ ];
 
+      # Optional machine-local NixOS system config (outside the repo).
+      # Requires --impure to take effect; silently skipped in pure evaluation.
+      # Use for system-level overrides like security.pki, networking, etc.
+      localSystemModules =
+        homeDir:
+        let
+          path = /. + "${homeDir}/.config/nix-config/local-system.nix";
+        in
+        if builtins.pathExists path then [ path ] else [ ];
+
       # Helper: create a nix-darwin system with the given modules.
       # homeModules: home-manager modules (cross-platform user config)
       # darwinModules: extra nix-darwin system modules (e.g. hosts/darwin/personal.nix)
@@ -222,7 +232,8 @@
               }
             )
           ]
-          ++ nixosModules;
+          ++ nixosModules
+          ++ localSystemModules "/home/${username}";
         };
 
       # Module sets
