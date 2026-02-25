@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   # Daemonless container runtime. dockerCompat provides `docker` CLI alias
@@ -6,5 +6,9 @@
   virtualisation.podman = {
     enable = true;
     dockerCompat = true;
+    dockerSocket.enable = true;
   };
+
+  # Docker Compose CLI plugin, wired through the Podman docker-compat socket.
+  environment.systemPackages = [ pkgs.docker-compose ];
 }
