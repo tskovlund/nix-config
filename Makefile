@@ -222,7 +222,7 @@ switch-nixos-wsl-base: .check-identity
 # Subsequent updates use these targets (builds on VPS via --build-host):
 
 deploy-miles: .check-identity
-	nix flake lock --update-input eliza-config
+	nix flake update eliza-config
 	git diff --quiet flake.lock || (git commit flake.lock -m "chore(deps): update eliza-config input" && git push)
 	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
