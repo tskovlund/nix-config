@@ -2,6 +2,8 @@
 
 This file documents how this repo is structured and how to extend it.
 
+Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
+
 ## Architecture
 
 - **flake.nix**: Entry point. Declares inputs and wires up:
