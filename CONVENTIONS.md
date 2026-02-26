@@ -108,6 +108,8 @@ relevant subset in its own AGENTS.md / CLAUDE.md / CONTRIBUTING.md.
   where the README already covers everything, `docs/` is not required
 - **CONTRIBUTING.md** when external contributors are expected — references
   CONVENTIONS.md for standards, covers dev setup and PR process
+- **Author section at the bottom of every README** — always present. Licensed
+  repos also have a License section (linking to the LICENSE file) after it
 
 ## Project Structure
 
@@ -117,3 +119,9 @@ relevant subset in its own AGENTS.md / CLAUDE.md / CONTRIBUTING.md.
   AI agent instructions
 - **Shared CI via `tskovlund/.github`** — reusable workflows for common
   patterns. Repos reference shared workflows instead of duplicating CI
+  configuration
+- **Automate enforcement** — CI checks, pre-commit/pre-push hooks, linting,
+  and type checking should enforce every rule that can be checked automatically
+- **Conventions belong in the repo** — each repo includes the relevant subset
+  of these conventions in its own docs. Redundancy across repos is intentional
+  so that every contributor picks them up
