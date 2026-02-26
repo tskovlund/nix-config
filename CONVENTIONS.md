@@ -118,9 +118,3 @@ relevant subset in its own AGENTS.md / CLAUDE.md / CONTRIBUTING.md.
   of these conventions in its own docs. Redundancy across repos is intentional
   so that every contributor picks them up
 
-## Python-Specific
-
-- **src layout** — all package code under `src/<package>/`
-- **Pyright strict mode** — all function signatures fully typed
-- **Ruff** for linting and formatting (line length 88)
-- **`__all__` in every module** — explicitly declare the public API
