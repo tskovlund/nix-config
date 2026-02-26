@@ -120,6 +120,10 @@ direnv allow
 
 This sets up commit hooks — pre-commit formats and lints `.nix` files, pre-push runs `nix flake check --all-systems`. CI validates both Linux and macOS on every PR.
 
+## Author
+
+Thomas Skovlund Hansen — [thomas@skovlund.dev](mailto:thomas@skovlund.dev)
+
 ## License
 
-MIT
+[MIT](LICENSE)
