@@ -1,4 +1,4 @@
-# CLAUDE.md — nix-config conventions
+# nix-config
 
 This file documents how this repo is structured and how to extend it.
 
