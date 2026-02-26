@@ -81,9 +81,6 @@ When adding new config, put it in base unless it's obviously personal. When in d
 
 ## Git workflow
 
-- **Direct to main**: config tweaks, bug fixes, small additions within an existing module
-- **Branch + PR**: new modules/phases, structural changes to flake.nix, anything touching multiple modules
-
 ### PR workflow (branch + PR)
 
 1. Create a feature branch: `git checkout -b feat/<name>`
@@ -151,13 +148,12 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 ## Style preferences
 
-- **Conventional commits.** All commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `type(scope): description`. Common types: `feat`, `fix`, `docs`, `chore`, `refactor`. Include scope when a commit touches a single module; omit for cross-cutting changes. Use these scopes consistently:
+- **Conventional commit scopes.** Include scope when a commit touches a single module; omit for cross-cutting changes. Use these scopes consistently:
   - **Module scopes** (map to `home/<dir>/`): `shell`, `git`, `editor`, `tools`, `claude`, `darwin`, `linux`
   - **Infra scopes**: `ci`, `bootstrap`, `flake`, `deps`
   - Example: `feat(shell): add fzf integration`, `fix(claude): skip tmux for non-interactive subcommands`, `chore(deps): update flake inputs`
-- **No ambiguous abbreviations.** Use explicit names: `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
+- **Nix naming: no `mk` prefix.** Use `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
 - **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
-- **Proper fixes over workarounds.** Always solve problems at the root cause. Workarounds are acceptable only for sufficiently small problems, with clear justification, and require explicit confirmation from Thomas. If a workaround is used, document why and create a follow-up issue for the proper fix. Workarounds erode maintainability over time — resist them by default.
 - **Verify UI changes before pushing.** For visual/UI changes (prompts, themes, TUI output, etc.) where `make check` can't confirm correctness, `make switch` first and ask Thomas to verify the result visually before committing and pushing.
 - **Use the best model for the job.** Cost is not a concern. When spawning agents for complex tasks, use Opus (with extended thinking if beneficial). Use Sonnet for straightforward, well-scoped subtasks.
 
