@@ -1,4 +1,9 @@
-{ username, pkgs, ... }:
+{
+  username,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   # Stage Manager — personal preference, not in base config.
@@ -116,42 +121,18 @@
     }
   ];
 
-  # Default file type associations via duti.
-  # Fixes incorrect defaults (MuseScore hijacking .md, VLC hijacking .ts, etc.)
-  system.activationScripts.setDefaultApps.text =
+  # Personal post-activation: file type associations + login items.
+  # Uses postActivation (a well-known hook that actually runs). Custom-named
+  # activationScripts (like the old setDefaultApps / setLoginItems) are defined
+  # but never wired into the execution order — only well-known hooks run.
+  # Both duti and osascript need sudo -u because activation runs as root.
+  system.activationScripts.postActivation.text =
     let
       duti = "${pkgs.duti}/bin/duti";
       setDefault = id: ext: "sudo -u ${username} ${duti} -s ${id} ${ext} all 2>/dev/null || true\n";
       iterm = "com.googlecode.iterm2";
       vlc = "org.videolan.vlc";
-    in
-    ''
-      echo "Setting default file type associations..."
-    ''
-    # Code / text files → iTerm2
-    + setDefault iterm ".md"
-    + setDefault iterm ".txt"
-    + setDefault iterm ".json"
-    + setDefault iterm ".yaml"
-    + setDefault iterm ".yml"
-    + setDefault iterm ".toml"
-    + setDefault iterm ".nix"
-    + setDefault iterm ".js"
-    + setDefault iterm ".ts"
-    + setDefault iterm ".py"
-    + setDefault iterm ".sh"
-    # Data → Numbers
-    + setDefault "com.apple.iWork.Numbers" ".csv"
-    # SVG → Firefox
-    + setDefault "org.mozilla.firefox" ".svg"
-    # Media → VLC
-    + setDefault vlc ".mp4"
-    + setDefault vlc ".mkv"
-    + setDefault vlc ".avi";
 
-  # Login items — apps that start automatically on login.
-  system.activationScripts.setLoginItems.text =
-    let
       loginItems = [
         {
           path = "/Applications/Scroll Reverser.app";
@@ -178,6 +159,33 @@
       '';
     in
     ''
+      echo "Setting default file type associations..."
+    ''
+    # Code / text files → iTerm2
+    + setDefault iterm ".md"
+    + setDefault iterm ".txt"
+    + setDefault iterm ".json"
+    + setDefault iterm ".yaml"
+    + setDefault iterm ".yml"
+    + setDefault iterm ".toml"
+    + setDefault iterm ".nix"
+    + setDefault iterm ".js"
+    + setDefault iterm ".ts"
+    + setDefault iterm ".py"
+    + setDefault iterm ".sh"
+    # Data → Numbers
+    + setDefault "com.apple.iWork.Numbers" ".csv"
+    # SVG → Firefox
+    + setDefault "org.mozilla.firefox" ".svg"
+    # Images → Preview
+    + setDefault "com.apple.Preview" ".webp"
+    # Media → VLC
+    + setDefault vlc ".mp4"
+    + setDefault vlc ".mkv"
+    + setDefault vlc ".avi"
+    + setDefault vlc ".webm"
+    # Login items
+    + ''
       echo "Setting login items..."
       ${builtins.concatStringsSep "" (map deleteItem loginItems)}
       ${builtins.concatStringsSep "" (map addItem loginItems)}
