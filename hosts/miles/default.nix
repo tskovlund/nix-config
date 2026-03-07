@@ -89,9 +89,18 @@ in
 
   # Automatic upgrades — rebuilds from the flake weekly on Wednesday 04:00 UTC.
   # Offset from the Monday flake.lock update PR to give time for review + merge.
+  #
+  # The --override-input is critical: without it, the build uses the stub
+  # personal input (username = "user") from flake.lock, which deletes the
+  # real user account and breaks SSH + backups. See: 2025-03-04 incident.
   system.autoUpgrade = {
     enable = true;
     flake = "github:tskovlund/nix-config#miles";
+    flags = [
+      "--override-input"
+      "personal"
+      "github:tskovlund/nix-config-personal"
+    ];
     dates = "Wed *-*-* 04:00:00";
     allowReboot = true;
     rebootWindow = {
