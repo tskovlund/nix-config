@@ -92,7 +92,7 @@ in
   #
   # The --override-input is critical: without it, the build uses the stub
   # personal input (username = "user") from flake.lock, which deletes the
-  # real user account and breaks SSH + backups. See: 2025-03-04 incident.
+  # real user account and breaks SSH + backups. See: 2026-03-04 incident.
   system.autoUpgrade = {
     enable = true;
     flake = "github:tskovlund/nix-config#miles";
