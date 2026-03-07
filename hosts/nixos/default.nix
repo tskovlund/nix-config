@@ -17,6 +17,17 @@
       "claude-code-bin"
     ];
 
+  # Automatic garbage collection — weekly, keep the last 7 days of generations.
+  # Without this, old store paths accumulate and fill the disk.
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
+  # Deduplicate identical files in the Nix store (runs weekly after GC)
+  nix.optimise.automatic = true;
+
   # Enable zsh system-wide
   programs.zsh.enable = true;
 
