@@ -19,7 +19,7 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
   - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
   - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
-  - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, home-manager integration). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
+  - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, automatic nix GC + store optimization). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
   - `hosts/wsl/default.nix` — general WSL layer (interop, automount, start menu launchers). Reusable for any WSL distribution, not just NixOS-WSL.
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
   - `hosts/miles/default.nix` — Hetzner Cloud VPS system config (SSH, firewall, fail2ban, sysctl hardening, auto-upgrade, Caddy, Uptime Kuma, QEMU guest). Naming convention: jazz legends.
@@ -226,7 +226,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
 - `make switch-nixos-wsl` / `switch-nixos-wsl-base` — explicit NixOS-WSL targets
-- `make deploy-miles` — remote deployment to Hetzner VPS (builds on VPS)
+- `make deploy-miles` — remote deployment to Hetzner VPS (builds on VPS). Requires dev shell (`nixos-rebuild` isn't in PATH on macOS). Run from `nix develop` or prefix: `nix develop --command make deploy-miles`
 - `make check` — validate flake (all platforms)
 - `make fmt` — format all Nix files with nixfmt
 - `make lint` — lint all Nix files with statix + deadnix

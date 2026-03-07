@@ -85,14 +85,26 @@ Most services are Tailscale-only. Only the rbb status page (`status.skovlund.dev
 
 The server auto-upgrades from `github:tskovlund/nix-config#miles` every **Wednesday at 04:00 UTC**. This is offset from the Monday flake.lock update PR to allow time for review and merge.
 
+The auto-upgrade passes `--override-input personal github:tskovlund/nix-config-personal` so it builds with the real identity. Without this, the build would use the stub personal input from `flake.lock` (`username = "user"`), deleting the real user account. See: 2026-03-04 incident.
+
 Reboots are allowed within the 03:00–05:00 UTC window (only if a kernel update requires it).
 
 To disable temporarily: `ssh root@miles systemctl stop nixos-upgrade.timer`
+
+## Garbage collection
+
+Automatic nix GC runs weekly on all NixOS hosts (config: `hosts/nixos/default.nix`):
+
+- **GC:** deletes store paths older than 7 days
+- **Store optimization:** deduplicates identical files in the Nix store
+
+This is critical on miles' 80GB disk. Without GC, store bloat from auto-upgrades can fill the disk in weeks.
 
 ## Deployment
 
 ```sh
 # Regular updates (via Tailscale — default)
+# Requires dev shell on macOS: nix develop --command make deploy-miles
 make deploy-miles
 
 # Emergency deployment via public IP (requires port 22 re-enabled in NixOS firewall)
