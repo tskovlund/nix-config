@@ -44,27 +44,21 @@
   # Replaces the old JSONL-based knowledge graph with richer memory operations.
   # Binary is Nix-managed; MCP registration is a one-time manual step
   # (see docs/manual-setup.md).
-  home.file.".local/bin/mcp-memory-service" = {
-    executable = true;
-    text = ''
-      #!/bin/sh
-      export MCP_MEMORY_STORAGE_PATH="''${MCP_MEMORY_STORAGE_PATH:-$HOME/.local/share/claude-memory}"
-      export MCP_MEMORY_MODEL_PATH="$HOME/.local/share/claude-memory/models"
-      export STORAGE_BACKEND="sqlite-vec"
-      exec ${pkgs.mcp-memory-service}/bin/mcp-memory-server "$@"
-    '';
-  };
-
-  # Keep the old wrapper available during migration so both can coexist.
-  # Remove after migration is complete and MCP registration is updated.
-  home.file.".local/bin/mcp-server-memory" = {
-    executable = true;
-    text = ''
-      #!/bin/sh
-      export MEMORY_FILE_PATH="''${MEMORY_FILE_PATH:-$HOME/.local/share/claude-memory/memory.jsonl}"
-      exec ${pkgs.mcp-server-memory}/bin/mcp-server-memory "$@"
-    '';
-  };
+  home.file.".local/bin/mcp-memory-service" =
+    let
+      pythonEnv = pkgs.python312.withPackages (ps: [ pkgs.mcp-memory-service ]);
+    in
+    {
+      executable = true;
+      text = ''
+        #!/bin/sh
+        export MCP_MEMORY_STORAGE_PATH="''${MCP_MEMORY_STORAGE_PATH:-$HOME/.local/share/claude-memory}"
+        export MCP_MEMORY_MODEL_PATH="$HOME/.local/share/claude-memory/models"
+        export STORAGE_BACKEND="sqlite-vec"
+        export MCP_MEMORY_USE_ONNX="1"
+        exec ${pythonEnv}/bin/python -m mcp_memory_service.server "$@"
+      '';
+    };
 
   # Ensure memory data and model directories exist.
   home.activation.createClaudeMemoryDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
