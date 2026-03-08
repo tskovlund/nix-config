@@ -65,7 +65,7 @@ let
       {
         hint = "fast";
         provider = "openrouter";
-        model = "anthropic/claude-haiku-4-5-20251001";
+        model = "anthropic/claude-haiku-4.5";
       }
       {
         hint = "default";
@@ -75,7 +75,7 @@ let
       {
         hint = "heavy";
         provider = "openrouter";
-        model = "anthropic/claude-opus-4-20250514";
+        model = "anthropic/claude-opus-4.6";
       }
     ];
 
@@ -516,7 +516,7 @@ let
       warn_at_percent = 80;
       allow_override = false;
       prices = {
-        "anthropic/claude-opus-4-20250514" = {
+        "anthropic/claude-opus-4.6" = {
           input = 15.0;
           output = 75.0;
         };
@@ -524,7 +524,7 @@ let
           input = 3.0;
           output = 15.0;
         };
-        "anthropic/claude-haiku-4-5-20251001" = {
+        "anthropic/claude-haiku-4.5" = {
           input = 0.8;
           output = 4.0;
         };
