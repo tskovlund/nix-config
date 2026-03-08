@@ -620,6 +620,13 @@ in
       RemainAfterExit = true;
     };
     script = ''
+      # --- Ensure user agenix secrets are current ---
+      # home-manager-thomas.service daemon-reloads user systemd but doesn't restart
+      # the agenix oneshot, so new/changed secrets aren't decrypted until manual
+      # restart or reboot. Force a restart here before we read them.
+      ${pkgs.sudo}/bin/sudo -u ${username} XDG_RUNTIME_DIR=/run/user/$(id -u ${username}) \
+        ${pkgs.systemd}/bin/systemctl --user restart agenix.service
+
       # --- SSH keys ---
 
       mkdir -p /var/lib/zeroclaw/.ssh
