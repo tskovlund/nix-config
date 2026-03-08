@@ -493,7 +493,8 @@ let
 
     web_search = {
       enabled = true;
-      provider = "duckduckgo";
+      provider = "brave";
+      api_key = "@BRAVE_API_KEY@";
       max_results = 5;
       timeout_secs = 15;
     };
@@ -744,6 +745,32 @@ in
       else
         echo "WARNING: $GATEWAY_TOKEN_FILE not found — gateway pairing will fail"
       fi
+
+      BRAVE_API_KEY_FILE="/home/${username}/.config/zeroclaw/brave-api-key"
+      if [ -f "$BRAVE_API_KEY_FILE" ]; then
+        BRAVE_API_KEY=$(cat "$BRAVE_API_KEY_FILE")
+        ${pkgs.gnused}/bin/sed -i "s|@BRAVE_API_KEY@|$BRAVE_API_KEY|g" /var/lib/zeroclaw/.zeroclaw/config.toml
+      else
+        echo "WARNING: $BRAVE_API_KEY_FILE not found — web search will fail"
+        # Fall back to empty key (Brave will reject, but config.toml is valid)
+        ${pkgs.gnused}/bin/sed -i "s|@BRAVE_API_KEY@||g" /var/lib/zeroclaw/.zeroclaw/config.toml
+      fi
+
+      # --- API keys for skills (read by Eliza via file) ---
+
+      mkdir -p /var/lib/zeroclaw/.config/api-keys
+
+      for key_name in linear-api-key notion-api-key openweathermap-api-key newsapi-key finnhub-api-key; do
+        SRC="/home/${username}/.config/zeroclaw/$key_name"
+        DEST="/var/lib/zeroclaw/.config/api-keys/$key_name"
+        if [ -f "$SRC" ]; then
+          cp "$SRC" "$DEST"
+          chown zeroclaw:zeroclaw "$DEST"
+          chmod 600 "$DEST"
+        else
+          echo "WARNING: $SRC not found"
+        fi
+      done
 
       chown zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/config.toml
       chmod 600 /var/lib/zeroclaw/.zeroclaw/config.toml
