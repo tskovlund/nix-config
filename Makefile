@@ -144,7 +144,7 @@ endif
 # --- Prefetch personal input (ensures latest version is cached) ---
 
 .prefetch: .check-identity
-	@nix flake prefetch $(PERSONAL_INPUT) 2>/dev/null || true
+	@nix flake prefetch --refresh $(PERSONAL_INPUT) 2>/dev/null || true
 
 # --- Auto-detecting targets ---
 
