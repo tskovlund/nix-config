@@ -168,3 +168,5 @@ Shared conventions for all tskovlund repositories.
 - **Conventions belong in the repo** — each repo includes the relevant subset
   of these conventions in its own docs. Redundancy across repos is intentional
   so that every contributor picks them up
+
+<!-- Language-specific conventions are appended per-repo by the sync workflow -->
