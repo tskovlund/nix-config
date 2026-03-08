@@ -68,11 +68,11 @@
     "eliza-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1772958194,
-        "narHash": "sha256-Dgba2k4FPLzbR08DW789yEQjBKL5VJuE0UaBZ6rHAuU=",
+        "lastModified": 1772965712,
+        "narHash": "sha256-CQOcjuvglOHM3Dm0+Dyow4QYOoqOnQjnBcuFnQJhn3Y=",
         "owner": "tskovlund",
         "repo": "eliza-config",
-        "rev": "53ecceffcd88d816ce2f95924eafe7200e4b3c8a",
+        "rev": "fdb0cb90270539f0f9c2aeee34a1fd4730075441",
         "type": "github"
       },
       "original": {
