@@ -190,6 +190,16 @@ let
         "nix-shell"
         "openssl"
         "age"
+        "tee"
+        "chmod"
+        "chown"
+        "yes"
+        "timeout"
+        "watch"
+        "column"
+        "paste"
+        "comm"
+        "tput"
       ];
       forbidden_paths = [
         "/boot"
@@ -232,8 +242,7 @@ let
         "/tmp"
         "/nix"
         "/run"
-        "/var/lib/zeroclaw/repos"
-        "/var/lib/zeroclaw/.config/agenix" # age key for self-modification
+        "/var/lib/zeroclaw" # full home — repos, workspace, brain.db, config
       ];
       non_cli_excluded_tools = [ ];
     };
@@ -245,8 +254,8 @@ let
       };
       resources = {
         max_memory_mb = 512;
-        max_cpu_time_seconds = 60;
-        max_subprocesses = 10;
+        max_cpu_time_seconds = 300;
+        max_subprocesses = 20;
         memory_monitoring = true;
       };
       audit = {
@@ -291,7 +300,7 @@ let
     };
 
     reliability = {
-      provider_retries = 2;
+      provider_retries = 3;
       provider_backoff_ms = 500;
       fallback_providers = [ ];
       api_keys = [ ];
@@ -311,7 +320,7 @@ let
     agent = {
       compact_context = false;
       max_tool_iterations = 200;
-      max_history_messages = 30;
+      max_history_messages = 50;
       parallel_tools = true;
       tool_dispatcher = "auto";
     };
@@ -390,13 +399,13 @@ let
 
     channels_config = {
       cli = true;
-      message_timeout_secs = 300;
+      message_timeout_secs = 600;
       telegram = {
         bot_token = "@TELEGRAM_BOT_TOKEN@";
         allowed_users = [ "tskovlund" ];
         stream_mode = "off";
         draft_update_interval_ms = 1000;
-        interrupt_on_new_message = false;
+        interrupt_on_new_message = true;
         mention_only = false;
       };
     };
@@ -408,7 +417,7 @@ let
       archive_after_days = 2;
       purge_after_days = 30;
       conversation_retention_days = 30;
-      embedding_provider = "none";
+      embedding_provider = "openrouter";
       embedding_model = "text-embedding-3-small";
       embedding_dimensions = 1536;
       vector_weight = 0.7;
@@ -472,7 +481,7 @@ let
     http_request = {
       enabled = true;
       allowed_domains = [ "*" ];
-      max_response_size = 0;
+      max_response_size = 1000000; # 1MB (0 was truncating ALL responses to 0 chars)
       timeout_secs = 30;
     };
 
@@ -505,41 +514,29 @@ let
       warn_at_percent = 80;
       allow_override = false;
       prices = {
-        "anthropic/claude-3.5-sonnet" = {
-          input = 3.0;
-          output = 15.0;
-        };
-        "openai/o1-preview" = {
-          input = 15.0;
-          output = 60.0;
-        };
         "anthropic/claude-opus-4-20250514" = {
           input = 15.0;
           output = 75.0;
         };
-        "anthropic/claude-sonnet-4-20250514" = {
+        "anthropic/claude-sonnet-4.6" = {
           input = 3.0;
           output = 15.0;
+        };
+        "anthropic/claude-haiku-4-5-20251001" = {
+          input = 0.8;
+          output = 4.0;
         };
         "google/gemini-2.0-flash" = {
           input = 0.1;
           output = 0.4;
         };
-        "anthropic/claude-3-haiku" = {
-          input = 0.25;
-          output = 1.25;
-        };
-        "google/gemini-1.5-pro" = {
-          input = 1.25;
-          output = 5.0;
+        "openai/gpt-4o" = {
+          input = 2.5;
+          output = 10.0;
         };
         "openai/gpt-4o-mini" = {
           input = 0.15;
           output = 0.6;
-        };
-        "openai/gpt-4o" = {
-          input = 5.0;
-          output = 15.0;
         };
       };
     };
