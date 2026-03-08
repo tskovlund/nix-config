@@ -84,9 +84,9 @@ in
       MCP_SSE_HOST = "0.0.0.0";
       MCP_SSE_PORT = "8765";
 
-      # Storage
-      MCP_MEMORY_STORAGE_PATH = dataDir;
-      MCP_MEMORY_MODEL_PATH = "${dataDir}/models";
+      # Storage: override base dir so DB lives in the StateDirectory
+      # (default would be ~/.local/share/mcp-memory/ under the service user's HOME)
+      MCP_MEMORY_BASE_DIR = dataDir;
       STORAGE_BACKEND = "sqlite-vec";
 
       # Embeddings: local ONNX (MiniLM-L6-v2), zero API cost
