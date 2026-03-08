@@ -494,7 +494,7 @@ let
     web_search = {
       enabled = true;
       provider = "brave";
-      api_key = "@BRAVE_API_KEY@";
+      brave_api_key = "@BRAVE_API_KEY@";
       max_results = 5;
       timeout_secs = 15;
     };
