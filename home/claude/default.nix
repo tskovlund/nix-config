@@ -39,10 +39,24 @@
     executable = true;
   };
 
-  # MCP Memory Server — persistent knowledge graph for Claude Code.
-  # Stores entities, relations, and observations in a JSONL file.
+  # MCP Memory Service — semantic memory with vector search for Claude Code.
+  # Uses ONNX embeddings (MiniLM-L6-v2) + SQLite-vec for local semantic search.
+  # Replaces the old JSONL-based knowledge graph with richer memory operations.
   # Binary is Nix-managed; MCP registration is a one-time manual step
   # (see docs/manual-setup.md).
+  home.file.".local/bin/mcp-memory-service" = {
+    executable = true;
+    text = ''
+      #!/bin/sh
+      export MCP_MEMORY_STORAGE_PATH="''${MCP_MEMORY_STORAGE_PATH:-$HOME/.local/share/claude-memory}"
+      export MCP_MEMORY_MODEL_PATH="$HOME/.local/share/claude-memory/models"
+      export STORAGE_BACKEND="sqlite-vec"
+      exec ${pkgs.mcp-memory-service}/bin/mcp-memory-server "$@"
+    '';
+  };
+
+  # Keep the old wrapper available during migration so both can coexist.
+  # Remove after migration is complete and MCP registration is updated.
   home.file.".local/bin/mcp-server-memory" = {
     executable = true;
     text = ''
@@ -52,9 +66,10 @@
     '';
   };
 
-  # Ensure memory data directory exists.
+  # Ensure memory data and model directories exist.
   home.activation.createClaudeMemoryDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p "$HOME/.local/share/claude-memory"
+    run mkdir -p "$HOME/.local/share/claude-memory/models"
   '';
 
   # MCP Grafana Server — observability integration for Claude Code.

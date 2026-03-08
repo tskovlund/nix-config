@@ -115,6 +115,7 @@
             ./hosts/darwin
             {
               nixpkgs.overlays = [
+                localOverlay
                 mcp-servers-nix.overlays.default
                 agenix.overlays.default
               ];
@@ -152,6 +153,7 @@
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             overlays = [
+              localOverlay
               mcp-servers-nix.overlays.default
               agenix.overlays.default
             ];
@@ -192,6 +194,7 @@
             ./hosts/nixos
             {
               nixpkgs.overlays = [
+                localOverlay
                 mcp-servers-nix.overlays.default
                 agenix.overlays.default
               ];
@@ -235,6 +238,11 @@
           ++ nixosModules
           ++ localSystemModules "/home/${username}";
         };
+
+      # Local package overlay — packages defined in pkgs/ that aren't in nixpkgs.
+      localOverlay = final: prev: {
+        mcp-memory-service = final.callPackage ./pkgs/mcp-memory-service { };
+      };
 
       # Module sets
       baseModules = [ ./home ];
