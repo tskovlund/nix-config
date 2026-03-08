@@ -17,12 +17,18 @@ After running `bootstrap.sh` and `make bootstrap`, these steps remain manual:
 ## All platforms
 
 - **Verify prompt**: Open a new terminal and confirm the starship prompt renders correctly
-- **MCP memory service**: Register with Claude Code (one-time):
+- **MCP memory service**: Register with Claude Code (one-time). Primary instance runs on miles VPS:
+  ```sh
+  claude mcp add --transport http --scope user \
+    -H "X-API-Key: $(cat ~/.config/mcp-memory/api-key)" \
+    memory http://miles:8765/mcp
+  ```
+  For offline/local use (fallback):
   ```sh
   claude mcp add --transport stdio --scope user memory -- \
     ~/.local/bin/mcp-memory-service
   ```
-  Verify with `claude mcp list`. Memory data is stored at `~/.local/share/claude-memory/` (SQLite database with vector embeddings). The ONNX embedding model (~25MB) is auto-downloaded on first run to `~/.local/share/claude-memory/models/`.
+  Verify with `claude mcp list`. See `docs/miles.md` for full setup instructions.
 
 ---
 

@@ -40,8 +40,13 @@
   };
 
   # MCP Memory Service — semantic memory with vector search for Claude Code.
-  # Uses ONNX embeddings (MiniLM-L6-v2) + SQLite-vec for local semantic search.
-  # Replaces the old JSONL-based knowledge graph with richer memory operations.
+  # Uses ONNX embeddings (MiniLM-L6-v2) + SQLite-vec for semantic search.
+  #
+  # Primary instance runs on miles VPS (Streamable HTTP, port 8765).
+  # Claude Code connects via: claude mcp add --transport http --scope user \
+  #   -H "X-API-Key: $(cat ~/.config/mcp-memory/api-key)" memory http://miles:8765/mcp
+  #
+  # This local wrapper is kept as a fallback for offline use (stdio transport).
   # Binary is Nix-managed; MCP registration is a one-time manual step
   # (see docs/manual-setup.md).
   home.file.".local/bin/mcp-memory-service" =

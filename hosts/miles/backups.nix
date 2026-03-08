@@ -51,6 +51,10 @@ let
       src = "/var/lib/private/ntfy-sh/cache-file.db";
       dest = "${snapshotDir}/ntfy-cache.db";
     }
+    {
+      src = "/var/lib/mcp-memory/sqlite_vec.db";
+      dest = "${snapshotDir}/mcp-memory.db";
+    }
   ];
 
   # Generate sqlite3 .backup commands for all databases
@@ -154,6 +158,7 @@ in
       "/var/lib/private/uptime-kuma"
       "/var/lib/grafana"
       "/var/lib/private/ntfy-sh"
+      "/var/lib/mcp-memory"
       # SQLite snapshots (created by backupPrepareCommand)
       snapshotDir
     ];
@@ -176,6 +181,7 @@ in
       "/var/lib/private/uptime-kuma/kuma.db"
       "/var/lib/private/ntfy-sh/user.db"
       "/var/lib/private/ntfy-sh/cache-file.db"
+      "/var/lib/mcp-memory/sqlite_vec.db"
 
       # Grafana ephemeral data (rebuilt on start)
       "/var/lib/grafana/data/plugins"
