@@ -765,6 +765,16 @@ in
         fi
       done
 
+      # MCP memory key lives at a different path than zeroclaw keys
+      MCP_KEY="/home/${username}/.config/mcp-memory/api-key"
+      if [ -f "$MCP_KEY" ]; then
+        cp "$MCP_KEY" /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
+        chown zeroclaw:zeroclaw /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
+        chmod 600 /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
+      else
+        echo "WARNING: $MCP_KEY not found"
+      fi
+
       chown zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/config.toml
       chmod 600 /var/lib/zeroclaw/.zeroclaw/config.toml
     '';
