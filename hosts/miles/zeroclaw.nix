@@ -595,17 +595,10 @@ in
       };
     in
     {
-      eliza-skill-delegation = mkElizaSecret "skill-delegation";
-      eliza-skill-docs = mkElizaSecret "skill-docs";
-      eliza-skill-linear-operations = mkElizaSecret "skill-linear-operations";
-      eliza-skill-memory-management = mkElizaSecret "skill-memory-management";
-      eliza-skill-morning-briefing = mkElizaSecret "skill-morning-briefing";
-      eliza-skill-notification-routing = mkElizaSecret "skill-notification-routing";
-      eliza-skill-pr-review = mkElizaSecret "skill-pr-review";
-      eliza-skill-self-improvement = mkElizaSecret "skill-self-improvement";
-      eliza-skill-skill-management = mkElizaSecret "skill-skill-management";
-      eliza-skill-system-health = mkElizaSecret "skill-system-health";
+      # Skills are plaintext in eliza-config/skills/ — no encryption needed.
+      # They're deployed by the zeroclaw-setup script below (not agenix).
 
+      # Workspace files contain personal data → stay encrypted
       eliza-workspace-AGENTS = mkElizaSecret "workspace-AGENTS";
       eliza-workspace-IDENTITY = mkElizaSecret "workspace-IDENTITY";
       eliza-workspace-SOUL = mkElizaSecret "workspace-SOUL";
@@ -693,19 +686,12 @@ in
         echo "WARNING: $AGE_KEY_SRC not found — self-modification encryption will fail"
       fi
 
-      # --- Eliza skills and workspace files ---
-      # Agenix decrypts to /run/agenix/eliza-*. Copy to the workspace.
-      # Clean up any old Nix store symlinks from the previous deployment model.
+      # --- Eliza skills (plaintext from eliza-config/skills/) ---
 
       rm -rf /var/lib/zeroclaw/.zeroclaw/workspace/skills
-      mkdir -p /var/lib/zeroclaw/.zeroclaw/workspace/skills
+      cp -r ${eliza-config}/skills /var/lib/zeroclaw/.zeroclaw/workspace/skills
 
-      for secret in /run/agenix/eliza-skill-*; do
-        [ -f "$secret" ] || continue
-        name=$(basename "$secret" | ${pkgs.gnused}/bin/sed 's/^eliza-skill-//')
-        mkdir -p "/var/lib/zeroclaw/.zeroclaw/workspace/skills/$name"
-        cp "$secret" "/var/lib/zeroclaw/.zeroclaw/workspace/skills/$name/SKILL.md"
-      done
+      # --- Eliza workspace files (encrypted, from agenix) ---
 
       for secret in /run/agenix/eliza-workspace-*; do
         [ -f "$secret" ] || continue
@@ -797,7 +783,7 @@ in
     path = [
       pkgs.git
       pkgs.openssh # git fetch needs ssh for SSH remotes
-      pkgs.age # decrypt .age files
+      pkgs.age # decrypt workspace .age files
     ];
     script = ''
       set -euo pipefail
@@ -815,14 +801,9 @@ in
       git -c safe.directory='*' -C "$CLONE" fetch origin
       git -c safe.directory='*' -C "$CLONE" reset --hard origin/main
 
-      # Hot reload: decrypt skills from .age files
-      for agefile in "$CLONE"/secrets/skill-*.age; do
-        [ -f "$agefile" ] || continue
-        name=$(basename "$agefile" .age)
-        skill_dir=$(echo "$name" | sed 's/^skill-//')
-        mkdir -p "$WORKSPACE/skills/$skill_dir"
-        age -d -i "$AGE_KEY" "$agefile" > "$WORKSPACE/skills/$skill_dir/SKILL.md"
-      done
+      # Hot reload: copy plaintext skills from clone
+      rm -rf "$WORKSPACE/skills"
+      cp -r "$CLONE/skills" "$WORKSPACE/skills"
 
       # Hot reload: decrypt workspace files from .age files
       for agefile in "$CLONE"/secrets/workspace-*.age; do
