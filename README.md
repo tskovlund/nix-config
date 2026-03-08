@@ -122,7 +122,7 @@ This sets up commit hooks — pre-commit formats and lints `.nix` files, pre-pus
 
 ## Author
 
-Thomas Skovlund Hansen — [thomas@skovlund.dev](mailto:thomas@skovlund.dev)
+Thomas Skovlund Hansen — [skovlund.dev](https://skovlund.dev) · [thomas@skovlund.dev](mailto:thomas@skovlund.dev)
 
 ## License
 
