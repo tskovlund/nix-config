@@ -27,10 +27,10 @@ IS_WSL := $(shell [ -n "$$WSL_DISTRO_NAME" ] && echo 1 || (grep -qi microsoft /p
 # Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
 IMPURE_FLAG := $(if $(IMPURE),--impure,)
 
-# Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs).
-# Note: --refresh re-fetches ALL inputs including nixpkgs, which can cause
-# transient build failures. For deploy-miles, the personal input is prefetched
-# automatically so REFRESH=1 is rarely needed.
+# Pass REFRESH=1 to force re-fetch of ALL inputs (big hammer — rarely needed).
+# The personal input is always prefetched automatically before building, so
+# REFRESH=1 is only useful when you need to bypass caching for nixpkgs or
+# other inputs. Prefer `make update` for routine input updates.
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 
 # Remote VPS host for deployment via Tailscale (override: make deploy-miles MILES_HOST=root@1.2.3.4)
@@ -113,7 +113,7 @@ define warn-agenix
 fi
 endef
 
-.PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity
+.PHONY: switch switch-base bootstrap check update fmt lint clean .check-identity .prefetch
 .PHONY: switch-darwin switch-darwin-base
 .PHONY: switch-linux switch-linux-base
 .PHONY: switch-nixos-wsl switch-nixos-wsl-base
@@ -141,29 +141,34 @@ ifeq ($(strip $(OVERRIDE_FLAGS)),)
 	@exit 1
 endif
 
+# --- Prefetch personal input (ensures latest version is cached) ---
+
+.prefetch: .check-identity
+	@nix flake prefetch $(PERSONAL_INPUT) 2>/dev/null || true
+
 # --- Auto-detecting targets ---
 
 ifeq ($(UNAME),Darwin)
-switch: .check-identity
+switch: .prefetch
 	$(call sudo-rebuild,darwin-rebuild switch,darwin)
 
-switch-base: .check-identity
+switch-base: .prefetch
 	$(call sudo-rebuild,darwin-rebuild switch,darwin-base)
 else ifeq ($(IS_NIXOS),1)
 ifeq ($(IS_WSL),1)
-switch: .check-identity
+switch: .prefetch
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl)
 	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 
-switch-base: .check-identity
+switch-base: .prefetch
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
 	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 else
 HOSTNAME := $(shell hostname)
 ifeq ($(HOSTNAME),miles)
-switch: .check-identity
+switch: .prefetch
 	$(call sudo-rebuild,nixos-rebuild switch,miles)
 	$(warn-agenix)
 
@@ -183,39 +188,39 @@ switch-base:
 endif
 endif
 else
-switch: .check-identity
+switch: .prefetch
 	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 	$(warn-agenix)
 
-switch-base: .check-identity
+switch-base: .prefetch
 	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 	$(warn-agenix)
 endif
 
 # --- Explicit platform targets ---
 
-switch-darwin: .check-identity
+switch-darwin: .prefetch
 	$(call sudo-rebuild,darwin-rebuild switch,darwin)
 	$(warn-agenix)
 
-switch-darwin-base: .check-identity
+switch-darwin-base: .prefetch
 	$(call sudo-rebuild,darwin-rebuild switch,darwin-base)
 	$(warn-agenix)
 
-switch-linux: .check-identity
+switch-linux: .prefetch
 	home-manager switch --flake .#linux --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 	$(warn-agenix)
 
-switch-linux-base: .check-identity
+switch-linux-base: .prefetch
 	home-manager switch --flake .#linux-base --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 	$(warn-agenix)
 
-switch-nixos-wsl: .check-identity
+switch-nixos-wsl: .prefetch
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl)
 	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
 
-switch-nixos-wsl-base: .check-identity
+switch-nixos-wsl-base: .prefetch
 	$(call sudo-rebuild,nixos-rebuild switch,nixos-wsl-base)
 	$(warn-agenix)
 	@systemctl --user start agenix 2>/dev/null || true
@@ -224,10 +229,9 @@ switch-nixos-wsl-base: .check-identity
 # Initial install: nix run github:nix-community/nixos-anywhere -- --flake .#miles root@<ip>
 # Subsequent updates use these targets (builds on VPS via --build-host):
 
-deploy-miles: .check-identity
+deploy-miles: .prefetch
 	nix flake update eliza-config
 	git diff --quiet flake.lock || (git commit flake.lock -m "chore(deps): update eliza-config input" && git push)
-	nix flake prefetch $(PERSONAL_INPUT)
 	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
