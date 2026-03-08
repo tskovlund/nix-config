@@ -190,6 +190,7 @@ let
         "nix-shell"
         "openssl"
         "age"
+        "claude"
         "tee"
         "chmod"
         "chown"
@@ -313,13 +314,13 @@ let
 
     scheduler = {
       enabled = true;
-      max_tasks = 64;
-      max_concurrent = 4;
+      max_tasks = 128;
+      max_concurrent = 8;
     };
 
     agent = {
       compact_context = false;
-      max_tool_iterations = 200;
+      max_tool_iterations = 500;
       max_history_messages = 50;
       parallel_tools = true;
       tool_dispatcher = "auto";
@@ -620,163 +621,270 @@ in
       RemainAfterExit = true;
     };
     script = ''
-      # --- Ensure user agenix secrets are current ---
-      # home-manager-thomas.service daemon-reloads user systemd but doesn't restart
-      # the agenix oneshot, so new/changed secrets aren't decrypted until manual
-      # restart or reboot. Force a restart here before we read them.
-      ${pkgs.sudo}/bin/sudo -u ${username} XDG_RUNTIME_DIR=/run/user/$(id -u ${username}) \
-        ${pkgs.systemd}/bin/systemctl --user restart agenix.service
+            # --- Ensure user agenix secrets are current ---
+            # home-manager-thomas.service daemon-reloads user systemd but doesn't restart
+            # the agenix oneshot, so new/changed secrets aren't decrypted until manual
+            # restart or reboot. Force a restart here before we read them.
+            ${pkgs.sudo}/bin/sudo -u ${username} XDG_RUNTIME_DIR=/run/user/$(id -u ${username}) \
+              ${pkgs.systemd}/bin/systemctl --user restart agenix.service
 
-      # --- SSH keys ---
+            # --- SSH keys ---
 
-      mkdir -p /var/lib/zeroclaw/.ssh
-      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh
-      chmod 700 /var/lib/zeroclaw/.ssh
+            mkdir -p /var/lib/zeroclaw/.ssh
+            chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh
+            chmod 700 /var/lib/zeroclaw/.ssh
 
-      # SSH auth key (GitHub push access + commit signing)
-      SRC="/home/${username}/.ssh/id_ed25519_github"
-      DEST="/var/lib/zeroclaw/.ssh/id_ed25519_github"
-      if [ -f "$SRC" ]; then
-        cp "$SRC" "$DEST"
-        chown zeroclaw:zeroclaw "$DEST"
-        chmod 600 "$DEST"
-        # Public key needed for SSH commit signing (gpg.format=ssh)
-        ssh-keygen -y -f "$DEST" > "$DEST.pub"
-        chown zeroclaw:zeroclaw "$DEST.pub"
-        chmod 644 "$DEST.pub"
-      else
-        echo "WARNING: $SRC not found — git push will fail until key is deployed"
-      fi
+            # SSH auth key (GitHub push access + commit signing)
+            SRC="/home/${username}/.ssh/id_ed25519_github"
+            DEST="/var/lib/zeroclaw/.ssh/id_ed25519_github"
+            if [ -f "$SRC" ]; then
+              cp "$SRC" "$DEST"
+              chown zeroclaw:zeroclaw "$DEST"
+              chmod 600 "$DEST"
+              # Public key needed for SSH commit signing (gpg.format=ssh)
+              ssh-keygen -y -f "$DEST" > "$DEST.pub"
+              chown zeroclaw:zeroclaw "$DEST.pub"
+              chmod 644 "$DEST.pub"
+            else
+              echo "WARNING: $SRC not found — git push will fail until key is deployed"
+            fi
 
-      # GitHub host keys (pinned, avoids TOFU prompts)
-      ${pkgs.openssh}/bin/ssh-keyscan -t ed25519,rsa github.com > /var/lib/zeroclaw/.ssh/known_hosts 2>/dev/null
-      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh/known_hosts
-      chmod 644 /var/lib/zeroclaw/.ssh/known_hosts
+            # GitHub host keys (pinned, avoids TOFU prompts)
+            ${pkgs.openssh}/bin/ssh-keyscan -t ed25519,rsa github.com > /var/lib/zeroclaw/.ssh/known_hosts 2>/dev/null
+            chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh/known_hosts
+            chmod 644 /var/lib/zeroclaw/.ssh/known_hosts
 
-      # SSH config — route GitHub through this key
-      cat > /var/lib/zeroclaw/.ssh/config <<'SSHCONFIG'
-      Host github.com
-        IdentityFile /var/lib/zeroclaw/.ssh/id_ed25519_github
-        IdentitiesOnly yes
-      SSHCONFIG
-      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh/config
-      chmod 644 /var/lib/zeroclaw/.ssh/config
+            # SSH config — route GitHub through this key
+            cat > /var/lib/zeroclaw/.ssh/config <<'SSHCONFIG'
+            Host github.com
+              IdentityFile /var/lib/zeroclaw/.ssh/id_ed25519_github
+              IdentitiesOnly yes
+            SSHCONFIG
+            chown zeroclaw:zeroclaw /var/lib/zeroclaw/.ssh/config
+            chmod 644 /var/lib/zeroclaw/.ssh/config
 
-      # --- Git identity ---
-      # ZeroClaw's security policy blocks `git config` at runtime
-      # (hardcoded in is_args_safe()), so we create .gitconfig here.
-      # Tracked upstream: https://github.com/zeroclaw-labs/zeroclaw/issues/1398
+            # --- Git identity ---
+            # ZeroClaw's security policy blocks `git config` at runtime
+            # (hardcoded in is_args_safe()), so we create .gitconfig here.
+            # Tracked upstream: https://github.com/zeroclaw-labs/zeroclaw/issues/1398
 
-      cat > /var/lib/zeroclaw/.gitconfig <<'GITCONFIG'
-      [user]
-        name = Eliza
-        email = thomas@skovlund.dev
-        signingKey = /var/lib/zeroclaw/.ssh/id_ed25519_github.pub
-      [gpg]
-        format = ssh
-      [commit]
-        gpgSign = true
-      GITCONFIG
-      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.gitconfig
+            cat > /var/lib/zeroclaw/.gitconfig <<'GITCONFIG'
+            [user]
+              name = Eliza
+              email = thomas@skovlund.dev
+              signingKey = /var/lib/zeroclaw/.ssh/id_ed25519_github.pub
+            [gpg]
+              format = ssh
+            [commit]
+              gpgSign = true
+            GITCONFIG
+            chown zeroclaw:zeroclaw /var/lib/zeroclaw/.gitconfig
 
-      # --- Age key (for self-modification: decrypt/encrypt skills) ---
+            # --- Age key (for self-modification: decrypt/encrypt skills) ---
 
-      AGE_KEY_SRC="/home/${username}/.config/agenix/age-key.txt"
-      AGE_KEY_DEST="/var/lib/zeroclaw/.config/agenix/age-key.txt"
-      mkdir -p /var/lib/zeroclaw/.config/agenix
-      if [ -f "$AGE_KEY_SRC" ]; then
-        cp "$AGE_KEY_SRC" "$AGE_KEY_DEST"
-        chown zeroclaw:zeroclaw /var/lib/zeroclaw/.config/agenix
-        chown zeroclaw:zeroclaw "$AGE_KEY_DEST"
-        chmod 600 "$AGE_KEY_DEST"
-      else
-        echo "WARNING: $AGE_KEY_SRC not found — self-modification encryption will fail"
-      fi
+            AGE_KEY_SRC="/home/${username}/.config/agenix/age-key.txt"
+            AGE_KEY_DEST="/var/lib/zeroclaw/.config/agenix/age-key.txt"
+            mkdir -p /var/lib/zeroclaw/.config/agenix
+            if [ -f "$AGE_KEY_SRC" ]; then
+              cp "$AGE_KEY_SRC" "$AGE_KEY_DEST"
+              chown zeroclaw:zeroclaw /var/lib/zeroclaw/.config/agenix
+              chown zeroclaw:zeroclaw "$AGE_KEY_DEST"
+              chmod 600 "$AGE_KEY_DEST"
+            else
+              echo "WARNING: $AGE_KEY_SRC not found — self-modification encryption will fail"
+            fi
 
-      # --- Eliza skills (plaintext from eliza-config/skills/) ---
+            # --- Eliza skills (plaintext from eliza-config/skills/) ---
 
-      rm -rf /var/lib/zeroclaw/.zeroclaw/workspace/skills
-      cp -r ${eliza-config}/skills /var/lib/zeroclaw/.zeroclaw/workspace/skills
+            rm -rf /var/lib/zeroclaw/.zeroclaw/workspace/skills
+            cp -r ${eliza-config}/skills /var/lib/zeroclaw/.zeroclaw/workspace/skills
 
-      # --- Eliza workspace files (encrypted, from agenix) ---
+            # --- Eliza workspace files (encrypted, from agenix) ---
 
-      for secret in /run/agenix/eliza-workspace-*; do
-        [ -f "$secret" ] || continue
-        name=$(basename "$secret" | ${pkgs.gnused}/bin/sed 's/^eliza-workspace-//')
-        rm -f "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
-        cp "$secret" "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
-      done
+            for secret in /run/agenix/eliza-workspace-*; do
+              [ -f "$secret" ] || continue
+              name=$(basename "$secret" | ${pkgs.gnused}/bin/sed 's/^eliza-workspace-//')
+              rm -f "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
+              cp "$secret" "/var/lib/zeroclaw/.zeroclaw/workspace/$name.md"
+            done
 
-      chown -R zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/workspace
+            chown -R zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/workspace
 
-      # --- Config.toml ---
-      # Base config from Nix store with secret placeholders.
-      # Secrets are injected from agenix-decrypted paths in Thomas's home.
+            # --- Config.toml ---
+            # Base config from Nix store with secret placeholders.
+            # Secrets are injected from agenix-decrypted paths in Thomas's home.
 
-      cp ${configFile} /var/lib/zeroclaw/.zeroclaw/config.toml
+            cp ${configFile} /var/lib/zeroclaw/.zeroclaw/config.toml
 
-      API_KEY_FILE="/home/${username}/.config/zeroclaw/api-key"
-      if [ -f "$API_KEY_FILE" ]; then
-        API_KEY=$(cat "$API_KEY_FILE")
-        ${pkgs.gnused}/bin/sed -i "s|@ZEROCLAW_API_KEY@|$API_KEY|g" /var/lib/zeroclaw/.zeroclaw/config.toml
-      else
-        echo "WARNING: $API_KEY_FILE not found — ZeroClaw API calls will fail"
-      fi
+            API_KEY_FILE="/home/${username}/.config/zeroclaw/api-key"
+            if [ -f "$API_KEY_FILE" ]; then
+              API_KEY=$(cat "$API_KEY_FILE")
+              ${pkgs.gnused}/bin/sed -i "s|@ZEROCLAW_API_KEY@|$API_KEY|g" /var/lib/zeroclaw/.zeroclaw/config.toml
+            else
+              echo "WARNING: $API_KEY_FILE not found — ZeroClaw API calls will fail"
+            fi
 
-      TELEGRAM_TOKEN_FILE="/home/${username}/.config/zeroclaw/telegram-bot-token"
-      if [ -f "$TELEGRAM_TOKEN_FILE" ]; then
-        TELEGRAM_TOKEN=$(cat "$TELEGRAM_TOKEN_FILE")
-        ${pkgs.gnused}/bin/sed -i "s|@TELEGRAM_BOT_TOKEN@|$TELEGRAM_TOKEN|g" /var/lib/zeroclaw/.zeroclaw/config.toml
-      else
-        echo "WARNING: $TELEGRAM_TOKEN_FILE not found — Telegram channel will fail"
-      fi
+            TELEGRAM_TOKEN_FILE="/home/${username}/.config/zeroclaw/telegram-bot-token"
+            if [ -f "$TELEGRAM_TOKEN_FILE" ]; then
+              TELEGRAM_TOKEN=$(cat "$TELEGRAM_TOKEN_FILE")
+              ${pkgs.gnused}/bin/sed -i "s|@TELEGRAM_BOT_TOKEN@|$TELEGRAM_TOKEN|g" /var/lib/zeroclaw/.zeroclaw/config.toml
+            else
+              echo "WARNING: $TELEGRAM_TOKEN_FILE not found — Telegram channel will fail"
+            fi
 
-      GATEWAY_TOKEN_FILE="/home/${username}/.config/zeroclaw/gateway-token"
-      if [ -f "$GATEWAY_TOKEN_FILE" ]; then
-        GATEWAY_TOKEN=$(cat "$GATEWAY_TOKEN_FILE")
-        ${pkgs.gnused}/bin/sed -i "s|@GATEWAY_PAIRED_TOKEN@|$GATEWAY_TOKEN|g" /var/lib/zeroclaw/.zeroclaw/config.toml
-      else
-        echo "WARNING: $GATEWAY_TOKEN_FILE not found — gateway pairing will fail"
-      fi
+            GATEWAY_TOKEN_FILE="/home/${username}/.config/zeroclaw/gateway-token"
+            if [ -f "$GATEWAY_TOKEN_FILE" ]; then
+              GATEWAY_TOKEN=$(cat "$GATEWAY_TOKEN_FILE")
+              ${pkgs.gnused}/bin/sed -i "s|@GATEWAY_PAIRED_TOKEN@|$GATEWAY_TOKEN|g" /var/lib/zeroclaw/.zeroclaw/config.toml
+            else
+              echo "WARNING: $GATEWAY_TOKEN_FILE not found — gateway pairing will fail"
+            fi
 
-      BRAVE_API_KEY_FILE="/home/${username}/.config/zeroclaw/brave-api-key"
-      if [ -f "$BRAVE_API_KEY_FILE" ]; then
-        BRAVE_API_KEY=$(cat "$BRAVE_API_KEY_FILE")
-        ${pkgs.gnused}/bin/sed -i "s|@BRAVE_API_KEY@|$BRAVE_API_KEY|g" /var/lib/zeroclaw/.zeroclaw/config.toml
-      else
-        echo "WARNING: $BRAVE_API_KEY_FILE not found — web search will fail"
-        # Fall back to empty key (Brave will reject, but config.toml is valid)
-        ${pkgs.gnused}/bin/sed -i "s|@BRAVE_API_KEY@||g" /var/lib/zeroclaw/.zeroclaw/config.toml
-      fi
+            BRAVE_API_KEY_FILE="/home/${username}/.config/zeroclaw/brave-api-key"
+            if [ -f "$BRAVE_API_KEY_FILE" ]; then
+              BRAVE_API_KEY=$(cat "$BRAVE_API_KEY_FILE")
+              ${pkgs.gnused}/bin/sed -i "s|@BRAVE_API_KEY@|$BRAVE_API_KEY|g" /var/lib/zeroclaw/.zeroclaw/config.toml
+            else
+              echo "WARNING: $BRAVE_API_KEY_FILE not found — web search will fail"
+              # Fall back to empty key (Brave will reject, but config.toml is valid)
+              ${pkgs.gnused}/bin/sed -i "s|@BRAVE_API_KEY@||g" /var/lib/zeroclaw/.zeroclaw/config.toml
+            fi
 
-      # --- API keys for skills (read by Eliza via file) ---
+            # --- API keys for skills (read by Eliza via file) ---
 
-      mkdir -p /var/lib/zeroclaw/.config/api-keys
+            mkdir -p /var/lib/zeroclaw/.config/api-keys
 
-      for key_name in linear-api-key notion-api-key openweathermap-api-key newsapi-key finnhub-api-key; do
-        SRC="/home/${username}/.config/zeroclaw/$key_name"
-        DEST="/var/lib/zeroclaw/.config/api-keys/$key_name"
-        if [ -f "$SRC" ]; then
-          cp "$SRC" "$DEST"
-          chown zeroclaw:zeroclaw "$DEST"
-          chmod 600 "$DEST"
-        else
-          echo "WARNING: $SRC not found"
-        fi
-      done
+            for key_name in linear-api-key notion-api-key openweathermap-api-key newsapi-key finnhub-api-key; do
+              SRC="/home/${username}/.config/zeroclaw/$key_name"
+              DEST="/var/lib/zeroclaw/.config/api-keys/$key_name"
+              if [ -f "$SRC" ]; then
+                cp "$SRC" "$DEST"
+                chown zeroclaw:zeroclaw "$DEST"
+                chmod 600 "$DEST"
+              else
+                echo "WARNING: $SRC not found"
+              fi
+            done
 
-      # MCP memory key lives at a different path than zeroclaw keys
-      MCP_KEY="/home/${username}/.config/mcp-memory/api-key"
-      if [ -f "$MCP_KEY" ]; then
-        cp "$MCP_KEY" /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
-        chown zeroclaw:zeroclaw /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
-        chmod 600 /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
-      else
-        echo "WARNING: $MCP_KEY not found"
-      fi
+            # MCP memory key lives at a different path than zeroclaw keys
+            MCP_KEY="/home/${username}/.config/mcp-memory/api-key"
+            if [ -f "$MCP_KEY" ]; then
+              cp "$MCP_KEY" /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
+              chown zeroclaw:zeroclaw /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
+              chmod 600 /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key
+            else
+              echo "WARNING: $MCP_KEY not found"
+            fi
 
-      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/config.toml
-      chmod 600 /var/lib/zeroclaw/.zeroclaw/config.toml
+            chown zeroclaw:zeroclaw /var/lib/zeroclaw/.zeroclaw/config.toml
+            chmod 600 /var/lib/zeroclaw/.zeroclaw/config.toml
+
+            # --- Claude Code config ---
+            # Claude Code runs as the zeroclaw user for headless coding tasks.
+            # Auth requires a one-time `claude login` (SSH into miles, run as zeroclaw).
+            # After that, the OAuth token persists in ~/.claude.json.
+
+            mkdir -p /var/lib/zeroclaw/.claude
+
+            # Settings: full autonomy for headless operation
+            cat > /var/lib/zeroclaw/.claude/settings.json <<'CLAUDESETTINGS'
+            {
+              "permissions": {
+                "allow": [
+                  "Bash(*)",
+                  "Read",
+                  "Edit",
+                  "Write",
+                  "Glob",
+                  "Grep",
+                  "Agent",
+                  "WebFetch",
+                  "WebSearch",
+                  "mcp__memory__*",
+                  "mcp__grafana__*"
+                ],
+                "deny": [],
+                "defaultMode": "bypassPermissions"
+              },
+              "skipDangerousModePermissionPrompt": true,
+              "autoUpdaterStatus": "disabled"
+            }
+            CLAUDESETTINGS
+
+            # CLAUDE.md for the zeroclaw user — instructs Claude Code sessions
+            # spawned by Eliza on how to behave
+            cat > /var/lib/zeroclaw/.claude/CLAUDE.md <<'CLAUDEMD'
+            # Autonomous Agent Session
+
+            You are running as a headless Claude Code session on the miles VPS,
+            spawned by Eliza (ZeroClaw) to perform coding tasks autonomously.
+
+            ## Environment
+            - User: zeroclaw (system user)
+            - Home: /var/lib/zeroclaw
+            - Repos: /var/lib/zeroclaw/repos/
+            - Git identity: Eliza <thomas@skovlund.dev> (SSH-signed commits)
+
+            ## Guidelines
+            - Work autonomously. No human is watching — complete the full task.
+            - Commit and push when done. Use conventional commit messages.
+            - If blocked, document what went wrong and exit cleanly.
+            - Follow CONVENTIONS.md in each repo.
+            CLAUDEMD
+
+            # claude.json — MCP server registrations + state.
+            # Only write MCP config if the file doesn't exist yet (preserves OAuth tokens
+            # from manual `claude login`). MCP servers are updated via `claude mcp add`.
+            if [ ! -f /var/lib/zeroclaw/.claude.json ]; then
+              cat > /var/lib/zeroclaw/.claude.json <<'CLAUDEJSON'
+              {
+                "mcpServers": {}
+              }
+      CLAUDEJSON
+            fi
+
+            # Register MCP servers (idempotent — overwrites existing entries).
+            # Memory: on localhost since both run on miles.
+            MCP_API_KEY=""
+            if [ -f /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key ]; then
+              MCP_API_KEY=$(cat /var/lib/zeroclaw/.config/api-keys/mcp-memory-api-key)
+            fi
+
+            GRAFANA_TOKEN=""
+            if [ -f "/home/${username}/.config/grafana/service-account-token" ]; then
+              GRAFANA_TOKEN=$(cat "/home/${username}/.config/grafana/service-account-token")
+            fi
+
+            # Update claude.json with MCP servers using python3 (jq can't handle nested merges cleanly)
+            ${pkgs.python3}/bin/python3 - <<PYMCP
+            import json, os
+            path = "/var/lib/zeroclaw/.claude.json"
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault("mcpServers", {})
+            if "$MCP_API_KEY":
+                data["mcpServers"]["memory"] = {
+                    "type": "http",
+                    "url": "http://127.0.0.1:8765/mcp",
+                    "headers": {"X-API-Key": "$MCP_API_KEY"}
+                }
+            if "$GRAFANA_TOKEN":
+                data["mcpServers"]["grafana"] = {
+                    "type": "stdio",
+                    "command": "${pkgs.mcp-grafana}/bin/mcp-grafana",
+                    "args": ["--disable-oncall", "--disable-incident", "--disable-sift", "--disable-pyroscope", "--disable-rendering"],
+                    "env": {
+                        "GRAFANA_URL": "http://127.0.0.1:3002",
+                        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "$GRAFANA_TOKEN"
+                    }
+                }
+            with open(path, "w") as f:
+                json.dump(data, f, indent=2)
+            PYMCP
+
+            chown -R zeroclaw:zeroclaw /var/lib/zeroclaw/.claude
+            chown zeroclaw:zeroclaw /var/lib/zeroclaw/.claude.json
+            chmod 600 /var/lib/zeroclaw/.claude.json
     '';
   };
 
@@ -879,10 +987,13 @@ in
       nodejs
       python3
       age # decrypt/encrypt agenix secrets for self-modification
+      claude-code-bin # headless coding agent (delegated tasks via scheduler)
     ];
 
     environment = {
       HOME = "/var/lib/zeroclaw";
+      # Claude Code defaults (inherited by headless sessions spawned via shell tool)
+      ANTHROPIC_MODEL = "claude-opus-4-6";
     };
 
     # Skills and workspace files are deployed by agenix (age.secrets above).
