@@ -27,7 +27,10 @@ IS_WSL := $(shell [ -n "$$WSL_DISTRO_NAME" ] && echo 1 || (grep -qi microsoft /p
 # Pass IMPURE=1 to enable --impure (needed for ~/.config/nix-config/local.nix)
 IMPURE_FLAG := $(if $(IMPURE),--impure,)
 
-# Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs)
+# Pass REFRESH=1 to bypass Nix's input cache (forces re-fetch of all inputs).
+# Note: --refresh re-fetches ALL inputs including nixpkgs, which can cause
+# transient build failures. For deploy-miles, the personal input is prefetched
+# automatically so REFRESH=1 is rarely needed.
 REFRESH_FLAG := $(if $(REFRESH),--refresh,)
 
 # Remote VPS host for deployment via Tailscale (override: make deploy-miles MILES_HOST=root@1.2.3.4)
@@ -224,6 +227,7 @@ switch-nixos-wsl-base: .check-identity
 deploy-miles: .check-identity
 	nix flake update eliza-config
 	git diff --quiet flake.lock || (git commit flake.lock -m "chore(deps): update eliza-config input" && git push)
+	nix flake prefetch $(PERSONAL_INPUT)
 	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)
