@@ -10,6 +10,7 @@
     ./git.nix
     ./navigation.nix
     ./utilities.nix
+    ./lean.nix
   ];
 
   programs.nixvim = {
