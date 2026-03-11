@@ -4,15 +4,15 @@ Operational runbook for the `miles` VPS (Miles Davis). See `hosts/miles/` for th
 
 ## Server specs
 
-| Property | Value |
-|----------|-------|
-| Provider | Hetzner Cloud |
-| Server type | CX33 (x86, shared) |
-| Resources | 4 vCPU, 8GB RAM, 80GB NVMe |
-| Location | Nuremberg (nbg1) |
-| IP | 46.225.116.48 |
-| OS | NixOS (deployed via nixos-anywhere + disko) |
-| Cost | ~€6.24/month |
+| Property    | Value                                       |
+| ----------- | ------------------------------------------- |
+| Provider    | Hetzner Cloud                               |
+| Server type | CX33 (x86, shared)                          |
+| Resources   | 4 vCPU, 8GB RAM, 80GB NVMe                  |
+| Location    | Nuremberg (nbg1)                            |
+| IP          | 46.225.116.48                               |
+| OS          | NixOS (deployed via nixos-anywhere + disko) |
+| Cost        | ~€6.24/month                                |
 
 ## Hetzner resources
 
@@ -48,10 +48,10 @@ Additional CNAMEs added as services come online (matrix, openclaw, etc.).
 
 Defense in depth — two independent firewalls:
 
-| Layer | Level | What it does |
-|-------|-------|--------------|
-| Hetzner Cloud Firewall (`miles-fw`) | Network/hypervisor | Drops traffic before it reaches the VM |
-| NixOS firewall (`networking.firewall`) | OS (nftables) | Drops traffic inside the VM |
+| Layer                                  | Level              | What it does                           |
+| -------------------------------------- | ------------------ | -------------------------------------- |
+| Hetzner Cloud Firewall (`miles-fw`)    | Network/hypervisor | Drops traffic before it reaches the VM |
+| NixOS firewall (`networking.firewall`) | OS (nftables)      | Drops traffic inside the VM            |
 
 Both must allow a port for traffic to reach a service. Update both when adding services.
 
@@ -65,20 +65,20 @@ Additional hardening:
 
 ## Services
 
-| Service | Port | URL | Purpose |
-|---------|------|-----|---------|
-| Tailscale | UDP 41641 | — | Mesh VPN (WireGuard). SSH + internal services via tailnet |
-| SSH | 22 (Tailscale only) | — | Remote access + deployment |
-| Caddy | 80, 443, 2019 (localhost) | — | Reverse proxy, HTTPS, Prometheus metrics |
-| Uptime Kuma | 3001 (0.0.0.0) | `status.skovlund.dev/status/rbb` (rbb only) | Service availability monitoring |
-| Ntfy | 2586 (0.0.0.0) | — (Tailscale: `http://miles:2586`) | Push notifications |
-| ZeroClaw | 3000 (0.0.0.0) | — (Tailscale: `http://miles:3000`) | AI assistant + web dashboard (Telegram, OpenRouter) |
-| MCP Memory | 8765 (0.0.0.0) | — (Tailscale: `http://miles:8765`) | Shared semantic memory (Claude Code + Eliza) |
-| Prometheus | 9090 (localhost) | — | Metrics storage and scraping |
-| Grafana | 3002 (0.0.0.0) | — (Tailscale: `http://miles:3002`) | Dashboards and alerting |
-| Loki | 3100 (localhost) | — | Log aggregation |
-| Promtail | 9080 (localhost) | — | Ships journal logs to Loki |
-| Node exporter | 9100 (localhost) | — | System metrics (CPU, memory, disk) |
+| Service       | Port                      | URL                                         | Purpose                                                   |
+| ------------- | ------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Tailscale     | UDP 41641                 | —                                           | Mesh VPN (WireGuard). SSH + internal services via tailnet |
+| SSH           | 22 (Tailscale only)       | —                                           | Remote access + deployment                                |
+| Caddy         | 80, 443, 2019 (localhost) | —                                           | Reverse proxy, HTTPS, Prometheus metrics                  |
+| Uptime Kuma   | 3001 (0.0.0.0)            | `status.skovlund.dev/status/rbb` (rbb only) | Service availability monitoring                           |
+| Ntfy          | 2586 (0.0.0.0)            | — (Tailscale: `http://miles:2586`)          | Push notifications                                        |
+| ZeroClaw      | 3000 (0.0.0.0)            | — (Tailscale: `http://miles:3000`)          | AI assistant + web dashboard (Telegram, OpenRouter)       |
+| MCP Memory    | 8765 (0.0.0.0)            | — (Tailscale: `http://miles:8765`)          | Shared semantic memory (Claude Code + Eliza)              |
+| Prometheus    | 9090 (localhost)          | —                                           | Metrics storage and scraping                              |
+| Grafana       | 3002 (0.0.0.0)            | — (Tailscale: `http://miles:3002`)          | Dashboards and alerting                                   |
+| Loki          | 3100 (localhost)          | —                                           | Log aggregation                                           |
+| Promtail      | 9080 (localhost)          | —                                           | Ships journal logs to Loki                                |
+| Node exporter | 9100 (localhost)          | —                                           | System metrics (CPU, memory, disk)                        |
 
 Most services are Tailscale-only. Only the rbb status page (`status.skovlund.dev/status/rbb`) is exposed to the internet. All other routes, including the admin UI, return 404.
 
@@ -199,6 +199,7 @@ To update secrets: `agenix -e secrets/zeroclaw-<name>.age` in nix-config-persona
 The `eliza-config` repo is public on GitHub. All sensitive content (skills, workspace markdown) is agenix-encrypted at rest as `.age` files in `secrets/`. Git history was squashed before making the repo public.
 
 **Deployment chain:**
+
 1. nix-config imports eliza-config as a non-flake input (`github:tskovlund/eliza-config`)
 2. NixOS agenix module decrypts `.age` files to `/run/agenix/` at activation
 3. `zeroclaw-setup` oneshot copies decrypted files to workspace directories
@@ -248,10 +249,10 @@ Shared semantic memory for Claude Code and Eliza. Runs [mcp-memory-service](http
 
 ### Consumers
 
-| Consumer | Transport | How |
-|----------|-----------|-----|
-| Claude Code | Streamable HTTP | `claude mcp add --transport http -H "X-API-Key: <key>" memory http://miles:8765/mcp` |
-| ZeroClaw/Eliza | HTTP requests | `curl -X POST http://localhost:8765/mcp` with JSON-RPC body |
+| Consumer       | Transport       | How                                                                                  |
+| -------------- | --------------- | ------------------------------------------------------------------------------------ |
+| Claude Code    | Streamable HTTP | `claude mcp add --transport http -H "X-API-Key: <key>" memory http://miles:8765/mcp` |
+| ZeroClaw/Eliza | HTTP requests   | `curl -X POST http://localhost:8765/mcp` with JSON-RPC body                          |
 
 ### Common operations
 
@@ -284,14 +285,15 @@ systemctl restart mcp-memory
 
 ## Notifications
 
-| Channel | Service | Purpose |
-|---------|---------|---------|
-| Ntfy | `http://miles:2586` (Tailscale) | Push notifications to phone (iOS/Android app) |
-| Resend | `notify.skovlund.dev` | Transactional email (SMTP-compatible, 100/day free) |
+| Channel | Service                         | Purpose                                             |
+| ------- | ------------------------------- | --------------------------------------------------- |
+| Ntfy    | `http://miles:2586` (Tailscale) | Push notifications to phone (iOS/Android app)       |
+| Resend  | `notify.skovlund.dev`           | Transactional email (SMTP-compatible, 100/day free) |
 
 Both are configured as Uptime Kuma notification channels. Ntfy relays through ntfy.sh for APNs/FCM push delivery.
 
 Grafana alerting uses both channels:
+
 - **Ntfy** (`grafana-alerts` user, `alerts` topic) — primary, push to phone
 - **Email** (`grafana@notify.skovlund.dev` via Resend SMTP) — secondary
 
@@ -306,17 +308,18 @@ Grafana alerting uses both channels:
 
 Config: `hosts/miles/observability.nix`
 
-| Component | Role | Port |
-|-----------|------|------|
-| Prometheus | Metrics storage, scrapes node exporter + Caddy every 15s (30d retention) | 9090 |
-| Node exporter | Exposes system metrics (CPU, memory, disk, systemd units) | 9100 |
-| Loki | Log aggregation (30d retention) | 3100 |
-| Promtail | Ships systemd journal → Loki | 9080 |
-| Grafana | Dashboards, alerting → Ntfy + email | 3002 |
+| Component     | Role                                                                     | Port |
+| ------------- | ------------------------------------------------------------------------ | ---- |
+| Prometheus    | Metrics storage, scrapes node exporter + Caddy every 15s (30d retention) | 9090 |
+| Node exporter | Exposes system metrics (CPU, memory, disk, systemd units)                | 9100 |
+| Loki          | Log aggregation (30d retention)                                          | 3100 |
+| Promtail      | Ships systemd journal → Loki                                             | 9080 |
+| Grafana       | Dashboards, alerting → Ntfy + email                                      | 3002 |
 
 All services listen on localhost or 0.0.0.0 (protected by firewall). Grafana, ntfy, and Uptime Kuma admin are Tailscale-only. Only the rbb status page is exposed via Caddy.
 
 **Provisioned declaratively:**
+
 - **Datasources:** Prometheus (`uid: prometheus`) + Loki (`uid: loki`)
 - **Dashboard:** Node Exporter Full (ID 1860, fetched at build time)
 - **Contact points:** Ntfy webhook (`grafana-alerts` user) + email (Resend SMTP)
@@ -326,15 +329,16 @@ All services listen on localhost or 0.0.0.0 (protected by firewall). Grafana, nt
 **Post-deploy setup:**
 
 1. Open `http://miles:3002` (via Tailscale), set password for `thomas` admin account
-3. Verify contact points: Alerting → Contact points → Test
-4. Create service account (Editor role) for MCP integration (see below)
-5. If SMTP email alerts don't work: secrets may not have been deployed before Grafana first started. Fix: `rm /var/lib/grafana/smtp_password && systemctl restart grafana-smtp-password grafana`
+2. Verify contact points: Alerting → Contact points → Test
+3. Create service account (Editor role) for MCP integration (see below)
+4. If SMTP email alerts don't work: secrets may not have been deployed before Grafana first started. Fix: `rm /var/lib/grafana/smtp_password && systemctl restart grafana-smtp-password grafana`
 
 ### MCP integration (mcp-grafana)
 
 Claude Code connects to Grafana via the `mcp-grafana` MCP server, providing tools for querying Prometheus/Loki, searching dashboards, and managing alerts.
 
 Setup:
+
 1. In Grafana: Administration → Service accounts → Add service account (Editor role) → Generate token
 2. Encrypt token: `agenix -e secrets/grafana-service-account-token.age` in nix-config-personal
 3. Deploy: `make switch` (to install the wrapper + decrypt the token)
@@ -344,23 +348,23 @@ Setup:
 
 Config: `hosts/miles/backups.nix`
 
-| Property | Value |
-|----------|-------|
-| Backend | Backblaze B2 (`miles-backups` bucket) |
-| Tool | Restic (encrypted, deduplicated, incremental) |
-| Schedule | Daily at 02:30 UTC (before auto-upgrade window) |
-| Retention | 7 daily, 4 weekly, 6 monthly |
-| Notifications | Ntfy (`backups` topic, `backup-alerts` user) |
+| Property      | Value                                           |
+| ------------- | ----------------------------------------------- |
+| Backend       | Backblaze B2 (`miles-backups` bucket)           |
+| Tool          | Restic (encrypted, deduplicated, incremental)   |
+| Schedule      | Daily at 02:30 UTC (before auto-upgrade window) |
+| Retention     | 7 daily, 4 weekly, 6 monthly                    |
+| Notifications | Ntfy (`backups` topic, `backup-alerts` user)    |
 
 ### What's backed up
 
-| Directory | Content | SQLite snapshot? |
-|-----------|---------|-----------------|
-| `/var/lib/zeroclaw/` | ZeroClaw workspace (memory, config, markdown files, cron) | Yes (`brain.db`, `jobs.db`) |
-| `/var/lib/private/uptime-kuma/` | Uptime Kuma monitors, notifications, uploads | Yes (`kuma.db`) |
-| `/var/lib/grafana/` | Grafana config (mostly declarative, but includes manual changes) | Yes (`grafana.db`) |
-| `/var/lib/private/ntfy-sh/` | Ntfy user DB, cache | Yes (`user.db`, `cache-file.db`) |
-| `/var/lib/mcp-memory/` | MCP Memory Service (semantic memory DB, models) | Yes (`sqlite_vec.db`) |
+| Directory                       | Content                                                          | SQLite snapshot?                 |
+| ------------------------------- | ---------------------------------------------------------------- | -------------------------------- |
+| `/var/lib/zeroclaw/`            | ZeroClaw workspace (memory, config, markdown files, cron)        | Yes (`brain.db`, `jobs.db`)      |
+| `/var/lib/private/uptime-kuma/` | Uptime Kuma monitors, notifications, uploads                     | Yes (`kuma.db`)                  |
+| `/var/lib/grafana/`             | Grafana config (mostly declarative, but includes manual changes) | Yes (`grafana.db`)               |
+| `/var/lib/private/ntfy-sh/`     | Ntfy user DB, cache                                              | Yes (`user.db`, `cache-file.db`) |
+| `/var/lib/mcp-memory/`          | MCP Memory Service (semantic memory DB, models)                  | Yes (`sqlite_vec.db`)            |
 
 **Not backed up** (declarative or transient): Prometheus data, Loki chunks, Caddy certs (auto-renewed), Nix store (reproducible from flake), ZeroClaw `open-skills/` git clone.
 

@@ -15,7 +15,7 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
   - `nixosConfigurations."nixos-wsl-base"` — NixOS-WSL, base only
   - `nixosConfigurations."miles"` — Hetzner VPS (always personal — no base variant)
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
-- **hosts/**: Platform-specific *system* config (nix-darwin settings, NixOS settings, not user config)
+- **hosts/**: Platform-specific _system_ config (nix-darwin settings, NixOS settings, not user config)
   - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
   - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
   - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
@@ -104,6 +104,7 @@ Note: the pre-push hook runs `nix flake check` on every push (including direct-t
 ### Agent autonomy
 
 The goal is to maximize continuous agent work without human intervention. Agents should:
+
 - Follow the PR review loop above autonomously — don't stop after the first push
 - Use agent teams for parallel work when tasks are independent
 - Pick up the next logical task after completing one (check Linear and GitHub issues)
@@ -236,6 +237,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `ct` / `claude-team` — launches Claude Code inside tmux -CC (iTerm2 control mode) so agent team splits render as native iTerm2 panes. Use for agent team sessions.
 
 **Important:** Git commands that trigger hooks (commit, push) require dev shell tools (`nixfmt`, `statix`, `deadnix`). Prefix with `nix develop --command` if not already in the dev shell:
+
 ```sh
 nix develop --command git commit -m "message"
 ```
@@ -263,6 +265,7 @@ Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the h
 ### SSH key naming convention
 
 Keys follow `id_ed25519_<purpose>`:
+
 - `id_ed25519_github` — GitHub authentication + commit signing
 - `id_ed25519_miles` — Hetzner VPS (miles) SSH access + deployment
 - Future: `id_ed25519_<hostname>` for additional hosts, `id_ed25519_work`, etc.

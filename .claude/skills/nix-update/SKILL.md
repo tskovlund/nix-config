@@ -15,6 +15,7 @@ Pull remote changes and update flake inputs. Full workflow: fetch → pull → u
 ## Pre-flight
 
 Check current state before making changes:
+
 ```sh
 git status --short
 git log --oneline origin/main..HEAD
@@ -40,6 +41,7 @@ nix flake update
 This updates all inputs (nixpkgs, home-manager, nix-darwin, agenix, etc.) to their latest versions.
 
 To update a single input:
+
 ```sh
 nix flake lock --update-input <name>
 ```
@@ -51,6 +53,7 @@ make check
 ```
 
 If check fails, the update introduced a breaking change. Common causes:
+
 - home-manager option renamed or removed
 - nix-darwin API change
 - nixpkgs package removed or renamed
@@ -66,6 +69,7 @@ make switch
 For non-visual changes, verify the change took effect. For visual changes, ask Thomas to verify.
 
 If deploying with local personal flake changes:
+
 ```sh
 make switch PERSONAL_INPUT=path:$HOME/repos/nix-config-personal
 ```
@@ -87,6 +91,7 @@ nix develop --command git push
 ## Also update nix-config-personal
 
 If nix-config-personal also has stale inputs:
+
 ```sh
 cd ~/repos/nix-config-personal
 git pull --rebase
@@ -96,6 +101,7 @@ nix develop --command git push
 ```
 
 Then re-deploy nix-config with the updated personal flake:
+
 ```sh
 cd ~/repos/nix-config
 make switch REFRESH=1

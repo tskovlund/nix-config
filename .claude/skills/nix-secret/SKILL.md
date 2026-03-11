@@ -27,11 +27,13 @@ The `thomas` variable holds the age public key: `age15j2yd89h8ahm93g2um8206atnfc
 ### 2. Encrypt the secret
 
 **Option A — agenix CLI** (recommended, reads recipients from `secrets/secrets.nix`):
+
 ```sh
 agenix -e secrets/<name>.age
 ```
 
 **Option B — age CLI** (non-interactive, useful for piping):
+
 ```sh
 age -r "age15j2yd89h8ahm93g2um8206atnfcl90hk7q062nt63xqrz57lspmsvmyzle" \
   -o secrets/<name>.age <plaintext-file>

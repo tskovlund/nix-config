@@ -45,15 +45,15 @@ See [`docs/features.md`](docs/features.md) for the full inventory.
 
 Every deployment is a **target** — a build tool + profile combination. **Base** gives you a solid dev environment on any machine. **Personal** layers on secrets, SSH keys, and personal config from your own flake.
 
-| Target | Manages | Profile |
-|--------|---------|---------|
-| `darwin` | macOS system + user config | personal |
-| `darwin-base` | macOS system + user config | base |
-| `nixos-wsl` | NixOS-WSL system + user config | personal |
-| `nixos-wsl-base` | NixOS-WSL system + user config | base |
-| `miles` | Hetzner VPS system + user config | personal |
-| `linux` | User config only (any Linux distro) | personal |
-| `linux-base` | User config only (any Linux distro) | base |
+| Target           | Manages                             | Profile  |
+| ---------------- | ----------------------------------- | -------- |
+| `darwin`         | macOS system + user config          | personal |
+| `darwin-base`    | macOS system + user config          | base     |
+| `nixos-wsl`      | NixOS-WSL system + user config      | personal |
+| `nixos-wsl-base` | NixOS-WSL system + user config      | base     |
+| `miles`          | Hetzner VPS system + user config    | personal |
+| `linux`          | User config only (any Linux distro) | personal |
+| `linux-base`     | User config only (any Linux distro) | base     |
 
 `make switch` auto-detects the right target. `make switch-base` picks the base variant.
 
@@ -70,44 +70,44 @@ The personal flake exports `identity` (username, name, email) and `homeModules` 
 
 ## Common tasks
 
-| Task | Command |
-|------|---------|
-| Apply config (base + personal) | `make switch` |
-| Apply config (base only) | `make switch-base` |
-| Apply with machine-local config | `make switch IMPURE=1` |
-| Deploy to VPS | `make deploy-miles MILES_HOST=root@<ip>` |
-| Validate without applying | `make check` |
-| Update all inputs | `make update` |
-| Format Nix files | `make fmt` |
-| Lint Nix files | `make lint` |
+| Task                            | Command                                  |
+| ------------------------------- | ---------------------------------------- |
+| Apply config (base + personal)  | `make switch`                            |
+| Apply config (base only)        | `make switch-base`                       |
+| Apply with machine-local config | `make switch IMPURE=1`                   |
+| Deploy to VPS                   | `make deploy-miles MILES_HOST=root@<ip>` |
+| Validate without applying       | `make check`                             |
+| Update all inputs               | `make update`                            |
+| Format Nix files                | `make fmt`                               |
+| Lint Nix files                  | `make lint`                              |
 
 All packages are pinned via `flake.lock`. Roll back with `git checkout flake.lock && make switch`. For platform-specific commands (rollback, diff closures, generations), see [`docs/platform-commands.md`](docs/platform-commands.md).
 
 ## Inputs
 
-| Input | What it provides |
-|-------|-----------------|
-| [nixpkgs](https://github.com/NixOS/nixpkgs) (unstable) | Packages — rolling release, CI-tested |
-| [nix-darwin](https://github.com/LnL7/nix-darwin) | Declarative macOS system config |
-| [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment |
-| [agenix](https://github.com/ryantm/agenix) | Age-encrypted secrets |
-| [nixvim](https://github.com/nix-community/nixvim) | Neovim config as typed Nix |
-| [nixos-wsl](https://github.com/nix-community/NixOS-WSL) | NixOS on WSL integration |
-| [disko](https://github.com/nix-community/disko) | Declarative disk partitioning |
-| [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | MCP servers (persistent memory) |
-| personal (stub) | Your identity flake — see [Personal identity](#personal-identity) |
+| Input                                                           | What it provides                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [nixpkgs](https://github.com/NixOS/nixpkgs) (unstable)          | Packages — rolling release, CI-tested                             |
+| [nix-darwin](https://github.com/LnL7/nix-darwin)                | Declarative macOS system config                                   |
+| [home-manager](https://github.com/nix-community/home-manager)   | Declarative user environment                                      |
+| [agenix](https://github.com/ryantm/agenix)                      | Age-encrypted secrets                                             |
+| [nixvim](https://github.com/nix-community/nixvim)               | Neovim config as typed Nix                                        |
+| [nixos-wsl](https://github.com/nix-community/NixOS-WSL)         | NixOS on WSL integration                                          |
+| [disko](https://github.com/nix-community/disko)                 | Declarative disk partitioning                                     |
+| [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | MCP servers (persistent memory)                                   |
+| personal (stub)                                                 | Your identity flake — see [Personal identity](#personal-identity) |
 
 All inputs follow a single nixpkgs to avoid version drift.
 
 ## Documentation
 
-| Document | Contents |
-|----------|----------|
-| [`docs/features.md`](docs/features.md) | Full feature inventory (shell, editor, git, CLI tools, macOS defaults, Claude Code) |
-| [`docs/architecture.md`](docs/architecture.md) | Targets, profiles, builders, system modules, adding new hosts |
-| [`docs/manual-setup.md`](docs/manual-setup.md) | Post-deploy manual steps (fonts, permissions, MCP registration) |
-| [`docs/platform-commands.md`](docs/platform-commands.md) | Platform-specific commands (rollback, diff closures, generations) |
-| [`docs/miles.md`](docs/miles.md) | Operational runbook for the Hetzner VPS |
+| Document                                                 | Contents                                                                            |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [`docs/features.md`](docs/features.md)                   | Full feature inventory (shell, editor, git, CLI tools, macOS defaults, Claude Code) |
+| [`docs/architecture.md`](docs/architecture.md)           | Targets, profiles, builders, system modules, adding new hosts                       |
+| [`docs/manual-setup.md`](docs/manual-setup.md)           | Post-deploy manual steps (fonts, permissions, MCP registration)                     |
+| [`docs/platform-commands.md`](docs/platform-commands.md) | Platform-specific commands (rollback, diff closures, generations)                   |
+| [`docs/miles.md`](docs/miles.md)                         | Operational runbook for the Hetzner VPS                                             |
 
 ## Development
 

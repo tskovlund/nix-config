@@ -21,6 +21,7 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(make check), Bash(make switch
    - When in doubt, use base (`home/default.nix`)
 
 3. **Add the import:**
+
    ```nix
    imports = [
      ./shell

@@ -19,46 +19,55 @@ allowed-tools: Read, Glob, Grep, Bash(nix *), Bash(home-manager *), Bash(make ch
 ## Common eval errors
 
 ### Infinite recursion
+
 - **Cause:** Circular imports or self-referencing attribute sets
 - **Fix:** Check module imports for cycles. Use `lib.mkIf` / `lib.mkMerge` to break dependency chains
 - **Trace clue:** `error: infinite recursion encountered` with no useful stack — add `--show-trace`
 
 ### Missing attribute
+
 - **Cause:** Typo in attribute name, wrong nixpkgs channel, or missing module import
 - **Fix:** Check spelling, verify package exists with `nix search nixpkgs#<name>`, ensure module is imported
 - **Trace clue:** `error: attribute '<name>' missing`
 
 ### Type mismatch
+
 - **Cause:** Passing wrong type to a home-manager option (e.g., string where list expected)
 - **Fix:** Check option type with `nix repl` or home-manager docs
 
 ## Common build failures
 
 ### Hash mismatch
+
 - **Cause:** Upstream source changed, or fetcher hash is wrong
 - **Fix:** Update the hash. Use `lib.fakeHash` or `""` to get the expected hash from the error
 
 ### Missing dependency
+
 - **Cause:** `buildInputs` or `nativeBuildInputs` incomplete
 - **Fix:** Add the missing dependency to the appropriate input list
 
 ### Platform-specific failures
+
 - **Cause:** Package doesn't support current platform
 - **Fix:** Use `lib.optionals pkgs.stdenv.isDarwin [...]` or platform modules
 
 ## Flake issues
 
 ### Lock out of date
+
 ```sh
 nix flake update              # Update all inputs
 nix flake lock --update-input <name>  # Update single input
 ```
 
 ### Input follows conflicts
+
 - **Cause:** An input's nixpkgs version conflicts with the pinned one
 - **Fix:** See "Follows override" in CLAUDE.md — temporarily pin or remove `follows`
 
 ### Eval cache stale
+
 ```sh
 make switch REFRESH=1         # Bypass Nix's input cache
 ```
@@ -70,6 +79,7 @@ nix repl --file flake.nix     # Load the flake
 ```
 
 Inside repl:
+
 - Tab completion to explore attributes
 - `:p <expr>` — pretty-print a value
 - `:t <expr>` — show type

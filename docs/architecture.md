@@ -16,15 +16,15 @@ Everything else — helpers, host modules, home modules — is internal wiring d
 
 The flake defines 7 targets:
 
-| Target | Build tool | Profile | What it manages |
-|--------|-----------|---------|----------------|
-| `darwin` | `darwin-rebuild` | personal | macOS system + user config |
-| `darwin-base` | `darwin-rebuild` | base | macOS system + user config |
-| `nixos-wsl` | `nixos-rebuild` | personal | NixOS system + user config |
-| `nixos-wsl-base` | `nixos-rebuild` | base | NixOS system + user config |
-| `miles` | `nixos-rebuild` | personal | NixOS system + user config (Hetzner VPS) |
-| `linux` | `home-manager` | personal | User config only (any Linux distro) |
-| `linux-base` | `home-manager` | base | User config only (any Linux distro) |
+| Target           | Build tool       | Profile  | What it manages                          |
+| ---------------- | ---------------- | -------- | ---------------------------------------- |
+| `darwin`         | `darwin-rebuild` | personal | macOS system + user config               |
+| `darwin-base`    | `darwin-rebuild` | base     | macOS system + user config               |
+| `nixos-wsl`      | `nixos-rebuild`  | personal | NixOS system + user config               |
+| `nixos-wsl-base` | `nixos-rebuild`  | base     | NixOS system + user config               |
+| `miles`          | `nixos-rebuild`  | personal | NixOS system + user config (Hetzner VPS) |
+| `linux`          | `home-manager`   | personal | User config only (any Linux distro)      |
+| `linux-base`     | `home-manager`   | base     | User config only (any Linux distro)      |
 
 **macOS** and **NixOS** targets manage both system-level settings and user config. **Linux** targets manage user config only — there's no system-level management, which is why they work on any Linux distro (Ubuntu, Fedora, WSL, etc.) without modification.
 
@@ -61,6 +61,7 @@ Three builder functions in `flake.nix` wire targets together:
 ### makeDarwin
 
 Creates a nix-darwin system configuration. Always imports:
+
 - `hosts/darwin/default.nix` — system config (Nix settings, fonts, Homebrew casks, macOS defaults)
 - `home/darwin/` — macOS-specific home-manager config (Homebrew PATH, SSH Keychain)
 - Profile modules (base or personal)
@@ -72,6 +73,7 @@ Personal target also imports `hosts/darwin/personal.nix` (personal casks, Mac Ap
 ### makeNixOS
 
 Creates a NixOS system configuration. Always imports:
+
 - `hosts/nixos/default.nix` — shared NixOS layer (user creation, flakes, zsh, home-manager integration)
 - `home/nixos/` — NixOS-specific home-manager config (systemd user service workaround)
 - Profile modules (base or personal)
@@ -83,6 +85,7 @@ Host-specific modules are passed via the `nixosModules` parameter. For example, 
 ### makeLinux
 
 Creates a standalone home-manager configuration. No system-level config at all. Imports:
+
 - Profile modules (base or personal)
 - nixvim and agenix home-manager modules
 - Machine-local config (`local.nix`, when `--impure`)
@@ -162,6 +165,7 @@ For non-WSL hosts, you must configure authentication in the host-specific config
 The flake has a `personal` input that defaults to `stubs/personal/` — a placeholder with dummy values. On real machines, `make switch` overrides it with your actual personal flake via `--override-input`.
 
 The personal flake exports:
+
 - `identity` — `{ isStub, username, fullName, email }` used by `flake.nix` (username → system user) and `home/git/` (name, email → git config)
 - `homeModules` — list of home-manager modules imported by personal targets (secrets, SSH, dotfiles)
 
