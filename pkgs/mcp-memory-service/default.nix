@@ -15,19 +15,19 @@ python312Packages.buildPythonPackage rec {
     hash = "sha256-Cu1BLBP/83bFaeaG/Q7TYEFKz48WLkgaEgrwY8T+F6Q=";
   };
 
-  # Patch out torch and sentence-transformers from project dependencies —
-  # the ONNX embedding path (onnx_embeddings.py) doesn't import either;
-  # they're only needed for the optional sentence-transformers embedding backend.
-  # This reduces the closure from ~3-5GB (with torch) to ~500MB-1GB.
-  # Also patch out python-semantic-release and build from build-system.requires —
-  # they're not needed during the Nix build (hatchling alone suffices).
+  # Patch out optional/build-only dependencies:
+  # - torch, sentence-transformers: only needed for the non-ONNX embedding backend
+  # - python-semantic-release, build: not needed during Nix build (hatchling suffices)
+  # - apscheduler: pulls in twisted which has flaky sandbox tests on macOS
+  # Also relax version bounds for python-multipart and sqlite-vec.
   postPatch = ''
     substituteInPlace pyproject.toml \
       --replace-fail '"sentence-transformers>=2.2.2",' "" \
       --replace-fail '"torch>=2.0.0",' "" \
       --replace-fail '"python-semantic-release", "build"' "" \
       --replace-fail '"python-multipart>=0.0.22"' '"python-multipart>=0.0.20"' \
-      --replace-fail '"sqlite-vec>=0.1.0"' '"sqlite-vec>=0.0.0"'
+      --replace-fail '"sqlite-vec>=0.1.0"' '"sqlite-vec>=0.0.0"' \
+      --replace-fail '"apscheduler>=3.11.0",' ""
   '';
 
   build-system = with python312Packages; [
@@ -56,7 +56,8 @@ python312Packages.buildPythonPackage rec {
     authlib
     pyjwt
     requests
-    apscheduler
+    # apscheduler removed — pulls in twisted which has flaky tests on macOS.
+    # Only used for optional scheduled memory cleanup, not core functionality.
     # ONNX runtime for local embeddings (from [sqlite] extra)
     onnxruntime
   ];
