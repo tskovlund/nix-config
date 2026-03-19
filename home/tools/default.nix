@@ -86,6 +86,9 @@
     catimg # display images in terminal
     glow # terminal markdown renderer
 
+    # Development SDKs
+    dotnet-sdk_10 # .NET 10 SDK
+
     # essentials
     sl
     cowsay
