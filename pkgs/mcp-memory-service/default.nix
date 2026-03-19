@@ -1,7 +1,7 @@
 {
   lib,
   python312Packages,
-  fetchFromGitHub,
+  fetchPypi,
 }:
 
 python312Packages.buildPythonPackage rec {
@@ -9,11 +9,10 @@ python312Packages.buildPythonPackage rec {
   version = "10.26.0";
   pyproject = true;
 
-  src = fetchFromGitHub {
-    owner = "doobidoo";
-    repo = "mcp-memory-service";
-    tag = "v${version}";
-    hash = "sha256-7QeqLhdJ0hdcAqZYlLq6XZYncfKWqzg5Xcon0vlKQqI=";
+  src = fetchPypi {
+    pname = "mcp_memory_service";
+    inherit version;
+    hash = "sha256-Cu1BLBP/83bFaeaG/Q7TYEFKz48WLkgaEgrwY8T+F6Q=";
   };
 
   # Patch out torch and sentence-transformers from project dependencies —
@@ -71,7 +70,7 @@ python312Packages.buildPythonPackage rec {
 
   meta = {
     description = "Persistent memory service with semantic search for AI agents via MCP";
-    homepage = "https://github.com/doobidoo/mcp-memory-service";
+    homepage = "https://pypi.org/project/mcp-memory-service/";
     license = lib.licenses.mit;
     maintainers = [ ];
   };
