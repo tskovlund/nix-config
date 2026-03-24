@@ -91,117 +91,7 @@ let
     autonomy = {
       level = "full";
       workspace_only = false;
-      allowed_commands = [
-        "git"
-        "npm"
-        "cargo"
-        "ls"
-        "cat"
-        "grep"
-        "find"
-        "echo"
-        "pwd"
-        "wc"
-        "head"
-        "tail"
-        "gh"
-        "rm"
-        "mkdir"
-        "cp"
-        "mv"
-        "sed"
-        "awk"
-        "sort"
-        "uniq"
-        "diff"
-        "tar"
-        "jq"
-        "python3"
-        "date"
-        "touch"
-        "ln"
-        "env"
-        "xargs"
-        "tr"
-        "cut"
-        "tac"
-        "realpath"
-        "dirname"
-        "basename"
-        "whoami"
-        "id"
-        "uname"
-        "hostname"
-        "which"
-        "stat"
-        "du"
-        "df"
-        "free"
-        "uptime"
-        "ps"
-        "curl"
-        "wget"
-        "ssh"
-        "scp"
-        "pip"
-        "npx"
-        "node"
-        "make"
-        "nix"
-        "systemctl"
-        "journalctl"
-        "unzip"
-        "zip"
-        "yq"
-        "rg"
-        "fd"
-        "docker"
-        "top"
-        "htop"
-        "vmstat"
-        "iostat"
-        "lsblk"
-        "lsof"
-        "ss"
-        "ip"
-        "dig"
-        "nslookup"
-        "ping"
-        "file"
-        "md5sum"
-        "sha256sum"
-        "base64"
-        "less"
-        "sleep"
-        "test"
-        "true"
-        "false"
-        "bc"
-        "expr"
-        "seq"
-        "rsync"
-        "pgrep"
-        "pkill"
-        "readlink"
-        "getent"
-        "nix-store"
-        "nix-env"
-        "nix-build"
-        "nix-shell"
-        "openssl"
-        "age"
-        "claude"
-        "tee"
-        "chmod"
-        "chown"
-        "yes"
-        "timeout"
-        "watch"
-        "column"
-        "paste"
-        "comm"
-        "tput"
-      ];
+      allowed_commands = [ "*" ];
       forbidden_paths = [
         "/boot"
         "/sys"
@@ -333,6 +223,7 @@ let
 
     query_classification = {
       enabled = true;
+      log_classifications = true;
       rules = [
         {
           hint = "fast";
@@ -580,17 +471,6 @@ let
       IdentitiesOnly yes
   '';
 
-  gitConfigFile = pkgs.writeText "zeroclaw-gitconfig" ''
-    [user]
-      name = Eliza
-      email = thomas@skovlund.dev
-      signingKey = /var/lib/zeroclaw/.ssh/id_ed25519_github.pub
-    [gpg]
-      format = ssh
-    [commit]
-      gpgSign = true
-  '';
-
   claudeSettingsFile = (pkgs.formats.json { }).generate "claude-settings.json" {
     permissions = {
       allow = [
@@ -758,12 +638,14 @@ in
       chmod 644 /var/lib/zeroclaw/.ssh/config
 
       # --- Git identity ---
-      # ZeroClaw's security policy blocks `git config` at runtime
-      # (hardcoded in is_args_safe()), so we create .gitconfig here.
-      # Tracked upstream: https://github.com/zeroclaw-labs/zeroclaw/issues/1398
+      # Set up initial git config for the zeroclaw user.
+      # ZeroClaw can also modify this at runtime via `git config`.
 
-      cp ${gitConfigFile} /var/lib/zeroclaw/.gitconfig
-      chown zeroclaw:zeroclaw /var/lib/zeroclaw/.gitconfig
+      ${pkgs.sudo}/bin/sudo -u zeroclaw ${pkgs.git}/bin/git config --global user.name "Eliza"
+      ${pkgs.sudo}/bin/sudo -u zeroclaw ${pkgs.git}/bin/git config --global user.email "thomas@skovlund.dev"
+      ${pkgs.sudo}/bin/sudo -u zeroclaw ${pkgs.git}/bin/git config --global user.signingKey "/var/lib/zeroclaw/.ssh/id_ed25519_github.pub"
+      ${pkgs.sudo}/bin/sudo -u zeroclaw ${pkgs.git}/bin/git config --global gpg.format "ssh"
+      ${pkgs.sudo}/bin/sudo -u zeroclaw ${pkgs.git}/bin/git config --global commit.gpgSign "true"
 
       # --- Age key (for self-modification: decrypt/encrypt skills) ---
 
