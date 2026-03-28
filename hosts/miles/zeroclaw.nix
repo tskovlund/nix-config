@@ -18,6 +18,20 @@
 }:
 
 let
+  # v0.6.1 removed pre-built web assets from the repo. build.rs tries to run
+  # `npm ci && npm run build` but the Nix sandbox has no network access, so the
+  # dashboard silently degrades to an empty shell. Build the frontend separately
+  # with pre-fetched npm deps, then copy it into the source tree before Cargo.
+  zeroclaw-web = pkgs.buildNpmPackage {
+    pname = "zeroclaw-web";
+    version = "0.1.0";
+    src = zeroclaw-src + "/web";
+    npmDepsHash = "sha256-4+raDJ7+w+RpdeZs2PJL10IWzfoT5B3EpOxsLUnlrRc=";
+    installPhase = ''
+      cp -r dist $out
+    '';
+  };
+
   zeroclaw = pkgs.rustPlatform.buildRustPackage {
     pname = "zeroclaw";
     version = "0-unstable-${zeroclaw-src.shortRev or "unknown"}";
@@ -31,6 +45,12 @@ let
 
     # Some tests require git and network access, unavailable in the Nix sandbox
     doCheck = false;
+
+    # Copy pre-built web frontend so build.rs finds a populated web/dist/
+    preBuild = ''
+      rm -rf web/dist
+      cp -r ${zeroclaw-web} web/dist
+    '';
 
     nativeBuildInputs = with pkgs; [
       pkg-config
