@@ -160,7 +160,7 @@
             config.allowUnfreePredicate =
               pkg:
               builtins.elem (nixpkgs.lib.getName pkg) [
-                "claude-code-bin"
+                "claude-code"
               ];
           };
           extraSpecialArgs = { inherit identity; };
