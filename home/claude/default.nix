@@ -3,7 +3,7 @@
 {
   # Claude Code — AI coding assistant CLI.
   # Settings and plugins are managed manually (see docs/manual-setup.md).
-  home.packages = [ pkgs.claude-code-bin ];
+  home.packages = [ pkgs.claude-code ];
 
   # Default to Opus 4.6
   home.sessionVariables.ANTHROPIC_MODEL = "claude-opus-4-6";

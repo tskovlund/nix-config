@@ -219,39 +219,27 @@ in
     };
   };
 
-  # Ensure Promtail data directory exists (required before systemd namespace setup)
-  systemd.tmpfiles.rules = [
-    "d /var/lib/promtail 0700 promtail promtail -"
-  ];
+  # Alloy — ships systemd journal logs to Loki (replaced Promtail, which was EOL)
+  environment.etc."alloy/config.alloy".text = ''
+    loki.write "default" {
+      endpoint.url = "http://localhost:3100/loki/api/v1/push"
+    }
 
-  # Promtail — ships systemd journal logs to Loki
-  services.promtail = {
-    enable = true;
-    configuration = {
-      server = {
-        http_listen_port = 9080;
-        grpc_listen_port = 0;
-      };
-      positions.filename = "/var/lib/promtail/positions.yaml";
-      clients = [
-        { url = "http://localhost:3100/loki/api/v1/push"; }
-      ];
-      scrape_configs = [
-        {
-          job_name = "journal";
-          journal = {
-            max_age = "12h";
-            labels.job = "systemd-journal";
-          };
-          relabel_configs = [
-            {
-              source_labels = [ "__journal__systemd_unit" ];
-              target_label = "unit";
-            }
-          ];
+    loki.source.journal "journal" {
+      max_age = "12h"
+      forward_to = [loki.write.default.receiver]
+      relabel_rules {
+        rule {
+          source_labels = ["__journal__systemd_unit"]
+          target_label  = "unit"
         }
-      ];
-    };
+      }
+    }
+  '';
+
+  services.alloy = {
+    enable = true;
+    configPath = "/etc/alloy/config.alloy";
   };
 
   # Grafana — dashboards, alerting, and visualization

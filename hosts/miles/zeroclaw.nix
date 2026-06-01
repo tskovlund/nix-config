@@ -905,7 +905,7 @@ in
       nodejs
       python3
       age # decrypt/encrypt agenix secrets for self-modification
-      claude-code-bin # headless coding agent (delegated tasks via scheduler)
+      claude-code # headless coding agent (delegated tasks via scheduler)
     ];
 
     environment = {

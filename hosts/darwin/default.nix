@@ -20,7 +20,7 @@
   nixpkgs.config.allowUnfreePredicate =
     pkg:
     builtins.elem (pkgs.lib.getName pkg) [
-      "claude-code-bin"
+      "claude-code"
     ];
 
   # --- Homebrew (cask management) ---

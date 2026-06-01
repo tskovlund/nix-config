@@ -14,7 +14,7 @@
   nixpkgs.config.allowUnfreePredicate =
     pkg:
     builtins.elem (lib.getName pkg) [
-      "claude-code-bin"
+      "claude-code"
     ];
 
   # Automatic garbage collection — weekly, keep the last 7 days of generations.
