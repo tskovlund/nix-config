@@ -13,9 +13,19 @@
   # Allow specific unfree packages (home-manager inherits this via useGlobalPkgs)
   nixpkgs.config.allowUnfreePredicate =
     pkg:
-    builtins.elem (lib.getName pkg) [
+    let
+      name = lib.getName pkg;
+    in
+    builtins.elem name [
       "claude-code"
-    ];
+    ]
+    || lib.hasPrefix "cuda" name
+    || lib.hasPrefix "libcu" name
+    || lib.hasPrefix "libnpp" name
+    || lib.hasPrefix "libnv" name
+    || lib.hasPrefix "nvidia" name
+    || lib.hasPrefix "cudnn" name
+    || lib.hasPrefix "nccl" name;
 
   # Automatic garbage collection — weekly, keep the last 7 days of generations.
   # Without this, old store paths accumulate and fill the disk.

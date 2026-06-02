@@ -5,5 +5,6 @@
   # The general NixOS layer (hosts/nixos) is imported by makeNixOS in flake.nix.
   imports = [
     ../wsl
+    ./ollama.nix
   ];
 }
