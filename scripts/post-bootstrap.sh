@@ -177,6 +177,10 @@ else
       "Read(~/.aws/**)",
       "Read(~/.ssh/id_*)"
     ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }
 JSON
