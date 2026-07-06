@@ -78,7 +78,14 @@
     }:
     let
       inherit (personal) identity;
-      personalHomeModules = personal.homeModules or [ ];
+      # personal.homeModules is an attrset with a `default` aggregate (the
+      # shape flake-schemas requires); tolerate the legacy list shape and
+      # the empty stub so either side can update first.
+      personalHomeModules =
+        let
+          raw = personal.homeModules or [ ];
+        in
+        if builtins.isAttrs raw then [ raw.default ] else raw;
       inherit (identity) username;
 
       # Optional machine-local home-manager config (outside the repo).
