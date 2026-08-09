@@ -7,156 +7,74 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
 ## Architecture
 
 - **flake.nix**: Entry point. Declares inputs and wires up:
-  - `darwinConfigurations."darwin"` — macOS, base + personal
-  - `darwinConfigurations."darwin-base"` — macOS, base only
-  - `homeConfigurations."linux"` — Linux, base + personal
-  - `homeConfigurations."linux-base"` — Linux, base only
-  - `nixosConfigurations."nixos-wsl"` — NixOS-WSL, base + personal
-  - `nixosConfigurations."nixos-wsl-base"` — NixOS-WSL, base only
+  - `darwinConfigurations."darwin"` / `."darwin-base"` — macOS, base + personal / base only
+  - `homeConfigurations."linux"` / `."linux-base"` — Linux, base + personal / base only
+  - `nixosConfigurations."nixos-wsl"` / `."nixos-wsl-base"` — NixOS-WSL, base + personal / base only
   - `nixosConfigurations."miles"` — Hetzner VPS (always personal — no base variant)
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
-- **hosts/**: Platform-specific _system_ config (nix-darwin settings, NixOS settings, not user config)
-  - `hosts/darwin/default.nix` — base system config (Nix settings, fonts, base Homebrew casks, macOS system defaults)
-  - `hosts/darwin/personal.nix` — personal system config (personal casks, Mac App Store apps). Imported via `darwinModules` in the personal `makeDarwin` call.
-  - `nix.enable = false` in darwin config because Determinate Nix manages the Nix daemon. This means `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
-  - `hosts/nixos/default.nix` — general NixOS layer (user setup, flakes, zsh, automatic nix GC + store optimization). Reusable by all NixOS hosts (WSL, VPS, bare-metal, etc.)
-  - `hosts/wsl/default.nix` — general WSL layer (interop, automount, start menu launchers). Reusable for any WSL distribution, not just NixOS-WSL.
+- **hosts/**: Platform-specific _system_ config (nix-darwin / NixOS settings, not user config)
+  - `hosts/darwin/default.nix` — base system config. `nix.enable = false` here because Determinate Nix manages the daemon, so `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
+  - `hosts/darwin/personal.nix` — personal casks, Mac App Store apps. Imported via `darwinModules` in the personal `makeDarwin` call.
+  - `hosts/nixos/default.nix` — general NixOS layer, reusable by all NixOS hosts (WSL, VPS, bare-metal)
+  - `hosts/wsl/default.nix` — general WSL layer, reusable for any WSL distribution
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
-  - `hosts/miles/default.nix` — Hetzner Cloud VPS system config (SSH, firewall, fail2ban, sysctl hardening, auto-upgrade, Caddy, Uptime Kuma, QEMU guest). Naming convention: jazz legends.
-  - `hosts/miles/disk-config.nix` — Disko declarative disk layout (BIOS/GPT, ext4, swap).
-  - `hosts/miles/zeroclaw.nix` — ZeroClaw AI assistant (package from source, systemd service, config). Post-deploy setup required: OpenRouter onboarding + Telegram channel binding.
-  - `hosts/miles/observability.nix` — Observability stack: Prometheus, Grafana, Loki, Promtail, node exporter. Grafana and all internal services are Tailscale-only (`http://miles:3002`). Declaratively provisioned: datasources (with stable UIDs), Node Exporter Full dashboard, alert rules (disk/memory/CPU/systemd/scrape), contact points (Ntfy webhook + Resend email), notification policy. MCP integration via `mcp-grafana` (wrapper in `home/claude/`).
-  - `hosts/miles/backups.nix` — Restic backups to Backblaze B2. Daily at 02:30 UTC, SQLite-safe snapshots via `sqlite3 .backup`, ntfy notifications on success/failure. Backs up ZeroClaw (workspace, memory, config), Uptime Kuma, Grafana, Ntfy data.
-  - `hosts/miles/tailscale.nix` — Tailscale mesh VPN. Creates a private WireGuard network between devices. SSH and internal services (Prometheus, Loki, etc.) are Tailscale-only — not exposed to the public internet. Post-deploy: `tailscale up` to authenticate.
-- **docs/miles.md**: Operational runbook for the miles VPS (specs, Hetzner resources, DNS, security, deployment, disaster recovery).
+  - `hosts/miles/` — Hetzner Cloud VPS (host naming convention: jazz legends). Split into `default.nix`, `disk-config.nix`, `observability.nix`, `backups.nix`, `tailscale.nix`, and `zeroclaw.nix`. See **docs/miles.md** for the operational runbook. ZeroClaw is pending decommission (approved in principle 2026-08) — don't invest in `zeroclaw.nix`.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
-- **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`. See README for details.
+- **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`.
 - **files/**: Raw config files that modules source or symlink
-- **bootstrap.sh**: Curl-pipeable bootstrap script for new machines. Installs Nix, Homebrew (macOS), clones repo, sets up identity, generates/migrates age key, runs first deploy. On NixOS-WSL, handles two-phase build when the bootstrap user (e.g. `nixos`) differs from the target user — builds base first to create the user, migrates config files, then builds the full personal config.
-- **scripts/**: Support scripts (not Nix modules). Currently contains `post-bootstrap.sh` for post-deploy initialization.
+- **bootstrap.sh**: Curl-pipeable bootstrap for new machines. On NixOS-WSL, handles the two-phase build when the bootstrap user (e.g. `nixos`) differs from the target user — base first to create the user, then the full personal config.
+- **scripts/**: Support scripts (not Nix modules)
 - **.githooks/**: Repo-local git hooks (pre-commit formats/lints, pre-push runs `nix flake check --all-systems`)
-- **.envrc**: direnv config — runs `use flake` to enter the dev shell, which sets `core.hooksPath`
+- **.envrc**: direnv config — `use flake` to enter the dev shell, which sets `core.hooksPath`
 
 ## Personal identity
 
-This repo contains no personal information. Identity (username, name, email) comes from an external **personal flake** input.
+This repo contains no personal information. Identity comes from an external **personal flake** input (nix-config-personal).
 
-- **`inputs.personal`** defaults to `path:./stubs/personal` — a stub with placeholder values and `isStub = true`.
-- On real machines, `make switch` reads `~/.config/nix-config/personal-input` and passes `--override-input personal <url>` to the rebuild command.
-- The personal flake exports two things:
-  - `identity = { isStub, username, fullName, email }` — consumed by `flake.nix` and `home/git/default.nix`
-  - `homeModules` — list of home-manager modules for personal config (secrets, SSH, dotfiles). Imported by personal targets via `personalHomeModules` in `flake.nix`.
-- In `flake.nix`, `username` is derived from `identity.username` and flows through to all system/user config via closures.
-- Home-manager modules receive `identity` via `extraSpecialArgs`. Use `{ identity, ... }:` in the module args to access it. Currently only `home/git/default.nix` uses `identity.fullName` and `identity.email`.
-- `nix flake check` in CI uses the stub (no override needed) and passes because stub values are valid strings. The stub exports `homeModules = []`.
-- `make switch` without identity configured prints a clear error message.
+- **`inputs.personal`** defaults to `path:./stubs/personal` — placeholder values, `isStub = true`.
+- `make switch` reads `~/.config/nix-config/personal-input` and passes `--override-input personal <url>`. Without identity configured it prints a clear error.
+- The personal flake exports `identity = { isStub, username, fullName, email }` (consumed by `flake.nix` and `home/git/default.nix`) and `homeModules` (imported via `personalHomeModules`).
+- `username` flows from `identity.username` through all system/user config via closures. Home-manager modules receive `identity` via `extraSpecialArgs` — use `{ identity, ... }:` in the module args.
+- CI uses the stub (no override); it passes because stub values are valid strings and `homeModules = []`.
 
 ## Profiles: base vs personal
 
 The base/personal split applies at both layers:
 
-- **home-manager** (user config):
-  - **`home/default.nix`** — base dev environment. Everything that belongs on any dev machine (shell, editor, git, CLI tools). New modules go here by default.
-  - **`home/personal.nix`** — personal additions layered on top. Only for things that are clearly personal (personal SSH hosts, fun tools, personal aliases).
-- **nix-darwin** (system config):
-  - **`hosts/darwin/default.nix`** — base system config including base Homebrew casks (Firefox, Chrome, iTerm2, etc.)
-  - **`hosts/darwin/personal.nix`** — personal casks, Mac App Store apps, personal brew formulae.
+- **home-manager**: `home/default.nix` (base dev environment — new modules go here by default) and `home/personal.nix` (clearly personal things only: personal SSH hosts, fun tools, personal aliases).
+- **nix-darwin**: `hosts/darwin/default.nix` (base casks) and `hosts/darwin/personal.nix` (personal casks, Mac App Store apps).
 
 When adding new config, put it in base unless it's obviously personal. When in doubt, ask.
 
-## Adding a new home-manager module
-
-1. Create `home/<category>/default.nix`
-2. Import it from `home/default.nix` (for base) or `home/personal.nix` (for personal):
-   ```nix
-   imports = [
-     ./shell
-     ./git
-     ./tools
-     ./editor
-     # add new module here
-   ];
-   ```
-3. Test with `make check`, then `make switch`
-
 ## Git workflow
 
-### PR workflow (branch + PR)
+Small changes go direct to main; structural work goes branch + PR.
 
-1. Create a feature branch: `git checkout -b feat/<name>`
-2. Make changes, test with `make check` and `make switch`
-3. Commit with conventional commit messages
-4. Push and create a PR linking the relevant phase issue
-5. **Review loop — iterate until clean:**
-   - Wait for CI and Copilot review (Copilot auto-reviews via the "Protect main" ruleset)
-   - Read all Copilot comments: `gh api repos/tskovlund/nix-config/pulls/<N>/comments`
-   - Address each comment: fix the code AND reply to the comment on GitHub confirming the fix (e.g. "Fixed in abc123."). If no change is needed, reply explaining why.
-   - Push fixes, then check for new comments — repeat until no unresolved comments remain
-   - This loop is part of the definition of done. A PR is not ready for human review until CI passes and all automated review comments are resolved.
-6. Once CI passes and comments are resolved, notify Thomas for final review
-7. Thomas merges. After merge:
-   - Pull main locally, delete the feature branch, prune stale remote tracking refs: `git fetch --prune`
-   - Close related GitHub issues (if not auto-closed by `Closes #N`)
-   - Update related Linear issues (add comment with PR link, move to Done)
+- Copilot auto-reviews every PR via the "Protect main" ruleset. Read its comments with
+  `gh api repos/tskovlund/nix-config/pulls/<N>/comments`, fix or decline each one with a reply, and repeat until clean — a PR isn't ready for Thomas until CI passes and no automated comment is unresolved.
+- The pre-push hook runs `nix flake check` on every push, including direct-to-main. CI additionally runs required checks for both Linux and macOS on PRs.
+- After merge: `git fetch --prune`, close related GitHub issues, comment the PR link on the Linear issue and move it to Done.
+- PR bodies follow `.github/PULL_REQUEST_TEMPLATE.md` (Summary / Test plan / Related issues). The test plan always includes `make check` and `make switch`.
+- Repo owner can bypass force-push protection when needed (e.g. amending on a PR branch).
 
-Note: the pre-push hook runs `nix flake check` on every push (including direct-to-main). CI also runs on PRs with required status checks for both Linux and macOS.
-
-### Agent autonomy
-
-The goal is to maximize continuous agent work without human intervention. Agents should:
-
-- Follow the PR review loop above autonomously — don't stop after the first push
-- Use agent teams for parallel work when tasks are independent
-- Pick up the next logical task after completing one (check Linear and GitHub issues)
-- Only pause for human input when a design decision genuinely requires it
-- Document all decisions and trade-offs in PR descriptions and issue comments so Thomas can review asynchronously
-
-### PR structure
-
-A PR template is defined in `.github/PULL_REQUEST_TEMPLATE.md`. When using `gh pr create --body`, follow the same structure:
-
-- **Summary** — what this PR does and why, as a short list of bullet points.
-- **Test plan** — checkboxes for how the change was verified. Always include `make check` and `make switch`. Add issue-specific verification steps as needed.
-- **Related issues** — link related GitHub issues (`Closes #N` or `Related: #N`) and Linear issues (full URL).
-
-### Keeping docs current
-
-- **README.md** and **CLAUDE.md** must be updated whenever changes affect them (new modules, new tools, workflow changes, architectural decisions)
-- **GitHub issues** conventions are documented below
+Update **README.md** and **AGENTS.md** whenever a change affects them — new modules, new tools, workflow changes, architectural decisions.
 
 ### Issue tracking
 
-GitHub Issues is the implementation tracker for this repo. Linear handles higher-level planning.
+GitHub Issues is the implementation tracker for this repo; Linear handles higher-level planning. Use the templates in `.github/ISSUE_TEMPLATE/` (Enhancement, Bug, Research) — Research issues end with "Trigger to revisit" and deliberately have no acceptance criteria.
 
-**Issue types and templates:**
-
-Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the appropriate template when creating issues — via the GitHub web UI (which presents template selection) or by following the template structure when using `gh issue create`.
-
-- **Enhancement** — new features or improvements. Sections: Summary, Why, Requirements (checkboxes), Caveats, Acceptance criteria, References.
-- **Bug** — something broken. Sections: Summary, Problem, Fix (checkboxes), Context, Acceptance criteria.
-- **Research** — exploratory / future consideration. Sections: What, Why consider it, Why not now, References, Trigger to revisit. Research issues do **not** have acceptance criteria — they end with "Trigger to revisit" instead.
-
-**Conventions:**
-
-- **Acceptance criteria on every actionable issue.** Every enhancement and bug must have an explicit "Acceptance criteria" section with verifiable conditions. This is how we know when an issue is done.
-- **No "Status:" headers in issue bodies.** GitHub's open/closed state tracks status. Don't add "Status: Not started" or "Status: Done" lines to issue descriptions.
-- **Don't edit issue bodies — use comments.** The issue body is the original spec. New context, corrections, investigation findings, and retrospective info all go in comments, preserving the timeline. The only exceptions are fixing typos, adding missing template sections before work starts, or ticking checkboxes (in issues, PRs, etc.).
-- **Always read issue comments before working on an issue.** Comments are a crucial part of issue tracking — they contain scope changes, investigation findings, design decisions, and context that the body alone won't have. The body may be outdated or incomplete. Skip this only when the issue is obviously simple or freshly created.
-- **Labels:** `bug`, `enhancement`, `documentation`, `phase`, `ci`, `research`, `dependencies`, `github actions`. Apply at least one label to every issue.
-- **No milestones or GitHub Projects.** Linear handles planning. The `phase` label is sufficient for grouping implementation phases.
-- **Cross-reference related issues** using `#N` links. Reference Linear issues with their full URL when relevant.
-- **Repo owner can bypass force-push protection** when needed (e.g., amending commits on a PR branch).
+- **Acceptance criteria on every actionable issue** — explicit, verifiable conditions. That's how we know an issue is done.
+- **Don't edit issue bodies — use comments.** The body is the original spec; corrections, findings, and retrospective context go in comments so the timeline is preserved. Exceptions: typos, adding missing template sections before work starts, ticking checkboxes.
+- **Always read the comments before working an issue.** They hold scope changes and design decisions the body won't have.
+- **Labels** (at least one per issue): `bug`, `enhancement`, `documentation`, `phase`, `ci`, `research`, `dependencies`, `github actions`. No milestones or GitHub Projects — `phase` is enough.
 
 ## Style preferences
 
-- **Conventional commit scopes.** Include scope when a commit touches a single module; omit for cross-cutting changes. Use these scopes consistently:
+- **Conventional commit scopes.** Include a scope when a commit touches a single module; omit for cross-cutting changes.
   - **Module scopes** (map to `home/<dir>/`): `shell`, `git`, `editor`, `tools`, `claude`, `darwin`, `linux`
   - **Infra scopes**: `ci`, `bootstrap`, `flake`, `deps`
-  - Example: `feat(shell): add fzf integration`, `fix(claude): skip tmux for non-interactive subcommands`, `chore(deps): update flake inputs`
+  - Example: `feat(shell): add fzf integration`, `chore(deps): update flake inputs`
 - **Nix naming: no `mk` prefix.** Use `makeDarwin` not `mkDarwin`, `homeModules` not `hm`. The Nix community loves `mk`-prefixed names (from `mkDerivation`) but we prefer clarity. Exception: don't rename things from upstream APIs (`lib.mkIf` stays as `lib.mkIf`).
-- **Discuss every design choice with Thomas.** Don't make assumptions about preferences. Present options with trade-offs.
-- **Verify UI changes before pushing.** For visual/UI changes (prompts, themes, TUI output, etc.) where `make check` can't confirm correctness, `make switch` first and ask Thomas to verify the result visually before committing and pushing.
-- **Use the best model for the job.** Cost is not a concern. When spawning agents for complex tasks, use Opus (with extended thinking if beneficial). Use Sonnet for straightforward, well-scoped subtasks.
 
 ## Module conventions
 
@@ -167,35 +85,15 @@ Three issue templates are defined in `.github/ISSUE_TEMPLATE/`. Always use the a
 
 ## Machine-local config
 
-Three mechanisms allow per-machine customization without modifying the repo:
+Three mechanisms allow per-machine customization without modifying the repo. All live outside the repo, so `nix flake check` and CI are unaffected.
 
-### Nix packages (`local.nix`)
+| File                                          | What it is                    | Applies to        | How to apply           |
+| --------------------------------------------- | ----------------------------- | ----------------- | ---------------------- |
+| `~/.config/nix-config/local.nix`              | home-manager module           | all targets       | `make switch IMPURE=1` |
+| `~/.config/nix-config/local-system.nix`       | NixOS module (`security.pki`, `networking`, `services`) | NixOS targets only | `make switch IMPURE=1` |
+| `~/.ssh/config.local`                         | SSH config fragment           | all targets       | no `--impure` needed   |
 
-Optional local config lives at `~/.config/nix-config/local.nix` (outside the repo). It's imported as a home-manager module by all targets (base and personal) when present and `--impure` is used. Without `--impure`, it's silently skipped.
-
-- Apply with: `make switch IMPURE=1`
-- The file is a standard home-manager module (receives `{ pkgs, ... }`)
-- `nix flake check` and CI are unaffected (pure evaluation = local.nix ignored)
-- See `examples/local.nix` for a starter template
-
-### NixOS system config (`local-system.nix`)
-
-Optional local NixOS system config lives at `~/.config/nix-config/local-system.nix` (outside the repo). It's imported as a NixOS module by all NixOS targets when present and `--impure` is used. Without `--impure`, it's silently skipped. Use this for system-level options that can't go in home-manager (e.g. `security.pki`, `networking`, `services`).
-
-- Apply with: `make switch IMPURE=1`
-- The file is a standard NixOS module (receives `{ pkgs, ... }`)
-- Only applies to NixOS targets (not Darwin or standalone Linux)
-- `nix flake check` and CI are unaffected (pure evaluation = local-system.nix ignored)
-- See `examples/local-system.nix` for a starter template
-
-### SSH config (`config.local`)
-
-The SSH module includes `~/.ssh/config.local` at the top of the generated `~/.ssh/config` via an `Include` directive. SSH uses first-match-wins, so entries in `config.local` take priority over the managed config (including the personal flake's GitHub host entry).
-
-- The file is optional — SSH silently ignores missing includes
-- Use for work SSH keys, host aliases, or machine-specific SSH settings
-- No `--impure` needed — the `Include` is always present in the generated config
-- Example: override `Host github.com` with a work SSH key on a work machine
+The two Nix files are silently skipped without `--impure`; see `examples/` for starter templates. `config.local` is `Include`d at the top of the generated `~/.ssh/config`, and SSH is first-match-wins, so its entries override the managed config (including the personal flake's GitHub host entry) — that's how a work machine overrides `Host github.com` with a work key.
 
 ## State versions — never change these
 
@@ -204,18 +102,6 @@ The SSH module includes `~/.ssh/config.local` at the top of the generated `~/.ss
 - `home.stateVersion = "25.11"` in `home/default.nix`
 
 These are compatibility markers, not package selectors. Changing them can trigger irreversible data migrations.
-
-## Follows override — if an input breaks
-
-All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks against the current nixpkgs-unstable (extremely rare):
-
-1. Check the input's repo for a compatible commit
-2. Temporarily pin that input to a specific rev:
-   ```nix
-   home-manager.url = "github:nix-community/home-manager/<commit-sha>";
-   ```
-3. Remove `inputs.nixpkgs.follows = "nixpkgs"` for that input (let it use its own nixpkgs)
-4. File an issue or wait for the fix, then revert to `follows`
 
 ## Commands
 
@@ -227,7 +113,7 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 - `make switch-darwin` / `switch-darwin-base` — explicit macOS targets
 - `make switch-linux` / `switch-linux-base` — explicit Linux (standalone home-manager) targets
 - `make switch-nixos-wsl` / `switch-nixos-wsl-base` — explicit NixOS-WSL targets
-- `make deploy-miles` — remote deployment to Hetzner VPS (builds on VPS). Requires dev shell (`nixos-rebuild` isn't in PATH on macOS). Run from `nix develop` or prefix: `nix develop --command make deploy-miles`
+- `make deploy-miles` — remote deployment to Hetzner VPS (builds on VPS). Requires dev shell (`nixos-rebuild` isn't in PATH on macOS): `nix develop --command make deploy-miles`
 - `make check` — validate flake (all platforms)
 - `make fmt` — format all Nix files with nixfmt
 - `make lint` — lint all Nix files with statix + deadnix
@@ -244,31 +130,13 @@ nix develop --command git commit -m "message"
 
 ## Secrets and SSH
 
-Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module. The architecture splits across two repos:
+Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module, split across two repos:
 
-- **nix-config** (public): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/` (includes `~/.ssh/config.local` for machine-local overrides).
-- **nix-config-personal** (public — `.age` files are encrypted, safe to share): encrypted `.age` files in `secrets/`, recipient definitions in `secrets/secrets.nix`, home-manager modules in `home/` that declare `age.secrets.*` and wire SSH/git config.
+- **nix-config** (this repo): agenix module wiring in `flake.nix` (all helpers import `agenix.homeManagerModules.default`), age identity path in `home/default.nix`, SSH client config in `home/ssh/`.
+- **nix-config-personal**: encrypted `.age` files in `secrets/`, recipients in `secrets/secrets.nix`, and the home-manager modules that declare `age.secrets.*`. Public repo — `.age` files are encrypted, so that's safe.
 
-### How it works
+How it works: a single portable **age key** (`~/.config/agenix/age-key.txt`, no passphrase) is the decryption identity, copied to every machine. `make switch` activates the agenix module, which decrypts to a per-user temp directory and symlinks to the declared paths (e.g. `~/.ssh/id_ed25519_github`). On macOS, `UseKeychain yes` + `AddKeysToAgent yes` stores key passphrases in Keychain after first use.
 
-1. A single **age key** (`~/.config/agenix/age-key.txt`) is the decryption identity. It's portable — the same key is copied to every machine. No passphrase.
-2. Secrets are encrypted against this key's public key and stored as `.age` files in nix-config-personal.
-3. `make switch` activates the agenix home-manager module, which decrypts secrets to a per-user temp directory and symlinks them to their declared paths (e.g. `~/.ssh/id_ed25519_github`).
-4. On macOS, `UseKeychain yes` + `AddKeysToAgent yes` means SSH key passphrases are stored in Keychain after first use.
-
-### SSH key naming convention
-
-Keys follow `id_ed25519_<purpose>`:
-
-- `id_ed25519_github` — GitHub authentication + commit signing
-- `id_ed25519_miles` — Hetzner VPS (miles) SSH access + deployment
-- Future: `id_ed25519_<hostname>` for additional hosts, `id_ed25519_work`, etc.
-
-### Adding a new secret
-
-1. Add the `.age` file entry to `secrets/secrets.nix` in nix-config-personal
-2. Encrypt: `agenix -e secrets/<name>.age` (or manually: `age -r <pubkey> -o <file>`)
-3. Declare `age.secrets.<name>` in a home-manager module under nix-config-personal's `home/`
-4. Reference the decrypted path via `config.age.secrets.<name>.path`
+**Adding a secret or a new SSH key:** the workflow and the `id_ed25519_<purpose>` naming convention are documented in nix-config-personal's AGENTS.md, which is the canonical copy.
 
 Never commit plaintext secrets, API keys, or private SSH keys to either repo.
