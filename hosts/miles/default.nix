@@ -22,7 +22,6 @@ in
     ./zeroclaw.nix
     ./observability.nix
     ./backups.nix
-    ./memory.nix
     ./tailscale.nix
   ];
 

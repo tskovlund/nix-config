@@ -1,12 +1,12 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 
 {
   # Claude Code — AI coding assistant CLI.
   # Settings and plugins are managed manually (see docs/manual-setup.md).
   home.packages = [ pkgs.claude-code ];
 
-  # Default to Opus 4.6
-  home.sessionVariables.ANTHROPIC_MODEL = "claude-opus-4-6";
+  # Model is chosen via /model in Claude Code (persisted in settings) rather
+  # than pinned here — an ANTHROPIC_MODEL env var would override that choice.
 
   # Enable experimental agent teams (parallel multi-agent orchestration)
   home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
@@ -38,38 +38,6 @@
     source = ../../files/claude/statusline-command.sh;
     executable = true;
   };
-
-  # MCP Memory Service — semantic memory with vector search for Claude Code.
-  # Uses ONNX embeddings (MiniLM-L6-v2) + SQLite-vec for semantic search.
-  #
-  # Primary instance runs on miles VPS (Streamable HTTP, port 8765).
-  # Claude Code connects via: claude mcp add --transport http --scope user \
-  #   -H "X-API-Key: $(cat ~/.config/mcp-memory/api-key)" memory http://miles:8765/mcp
-  #
-  # This local wrapper is kept as a fallback for offline use (stdio transport).
-  # Binary is Nix-managed; MCP registration is a one-time manual step
-  # (see docs/manual-setup.md).
-  home.file.".local/bin/mcp-memory-service" =
-    let
-      pythonEnv = pkgs.python312.withPackages (ps: [ pkgs.mcp-memory-service ]);
-    in
-    {
-      executable = true;
-      text = ''
-        #!/bin/sh
-        export MCP_MEMORY_STORAGE_PATH="''${MCP_MEMORY_STORAGE_PATH:-$HOME/.local/share/claude-memory}"
-        export MCP_MEMORY_MODEL_PATH="$HOME/.local/share/claude-memory/models"
-        export STORAGE_BACKEND="sqlite-vec"
-        export MCP_MEMORY_USE_ONNX="1"
-        exec ${pythonEnv}/bin/python -m mcp_memory_service.server "$@"
-      '';
-    };
-
-  # Ensure memory data and model directories exist.
-  home.activation.createClaudeMemoryDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run mkdir -p "$HOME/.local/share/claude-memory"
-    run mkdir -p "$HOME/.local/share/claude-memory/models"
-  '';
 
   # MCP Grafana Server — observability integration for Claude Code.
   # Connects to Grafana on miles VPS, providing tools for querying Prometheus/Loki,

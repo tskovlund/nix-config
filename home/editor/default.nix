@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -18,5 +18,11 @@
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
+
+    # Reuse the already-instantiated nixpkgs instead of nixvim's own pin.
+    # Our flake `follows` overrides nixvim's nixpkgs anyway; declaring it
+    # explicitly keeps the single-nixpkgs policy and silences the mismatch
+    # warning nixvim emits when `follows` diverges from its pinned default.
+    nixpkgs.pkgs = pkgs;
   };
 }

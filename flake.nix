@@ -122,7 +122,6 @@
             ./hosts/darwin
             {
               nixpkgs.overlays = [
-                localOverlay
                 mcp-servers-nix.overlays.default
                 agenix.overlays.default
               ];
@@ -160,7 +159,6 @@
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             overlays = [
-              localOverlay
               mcp-servers-nix.overlays.default
               agenix.overlays.default
             ];
@@ -201,7 +199,6 @@
             ./hosts/nixos
             {
               nixpkgs.overlays = [
-                localOverlay
                 mcp-servers-nix.overlays.default
                 agenix.overlays.default
               ];
@@ -245,25 +242,6 @@
           ++ nixosModules
           ++ localSystemModules "/home/${username}";
         };
-
-      # Local package overlay — packages defined in pkgs/ that aren't in nixpkgs,
-      # plus targeted fixes for upstream packages with flaky tests in the Nix sandbox.
-      localOverlay = final: prev: {
-        mcp-memory-service = final.callPackage ./pkgs/mcp-memory-service { };
-
-        # Override python312 to fix flaky mcp test in the Nix sandbox.
-        # This cascades to python312Packages so all consumers get the fix.
-        python312 = prev.python312.override {
-          packageOverrides = python-final: python-prev: {
-            # Several Python networking packages have flaky tests in the Nix
-            # sandbox on macOS (server startup timeouts, concurrency races,
-            # DNS/mDNS failures). These are all transitive deps of
-            # mcp-memory-service. Skip tests rather than playing whack-a-mole.
-            mcp = python-prev.mcp.overridePythonAttrs { doCheck = false; };
-            zeroconf = python-prev.zeroconf.overridePythonAttrs { doCheck = false; };
-          };
-        };
-      };
 
       # Module sets
       baseModules = [ ./home ];

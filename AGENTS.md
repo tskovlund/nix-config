@@ -242,12 +242,6 @@ All inputs follow a single nixpkgs. If home-manager or nix-darwin ever breaks ag
 nix develop --command git commit -m "message"
 ```
 
-## Persistent memory (MCP)
-
-See global CLAUDE.md for full MCP memory guidelines (proactive querying, what to store vs keep in CLAUDE.md).
-
-The memory server binary is Nix-managed (`home/claude/default.nix`). MCP registration is a one-time manual step — see `docs/manual-setup.md`.
-
 ## Secrets and SSH
 
 Secrets use [agenix](https://github.com/ryantm/agenix) (age-encrypted) via the home-manager module. The architecture splits across two repos:

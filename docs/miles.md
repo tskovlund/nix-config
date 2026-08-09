@@ -73,7 +73,6 @@ Additional hardening:
 | Uptime Kuma   | 3001 (0.0.0.0)            | `status.skovlund.dev/status/rbb` (rbb only) | Service availability monitoring                           |
 | Ntfy          | 2586 (0.0.0.0)            | — (Tailscale: `http://miles:2586`)          | Push notifications                                        |
 | ZeroClaw      | 3000 (0.0.0.0)            | — (Tailscale: `http://miles:3000`)          | AI assistant + web dashboard (Telegram, OpenRouter)       |
-| MCP Memory    | 8765 (0.0.0.0)            | — (Tailscale: `http://miles:8765`)          | Shared semantic memory (Claude Code + Eliza)              |
 | Prometheus    | 9090 (localhost)          | —                                           | Metrics storage and scraping                              |
 | Grafana       | 3002 (0.0.0.0)            | — (Tailscale: `http://miles:3002`)          | Dashboards and alerting                                   |
 | Loki          | 3100 (localhost)          | —                                           | Log aggregation                                           |
@@ -236,53 +235,6 @@ ZeroClaw is the default gateway for LLM interactions. Direct API only when there
 - **Through ZeroClaw:** Chat, research, website content, alerts, Cambr batch analysis
 - **Direct API:** Cambr strategy evaluation (latency-sensitive), CI/CD tasks, Claude Code
 
-## MCP Memory Service
-
-Shared semantic memory for Claude Code and Eliza. Runs [mcp-memory-service](https://github.com/doobidoo/mcp-memory-service) in Streamable HTTP mode.
-
-- **Config:** `hosts/miles/memory.nix`
-- **Port:** 8765 (Tailscale only)
-- **Storage:** SQLite-vec at `/var/lib/mcp-memory/sqlite_vec.db`
-- **Embeddings:** MiniLM-L6-v2 via ONNX (local, zero API cost)
-- **Auth:** API key (`X-API-Key` header, agenix-encrypted)
-- **User:** `mcp-memory` system user
-
-### Consumers
-
-| Consumer       | Transport       | How                                                                                  |
-| -------------- | --------------- | ------------------------------------------------------------------------------------ |
-| Claude Code    | Streamable HTTP | `claude mcp add --transport http -H "X-API-Key: <key>" memory http://miles:8765/mcp` |
-| ZeroClaw/Eliza | HTTP requests   | `curl -X POST http://localhost:8765/mcp` with JSON-RPC body                          |
-
-### Common operations
-
-```sh
-# Check service status
-systemctl status mcp-memory
-
-# View logs
-journalctl -u mcp-memory -f
-
-# Restart
-systemctl restart mcp-memory
-```
-
-### Post-deploy setup (first time only)
-
-1. Generate API key: `openssl rand -hex 32`
-2. Encrypt for macOS: `agenix -e secrets/mcp-memory-api-key.age` in nix-config-personal
-3. Deploy macOS: `make switch` (decrypts to `~/.config/mcp-memory/api-key`)
-4. Deploy miles: `make deploy-miles REFRESH=1` (oneshot copies key to `/var/lib/mcp-memory/env`)
-5. Register in Claude Code (remove old local registration first):
-   ```sh
-   claude mcp remove memory
-   claude mcp add --transport http --scope user \
-     -H "X-API-Key: $(cat ~/.config/mcp-memory/api-key)" \
-     memory http://miles:8765/mcp
-   ```
-6. Verify: start a Claude Code session and test `memory_search`
-7. Migrate local memories: run `memory_list` locally, then `memory_store` each to the remote instance
-
 ## Notifications
 
 | Channel | Service                         | Purpose                                             |
@@ -364,7 +316,6 @@ Config: `hosts/miles/backups.nix`
 | `/var/lib/private/uptime-kuma/` | Uptime Kuma monitors, notifications, uploads                     | Yes (`kuma.db`)                  |
 | `/var/lib/grafana/`             | Grafana config (mostly declarative, but includes manual changes) | Yes (`grafana.db`)               |
 | `/var/lib/private/ntfy-sh/`     | Ntfy user DB, cache                                              | Yes (`user.db`, `cache-file.db`) |
-| `/var/lib/mcp-memory/`          | MCP Memory Service (semantic memory DB, models)                  | Yes (`sqlite_vec.db`)            |
 
 **Not backed up** (declarative or transient): Prometheus data, Loki chunks, Caddy certs (auto-renewed), Nix store (reproducible from flake), ZeroClaw `open-skills/` git clone.
 
@@ -418,7 +369,7 @@ After rebuilding the server (see Disaster Recovery section):
 
 ```sh
 # 1. Stop services that own the data
-systemctl stop zeroclaw mcp-memory uptime-kuma grafana ntfy-sh
+systemctl stop zeroclaw uptime-kuma grafana ntfy-sh
 
 # 2. Restore from B2
 source /var/lib/restic/b2-env
@@ -432,7 +383,6 @@ cp /tmp/restore/var/lib/restic/snapshots/grafana.db /var/lib/grafana/data/grafan
 cp /tmp/restore/var/lib/restic/snapshots/kuma.db /var/lib/private/uptime-kuma/kuma.db
 cp /tmp/restore/var/lib/restic/snapshots/ntfy-user.db /var/lib/private/ntfy-sh/user.db
 cp /tmp/restore/var/lib/restic/snapshots/ntfy-cache.db /var/lib/private/ntfy-sh/cache-file.db
-cp /tmp/restore/var/lib/restic/snapshots/mcp-memory.db /var/lib/mcp-memory/sqlite_vec.db
 
 # 4. Restore non-DB files (configs, workspace markdown, uploads)
 cp -a /tmp/restore/var/lib/zeroclaw/.zeroclaw/ /var/lib/zeroclaw/.zeroclaw/
@@ -441,10 +391,9 @@ cp -a /tmp/restore/var/lib/private/ntfy-sh/ /var/lib/private/ntfy-sh/
 
 # 5. Fix ownership
 chown -R zeroclaw:zeroclaw /var/lib/zeroclaw
-chown -R mcp-memory:mcp-memory /var/lib/mcp-memory
 
 # 6. Restart services
-systemctl start zeroclaw mcp-memory uptime-kuma grafana ntfy-sh
+systemctl start zeroclaw uptime-kuma grafana ntfy-sh
 
 # 7. Clean up
 rm -rf /tmp/restore
