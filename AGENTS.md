@@ -87,11 +87,11 @@ GitHub Issues is the implementation tracker for this repo; Linear handles higher
 
 Three mechanisms allow per-machine customization without modifying the repo. All live outside the repo, so `nix flake check` and CI are unaffected.
 
-| File                                          | What it is                    | Applies to        | How to apply           |
-| --------------------------------------------- | ----------------------------- | ----------------- | ---------------------- |
-| `~/.config/nix-config/local.nix`              | home-manager module           | all targets       | `make switch IMPURE=1` |
-| `~/.config/nix-config/local-system.nix`       | NixOS module (`security.pki`, `networking`, `services`) | NixOS targets only | `make switch IMPURE=1` |
-| `~/.ssh/config.local`                         | SSH config fragment           | all targets       | no `--impure` needed   |
+| File                                    | What it is                                              | Applies to         | How to apply           |
+| --------------------------------------- | ------------------------------------------------------- | ------------------ | ---------------------- |
+| `~/.config/nix-config/local.nix`        | home-manager module                                     | all targets        | `make switch IMPURE=1` |
+| `~/.config/nix-config/local-system.nix` | NixOS module (`security.pki`, `networking`, `services`) | NixOS targets only | `make switch IMPURE=1` |
+| `~/.ssh/config.local`                   | SSH config fragment                                     | all targets        | no `--impure` needed   |
 
 The two Nix files are silently skipped without `--impure`; see `examples/` for starter templates. `config.local` is `Include`d at the top of the generated `~/.ssh/config`, and SSH is first-match-wins, so its entries override the managed config (including the personal flake's GitHub host entry) — that's how a work machine overrides `Host github.com` with a work key.
 
