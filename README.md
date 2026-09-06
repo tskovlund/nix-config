@@ -20,7 +20,7 @@ Fully declarative, cross-platform environment — shell, editor, git, CLI tools,
 curl -fsSL https://raw.githubusercontent.com/tskovlund/nix-config/main/bootstrap.sh | bash
 ```
 
-The script installs Nix and Homebrew if needed, detects your platform, sets up identity, and runs the first deploy. After bootstrap completes: `cd ~/repos/nix-config && make bootstrap` for GitHub CLI auth, Claude Code settings, and SSH key upload.
+The script installs Nix and Homebrew if needed, detects your platform, sets up identity, and runs the first deploy. After bootstrap completes: `cd ~/repos/nix-config && make bootstrap` for GitHub CLI auth and SSH key upload.
 
 > **Have an age key?** Copy it to `~/.config/agenix/age-key.txt` before running bootstrap so secrets decrypt on the first deploy.
 >

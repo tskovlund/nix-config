@@ -66,3 +66,15 @@ Full inventory of what nix-config provides out of the box.
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI
 - Custom statusline showing directory, git status, model, context usage, cost, and session info (aligned with starship prompt style)
+- `~/.claude/settings.json` reconciled from Nix on every switch (see below)
+
+### Claude Code settings
+
+Claude Code writes to `~/.claude/settings.json` itself (choosing "always allow", `/config`, `/model`), so the file cannot be a read-only symlink into the Nix store. Instead `home/claude/settings.nix` declares the desired state and a home-manager activation step deep-merges it into the file on disk with `jq`:
+
+- Keys declared in `settings` are enforced: plugins, statusline, permission mode, allow/deny lists, attribution, TUI preferences.
+- Keys Claude Code added on its own (for example `model`) are left alone.
+- `permissions.allow` and `permissions.deny` are treated as sets: entries you added interactively stay, declared entries that are missing get appended, and entries listed in `retired` are removed. That is how a permission for a removed MCP server disappears from every machine on its next switch.
+- If the merge result equals the current content nothing is written. A file that is not valid JSON is left untouched with a warning.
+
+To change a setting for all machines, edit `home/claude/settings.nix` and run `make switch`. To stop managing an entry, delete it from `settings`; to actively remove it from existing files, add it to `retired` for a while.

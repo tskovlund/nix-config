@@ -232,7 +232,7 @@ switch-nixos-wsl-base: .prefetch
 deploy-miles: .prefetch
 	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
-# Post-deploy initialization (gh auth, Claude settings, manual step reminders)
+# Post-deploy initialization (gh auth, SSH key upload, manual step reminders)
 bootstrap:
 	@bash scripts/post-bootstrap.sh
 

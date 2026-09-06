@@ -549,11 +549,11 @@ if [ "${NEEDS_MIGRATION:-false}" = true ]; then
   echo ""
   echo "  Then finish setup:"
   echo "    cd ~/repos/nix-config"
-  echo "    make bootstrap    # Post-deploy setup (gh auth, Claude settings, etc.)"
+  echo "    make bootstrap    # Post-deploy setup (gh auth, SSH keys, etc.)"
 else
   echo "  Next steps:"
   echo "    cd $NIX_CONFIG_DIR"
-  echo "    make bootstrap    # Post-deploy setup (gh auth, Claude settings, etc.)"
+  echo "    make bootstrap    # Post-deploy setup (gh auth, SSH keys, etc.)"
 fi
 echo ""
 echo "  For subsequent config changes:"
