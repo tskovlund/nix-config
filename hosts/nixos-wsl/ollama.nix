@@ -25,7 +25,7 @@ in
   };
 
   # ollama-cuda is unfree, so cache.nixos.org never carries it and every
-  # nixpkgs bump rebuilds its CUDA kernels locally (about an hour on 12 cores).
+  # nixpkgs bump rebuilds its CUDA kernels locally (hours on this host).
   # The CUDA maintainers' cache serves the toolkit it depends on, which trims
   # the rebuild even when the ollama package itself is not cached.
   nix.settings = {
