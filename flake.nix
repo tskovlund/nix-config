@@ -233,6 +233,19 @@
       darwinHomeModules = [ ./home/darwin ];
       nixosHomeModules = [ ./home/nixos ];
 
+      # Helper: eval-only check. Instantiates the full derivation graph of a
+      # target (every module is evaluated, so option and type errors surface)
+      # without building anything: unsafeDiscardStringContext drops the
+      # dependency on the drv, so the closure (LSP servers, unfree CUDA
+      # packages, ...) is never realised. `nix flake check` instantiates
+      # nixosConfigurations on its own, but not homeConfigurations or
+      # darwinConfigurations, which is what these checks add.
+      evalOnly =
+        pkgs: name: drv:
+        pkgs.runCommand "eval-${name}" { } ''
+          echo "${builtins.unsafeDiscardStringContext drv.drvPath}" > "$out"
+        '';
+
       # Helper: create a dev shell with formatting/linting tools and hook setup.
       makeDevShell =
         pkgs:
@@ -312,5 +325,37 @@
       # Provides formatting/linting tools and sets up commit hooks
       devShells."aarch64-darwin".default = makeDevShell nixpkgs.legacyPackages.aarch64-darwin;
       devShells."x86_64-linux".default = makeDevShell nixpkgs.legacyPackages.x86_64-linux;
+
+      # Eval-only checks, run by `nix flake check` (pre-push hook and CI).
+      # Instantiate-only on purpose: a real build of the home-manager closure
+      # pulls jdtls, omnisharp, clangd and unfree packages that are not in the
+      # public cache, which is far too heavy for a CI runner.
+      checks."x86_64-linux" =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in
+        {
+          nixos-wsl =
+            evalOnly pkgs "nixos-wsl"
+              self.nixosConfigurations."nixos-wsl".config.system.build.toplevel;
+          nixos-wsl-base =
+            evalOnly pkgs "nixos-wsl-base"
+              self.nixosConfigurations."nixos-wsl-base".config.system.build.toplevel;
+          home-linux = evalOnly pkgs "home-linux" self.homeConfigurations."linux".activationPackage;
+          home-linux-base =
+            evalOnly pkgs "home-linux-base"
+              self.homeConfigurations."linux-base".activationPackage;
+        };
+
+      checks."aarch64-darwin" =
+        let
+          pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        in
+        {
+          darwin = evalOnly pkgs "darwin" self.darwinConfigurations."darwin".config.system.build.toplevel;
+          darwin-base =
+            evalOnly pkgs "darwin-base"
+              self.darwinConfigurations."darwin-base".config.system.build.toplevel;
+        };
     };
 }

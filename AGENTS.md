@@ -12,6 +12,7 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
   - `nixosConfigurations."nixos-wsl"` / `."nixos-wsl-base"` — NixOS-WSL, base + personal / base only
   - `nixosConfigurations."miles"` — Hetzner VPS (always personal — no base variant)
   - `devShells` — dev shell with commit hook setup (entered automatically via direnv)
+  - `checks` — eval-only checks that instantiate every target's toplevel / activation package (module errors surface in `nix flake check` without building the closure)
 - **hosts/**: Platform-specific _system_ config (nix-darwin / NixOS settings, not user config)
   - `hosts/darwin/default.nix` — base system config. `nix.enable = false` here because Determinate Nix manages the daemon, so `nix.*` options are unavailable in nix-darwin — configure Nix settings via Determinate instead.
   - `hosts/darwin/personal.nix` — personal casks, Mac App Store apps. Imported via `darwinModules` in the personal `makeDarwin` call.
@@ -52,7 +53,7 @@ Small changes go direct to main; structural work goes branch + PR.
 
 - Copilot auto-reviews every PR via the "Protect main" ruleset. Read its comments with
   `gh api repos/tskovlund/nix-config/pulls/<N>/comments`, fix or decline each one with a reply, and repeat until clean — a PR isn't ready for Thomas until CI passes and no automated comment is unresolved.
-- The pre-push hook runs `nix flake check` on every push, including direct-to-main. CI additionally runs required checks for both Linux and macOS on PRs.
+- The pre-push hook runs `nix flake check` on every push, including direct-to-main. CI additionally runs required checks for both Linux and macOS on PRs. Both instantiate (but do not build) every target through the flake's `checks` output, so a broken module fails before `make switch`.
 - After merge: `git fetch --prune`, close related GitHub issues, comment the PR link on the Linear issue and move it to Done.
 - PR bodies follow `.github/PULL_REQUEST_TEMPLATE.md` (Summary / Test plan / Related issues). The test plan always includes `make check` and `make switch`.
 - Repo owner can bypass force-push protection when needed (e.g. amending on a PR branch).
