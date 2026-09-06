@@ -11,20 +11,11 @@
   # Enable experimental agent teams (parallel multi-agent orchestration)
   home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
 
-  # Shell aliases for Claude Code:
-  #   c  — shorthand for claude
-  #   ct — "claude team": launches inside tmux -CC (iTerm2 control mode)
-  #         so agent team splits render as native iTerm2 panes
+  # Shell alias: `c` as shorthand for claude.
+  # The `ct` / `claude-team` launcher (tmux -CC, iTerm2 control mode) is
+  # macOS-only and lives in home/darwin/.
   programs.zsh.initContent = ''
     alias c='claude'
-    alias claude-team='ct'
-    ct() {
-      if [ -n "$TMUX" ]; then
-        command claude --teammate-mode tmux "$@"
-      else
-        tmux -CC new-session "command claude --teammate-mode tmux $*"
-      fi
-    }
   '';
 
   # Claude Code manages its own binary at ~/.local/bin/claude via self-update.

@@ -37,6 +37,31 @@ in
   # System Settings → Privacy & Security → Accessibility → fn-toggle.app
   home.packages = [ fn-toggle ];
 
+  # iTerm2 is the terminal installed by hosts/darwin (cask). Both blocks
+  # below only make sense there: the shell integration script is fetched
+  # from iterm2.com on first use, and `ct` relies on tmux -CC (iTerm2
+  # control mode) so agent-team splits render as native iTerm2 panes.
+  #
+  #   ct / claude-team — launch Claude Code inside tmux -CC for agent teams
+  programs.zsh.initContent = ''
+    # iTerm2 shell integration (command framing, clickable marks, etc.)
+    if [ "$TERM_PROGRAM" = "iTerm.app" ]; then
+      if [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]; then
+        curl -Ls https://iterm2.com/shell_integration/zsh -o "$HOME/.iterm2_shell_integration.zsh"
+      fi
+      source "$HOME/.iterm2_shell_integration.zsh"
+    fi
+
+    alias claude-team='ct'
+    ct() {
+      if [ -n "$TMUX" ]; then
+        command claude --teammate-mode tmux "$@"
+      else
+        tmux -CC new-session "command claude --teammate-mode tmux $*"
+      fi
+    }
+  '';
+
   # Store SSH key passphrases in the macOS Keychain. Combined with
   # addKeysToAgent (set in home/ssh/), you type your passphrase once
   # and Keychain remembers it across reboots.

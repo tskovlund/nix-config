@@ -93,7 +93,7 @@ Three mechanisms allow per-machine customization without modifying the repo. All
 | `~/.config/nix-config/local-system.nix` | NixOS module (`security.pki`, `networking`, `services`) | NixOS targets only | `make switch IMPURE=1` |
 | `~/.ssh/config.local`                   | SSH config fragment                                     | all targets        | no `--impure` needed   |
 
-The two Nix files are silently skipped without `--impure`; see `examples/` for starter templates. `config.local` is `Include`d at the top of the generated `~/.ssh/config`, and SSH is first-match-wins, so its entries override the managed config (including the personal flake's GitHub host entry) — that's how a work machine overrides `Host github.com` with a work key.
+The two Nix files are silently skipped without `--impure`; see `examples/` for starter templates. Work SDKs such as `dotnet-sdk_10` are deliberately not in the base profile — `examples/local.nix` carries them. `config.local` is `Include`d at the top of the generated `~/.ssh/config`, and SSH is first-match-wins, so its entries override the managed config (including the personal flake's GitHub host entry) — that's how a work machine overrides `Host github.com` with a work key.
 
 ## State versions — never change these
 
@@ -120,7 +120,7 @@ These are compatibility markers, not package selectors. Changing them can trigge
 - `make update` — update all inputs
 - `nix repl --file flake.nix` — explore the flake interactively
 - `c` / `claude` — run Claude Code normally
-- `ct` / `claude-team` — launches Claude Code inside tmux -CC (iTerm2 control mode) so agent team splits render as native iTerm2 panes. Use for agent team sessions.
+- `ct` / `claude-team` — macOS only (`home/darwin/`): launches Claude Code inside tmux -CC (iTerm2 control mode) so agent team splits render as native iTerm2 panes. Use for agent team sessions.
 
 **Important:** Git commands that trigger hooks (commit, push) require dev shell tools (`nixfmt`, `statix`, `deadnix`). Prefix with `nix develop --command` if not already in the dev shell:
 

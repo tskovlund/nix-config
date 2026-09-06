@@ -16,12 +16,8 @@
   # Platform identifier for this host.
   nixpkgs.hostPlatform = "aarch64-darwin";
 
-  # Allow specific unfree packages (home-manager inherits this via useGlobalPkgs).
-  nixpkgs.config.allowUnfreePredicate =
-    pkg:
-    builtins.elem (pkgs.lib.getName pkg) [
-      "claude-code"
-    ];
+  # Unfree packages are allowed via the shared predicate set in flake.nix
+  # (home-manager inherits it via useGlobalPkgs).
 
   # --- Homebrew (cask management) ---
   # Homebrew itself is installed separately (not managed by Nix).

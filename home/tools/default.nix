@@ -86,8 +86,7 @@
     catimg # display images in terminal
     glow # terminal markdown renderer
 
-    # Development SDKs
-    dotnet-sdk_10 # .NET 10 SDK
+    # Work SDKs (dotnet, azure-cli, ...) are machine-local: see examples/local.nix
 
     # essentials
     sl
