@@ -19,7 +19,7 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
   - `hosts/wsl/default.nix` — general WSL layer, reusable for any WSL distribution
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
   - `hosts/miles/` — Hetzner Cloud VPS (host naming convention: jazz legends). Split into `default.nix`, `disk-config.nix`, `observability.nix`, `backups.nix`, and `tailscale.nix`. See **docs/miles.md** for the operational runbook.
-- **home/**: User environment modules managed by home-manager. This is where most config lives.
+- **home/**: User environment modules managed by home-manager. This is where most config lives. `home/claude/settings.nix` is the source of truth for `~/.claude/settings.json` (merged in, not symlinked — see docs/features.md).
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`.
 - **files/**: Raw config files that modules source or symlink
 - **bootstrap.sh**: Curl-pipeable bootstrap for new machines. On NixOS-WSL, handles the two-phase build when the bootstrap user (e.g. `nixos`) differs from the target user — base first to create the user, then the full personal config.
@@ -106,7 +106,7 @@ These are compatibility markers, not package selectors. Changing them can trigge
 ## Commands
 
 - `bootstrap.sh` — new-machine bootstrap (installs Nix, clones, deploys)
-- `make bootstrap` — post-deploy initialization (gh auth, Claude settings, manual step reminders)
+- `make bootstrap` — post-deploy initialization (gh auth, SSH key upload, manual step reminders)
 - `make switch` — apply base + personal config (auto-detects macOS / Linux / NixOS-WSL)
 - `make switch REFRESH=1` — same, but bypass Nix's input cache (useful after pushing to personal flake)
 - `make switch-base` — apply base only config (auto-detects platform)

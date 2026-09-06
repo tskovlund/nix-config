@@ -20,4 +20,4 @@ After running `bootstrap.sh` and `make bootstrap`, these steps remain manual:
 
 ---
 
-Everything else (Nix, Homebrew, /etc/zshenv, Mac App Store, ~/Screenshots, personal identity, GitHub CLI auth, Claude Code settings, home-manager backup cleanup) is handled by `bootstrap.sh` and `make bootstrap`.
+Everything else (Nix, Homebrew, /etc/zshenv, Mac App Store, ~/Screenshots, personal identity, GitHub CLI auth, home-manager backup cleanup) is handled by `bootstrap.sh` and `make bootstrap`. Claude Code settings are reconciled by `make switch` itself (see [`docs/features.md`](features.md#claude-code)).

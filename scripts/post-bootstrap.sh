@@ -131,63 +131,7 @@ if command_exists gh && gh auth status >/dev/null 2>&1; then
   fi
 fi
 
-# --- Step 4: Claude Code settings ---------------------------------------------
-
-CLAUDE_SETTINGS="$HOME/.claude/settings.json"
-
-if [ -f "$CLAUDE_SETTINGS" ]; then
-  ok "Claude Code settings: already configured ($CLAUDE_SETTINGS)"
-else
-  info "Writing default Claude Code settings..."
-  mkdir -p "$HOME/.claude"
-  cat > "$CLAUDE_SETTINGS" << 'JSON'
-{
-  "enabledPlugins": {
-    "Notion@claude-plugins-official": true,
-    "linear@claude-plugins-official": true
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
-  },
-  "permissions": {
-    "defaultMode": "acceptEdits",
-    "allow": [
-      "Bash(nix *)",
-      "Bash(make *)",
-      "Bash(home-manager *)",
-      "Bash(darwin-rebuild *)",
-      "Bash(nixos-rebuild *)",
-      "Bash(git *)",
-      "Bash(gh *)",
-      "Bash(ls *)",
-      "Bash(which *)",
-      "Bash(* --version)",
-      "Bash(* --help)",
-      "Read",
-      "mcp__memory__*",
-      "mcp__plugin_linear_linear__*",
-      "mcp__plugin_Notion_notion__*"
-    ],
-    "deny": [
-      "Bash(curl *)",
-      "Bash(wget *)",
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(~/.aws/**)",
-      "Read(~/.ssh/id_*)"
-    ]
-  },
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  }
-}
-JSON
-  ok "Claude Code settings written to $CLAUDE_SETTINGS"
-fi
-
-# --- Step 5: home-manager backup cleanup --------------------------------------
+# --- Step 4: home-manager backup cleanup --------------------------------------
 
 hm_backups="$(find "$HOME" -maxdepth 3 -name "*.hm-backup" 2>/dev/null || true)"
 
@@ -211,7 +155,7 @@ else
   ok "No home-manager backup files found"
 fi
 
-# --- Step 6: Stale dotfile cleanup --------------------------------------------
+# --- Step 5: Stale dotfile cleanup --------------------------------------------
 
 stale_files=(
   "$HOME/.zshrc.old"
@@ -254,7 +198,7 @@ else
   ok "No stale dotfiles found"
 fi
 
-# --- Step 7: Manual steps checklist -------------------------------------------
+# --- Step 6: Manual steps checklist -------------------------------------------
 
 echo ""
 printf "${BOLD}Manual steps remaining${RESET}\n"

@@ -2,7 +2,9 @@
 
 {
   # Claude Code — AI coding assistant CLI.
-  # Settings and plugins are managed manually (see docs/manual-setup.md).
+  # ~/.claude/settings.json is reconciled from ./settings.nix on every switch.
+  imports = [ ./settings.nix ];
+
   home.packages = [ pkgs.claude-code ];
 
   # Model is chosen via /model in Claude Code (persisted in settings) rather
@@ -23,8 +25,7 @@
   # fight the self-updater by symlinking over it.
 
   # Statusline script — displays workspace context and session info.
-  # To activate, add to ~/.claude/settings.json:
-  #   "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
+  # Wired into settings.json via the statusLine entry in ./settings.nix.
   home.file.".claude/statusline-command.sh" = {
     source = ../../files/claude/statusline-command.sh;
     executable = true;
