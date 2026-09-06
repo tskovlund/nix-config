@@ -94,9 +94,10 @@ All packages are pinned via `flake.lock`. Roll back with `git checkout flake.loc
 | [nixvim](https://github.com/nix-community/nixvim)             | Neovim config as typed Nix                                        |
 | [nixos-wsl](https://github.com/nix-community/NixOS-WSL)       | NixOS on WSL integration                                          |
 | [disko](https://github.com/nix-community/disko)               | Declarative disk partitioning                                     |
+| nixpkgs-cuda (pinned rev)                                     | ollama-cuda for the WSL host, bumped deliberately (unfree, hours to build) |
 | personal (stub)                                               | Your identity flake — see [Personal identity](#personal-identity) |
 
-All inputs follow a single nixpkgs to avoid version drift.
+All inputs follow a single nixpkgs to avoid version drift, except `nixpkgs-cuda`, which is pinned so a routine bump never triggers the CUDA compile.
 
 ## Documentation
 
