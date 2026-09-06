@@ -8,11 +8,14 @@
 # - programs.* for program configuration
 # - home.file for dotfile management
 # - home.sessionVariables for environment variables
+#
+# Work SDKs belong here rather than in the shared base profile. On a machine
+# that needs .NET, copy this file as-is and run `make switch IMPURE=1`.
 { pkgs, ... }:
 
 {
   home.packages = with pkgs; [
-    # dotnet-sdk_8
+    dotnet-sdk_10 # .NET 10 SDK
     # azure-cli
     # terraform
   ];

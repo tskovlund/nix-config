@@ -64,6 +64,31 @@
         if builtins.isAttrs raw then [ raw.default ] else raw;
       inherit (identity) username;
 
+      # Unfree packages allowed on every target. Defined once here and wired
+      # into all three builders so the list lives in one place. The CUDA /
+      # NVIDIA prefixes are for ollama-cuda (hosts/nixos-wsl/ollama.nix).
+      allowUnfreePredicate =
+        pkg:
+        let
+          name = nixpkgs.lib.getName pkg;
+          prefixes = [
+            "cuda"
+            "cudnn"
+            "libcu"
+            "libnpp"
+            "libnv"
+            "nccl"
+            "nvidia"
+          ];
+        in
+        builtins.elem name [ "claude-code" ] || builtins.any (p: nixpkgs.lib.hasPrefix p name) prefixes;
+
+      # nixpkgs settings shared by the nix-darwin and NixOS builders.
+      nixpkgsModule = {
+        nixpkgs.overlays = [ agenix.overlays.default ];
+        nixpkgs.config = { inherit allowUnfreePredicate; };
+      };
+
       # Optional machine-local home-manager config (outside the repo).
       # Requires --impure to take effect; silently skipped in pure evaluation.
       localModules =
@@ -96,7 +121,7 @@
           specialArgs = { inherit username; };
           modules = [
             ./hosts/darwin
-            { nixpkgs.overlays = [ agenix.overlays.default ]; }
+            nixpkgsModule
             home-manager.darwinModules.home-manager
             {
               system.primaryUser = username;
@@ -130,11 +155,7 @@
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             overlays = [ agenix.overlays.default ];
-            config.allowUnfreePredicate =
-              pkg:
-              builtins.elem (nixpkgs.lib.getName pkg) [
-                "claude-code"
-              ];
+            config = { inherit allowUnfreePredicate; };
           };
           extraSpecialArgs = { inherit identity; };
           modules =
@@ -165,7 +186,7 @@
           specialArgs = { inherit username; };
           modules = [
             ./hosts/nixos
-            { nixpkgs.overlays = [ agenix.overlays.default ]; }
+            nixpkgsModule
             agenix.nixosModules.default
             {
               age.identityPaths = [ "/home/${username}/.config/agenix/age-key.txt" ];

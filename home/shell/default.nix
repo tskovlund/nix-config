@@ -70,14 +70,6 @@ in
       # Case-insensitive tab completion
       zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
-      # iTerm2 shell integration (command framing, clickable marks, etc.)
-      if [ "$TERM_PROGRAM" = "iTerm.app" ]; then
-        if [ ! -e "$HOME/.iterm2_shell_integration.zsh" ]; then
-          curl -Ls https://iterm2.com/shell_integration/zsh -o "$HOME/.iterm2_shell_integration.zsh"
-        fi
-        source "$HOME/.iterm2_shell_integration.zsh"
-      fi
-
       # Show alias expansion before execution (for learning)
       # Inspired by ohare93/nixfiles
       _alias_expansion_preexec() {
