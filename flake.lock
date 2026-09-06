@@ -65,22 +65,6 @@
         "type": "github"
       }
     },
-    "eliza-config": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1783339914,
-        "narHash": "sha256-U4rDzo3EcRW9GQ4pVmXD1hXSSZwEEbNlZAOi4ic9Tvo=",
-        "owner": "tskovlund",
-        "repo": "eliza-config",
-        "rev": "564c32cf935503711294f2f42dcdee8e3825aa5e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tskovlund",
-        "repo": "eliza-config",
-        "type": "github"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -156,26 +140,6 @@
       "original": {
         "owner": "nix-community",
         "repo": "home-manager",
-        "type": "github"
-      }
-    },
-    "mcp-servers-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1788705871,
-        "narHash": "sha256-rbcTTqnrnvDRoVKJwG8rnSIpE1mImuOTp8ZncH9YtnI=",
-        "owner": "natsukium",
-        "repo": "mcp-servers-nix",
-        "rev": "00cfd7e097a01ec9fe926dda007207e1dee06bd2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "natsukium",
-        "repo": "mcp-servers-nix",
         "type": "github"
       }
     },
@@ -273,15 +237,12 @@
       "inputs": {
         "agenix": "agenix",
         "disko": "disko",
-        "eliza-config": "eliza-config",
         "home-manager": "home-manager_2",
-        "mcp-servers-nix": "mcp-servers-nix",
         "nix-darwin": "nix-darwin",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "nixvim": "nixvim",
-        "personal": "personal",
-        "zeroclaw-src": "zeroclaw-src"
+        "personal": "personal"
       }
     },
     "systems": {
@@ -313,23 +274,6 @@
         "owner": "nix-systems",
         "ref": "future-26.11",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "zeroclaw-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774339151,
-        "narHash": "sha256-AC77HK1o99w+RM4C4dkctT0rd1Ye/rKGRN0boKRhcdU=",
-        "owner": "zeroclaw-labs",
-        "repo": "zeroclaw",
-        "rev": "feaca20582b1726672987921fdee30f2855ff211",
-        "type": "github"
-      },
-      "original": {
-        "owner": "zeroclaw-labs",
-        "ref": "v0.6.1",
-        "repo": "zeroclaw",
         "type": "github"
       }
     }

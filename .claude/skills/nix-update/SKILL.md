@@ -58,7 +58,7 @@ If check fails, the update introduced a breaking change. Common causes:
 - nix-darwin API change
 - nixpkgs package removed or renamed
 
-Use `/nix-debug` to investigate failures. If an input broke, see "Follows override" in CLAUDE.md for pinning strategies.
+Use `/nix-debug` to investigate failures. If an input broke, its "Input follows conflicts" section covers pinning strategies.
 
 ## Step 4: Deploy
 

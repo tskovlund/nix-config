@@ -75,4 +75,4 @@ Or for package-only modules:
 
 - No ambiguous abbreviations: `makeDarwin` not `mkDarwin` (except upstream APIs like `lib.mkIf`)
 - Keep modules focused: one concern per directory
-- State versions must never be changed (see CLAUDE.md)
+- State versions must never be changed (see AGENTS.md)

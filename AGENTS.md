@@ -18,7 +18,7 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
   - `hosts/nixos/default.nix` — general NixOS layer, reusable by all NixOS hosts (WSL, VPS, bare-metal)
   - `hosts/wsl/default.nix` — general WSL layer, reusable for any WSL distribution
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
-  - `hosts/miles/` — Hetzner Cloud VPS (host naming convention: jazz legends). Split into `default.nix`, `disk-config.nix`, `observability.nix`, `backups.nix`, `tailscale.nix`, and `zeroclaw.nix`. See **docs/miles.md** for the operational runbook. ZeroClaw is pending decommission (approved in principle 2026-08) — don't invest in `zeroclaw.nix`.
+  - `hosts/miles/` — Hetzner Cloud VPS (host naming convention: jazz legends). Split into `default.nix`, `disk-config.nix`, `observability.nix`, `backups.nix`, and `tailscale.nix`. See **docs/miles.md** for the operational runbook.
 - **home/**: User environment modules managed by home-manager. This is where most config lives.
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`.
 - **files/**: Raw config files that modules source or symlink

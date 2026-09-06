@@ -85,17 +85,16 @@ All packages are pinned via `flake.lock`. Roll back with `git checkout flake.loc
 
 ## Inputs
 
-| Input                                                           | What it provides                                                  |
-| --------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [nixpkgs](https://github.com/NixOS/nixpkgs) (unstable)          | Packages — rolling release, CI-tested                             |
-| [nix-darwin](https://github.com/LnL7/nix-darwin)                | Declarative macOS system config                                   |
-| [home-manager](https://github.com/nix-community/home-manager)   | Declarative user environment                                      |
-| [agenix](https://github.com/ryantm/agenix)                      | Age-encrypted secrets                                             |
-| [nixvim](https://github.com/nix-community/nixvim)               | Neovim config as typed Nix                                        |
-| [nixos-wsl](https://github.com/nix-community/NixOS-WSL)         | NixOS on WSL integration                                          |
-| [disko](https://github.com/nix-community/disko)                 | Declarative disk partitioning                                     |
-| [mcp-servers-nix](https://github.com/natsukium/mcp-servers-nix) | MCP servers (persistent memory)                                   |
-| personal (stub)                                                 | Your identity flake — see [Personal identity](#personal-identity) |
+| Input                                                         | What it provides                                                  |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [nixpkgs](https://github.com/NixOS/nixpkgs) (unstable)        | Packages — rolling release, CI-tested                             |
+| [nix-darwin](https://github.com/LnL7/nix-darwin)              | Declarative macOS system config                                   |
+| [home-manager](https://github.com/nix-community/home-manager) | Declarative user environment                                      |
+| [agenix](https://github.com/ryantm/agenix)                    | Age-encrypted secrets                                             |
+| [nixvim](https://github.com/nix-community/nixvim)             | Neovim config as typed Nix                                        |
+| [nixos-wsl](https://github.com/nix-community/NixOS-WSL)       | NixOS on WSL integration                                          |
+| [disko](https://github.com/nix-community/disko)               | Declarative disk partitioning                                     |
+| personal (stub)                                               | Your identity flake — see [Personal identity](#personal-identity) |
 
 All inputs follow a single nixpkgs to avoid version drift.
 

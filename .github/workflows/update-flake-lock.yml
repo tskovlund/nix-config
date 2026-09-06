@@ -18,8 +18,7 @@ jobs:
       - uses: DeterminateSystems/determinate-nix-action@4eea0b33e3d1f02ecfe37cf16e7204c424009606 # v3
       - uses: DeterminateSystems/update-flake-lock@834c491b2ece4de0bbd00d85214bb5e83b4da5c6 # v28
         with:
-          # Skip the local stub (personal) and zeroclaw-src (pinned to a
-          # tag, updating would be a no-op).
-          inputs: nixpkgs nix-darwin home-manager agenix nixvim mcp-servers-nix nixos-wsl disko eliza-config
+          # Skip the local stub (personal).
+          inputs: nixpkgs nix-darwin home-manager agenix nixvim nixos-wsl disko
           pr-title: "chore(deps): update flake.lock"
           pr-labels: dependencies

@@ -66,4 +66,3 @@ Full inventory of what nix-config provides out of the box.
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI
 - Custom statusline showing directory, git status, model, context usage, cost, and session info (aligned with starship prompt style)
-- [mcp-memory-service](https://github.com/doobidoo/mcp-memory-service) — semantic memory with ONNX embeddings and SQLite-vec for persistent context across sessions
