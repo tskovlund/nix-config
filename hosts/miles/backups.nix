@@ -1,6 +1,6 @@
 # Restic backups to Backblaze B2.
 #
-# Backs up application state (SQLite databases, config, workspace files) to B2 daily.
+# Backs up application state (SQLite databases, config, uploads) to B2 daily.
 # Uses sqlite3 .backup for crash-consistent snapshots of active databases.
 # Sends push notifications via ntfy on success and failure.
 #
@@ -27,14 +27,6 @@ let
   # Paths verified on miles 2026-02-20.
   # Uptime Kuma and ntfy use DynamicUser — data lives in /var/lib/private/.
   sqliteDatabases = [
-    {
-      src = "/var/lib/zeroclaw/.zeroclaw/workspace/memory/brain.db";
-      dest = "${snapshotDir}/zeroclaw-brain.db";
-    }
-    {
-      src = "/var/lib/zeroclaw/.zeroclaw/workspace/cron/jobs.db";
-      dest = "${snapshotDir}/zeroclaw-jobs.db";
-    }
     {
       src = "/var/lib/grafana/data/grafana.db";
       dest = "${snapshotDir}/grafana.db";
@@ -150,7 +142,6 @@ in
     paths = [
       # Application data directories (configs, workspace files, uploads).
       # Uptime Kuma and ntfy use DynamicUser — real data is in /var/lib/private/.
-      "/var/lib/zeroclaw"
       "/var/lib/private/uptime-kuma"
       "/var/lib/grafana"
       "/var/lib/private/ntfy-sh"
@@ -170,8 +161,6 @@ in
       "*.db-journal"
 
       # Live SQLite databases (use crash-consistent snapshots instead)
-      "/var/lib/zeroclaw/.zeroclaw/workspace/memory/brain.db"
-      "/var/lib/zeroclaw/.zeroclaw/workspace/cron/jobs.db"
       "/var/lib/grafana/data/grafana.db"
       "/var/lib/private/uptime-kuma/kuma.db"
       "/var/lib/private/ntfy-sh/user.db"
@@ -183,10 +172,6 @@ in
       "/var/lib/grafana/data/csv"
       "/var/lib/grafana/data/pdf"
       "/var/lib/grafana/data/log"
-
-      # ZeroClaw git clones (can be re-cloned from remote)
-      "/var/lib/zeroclaw/open-skills"
-      "/var/lib/zeroclaw/repos"
     ];
 
     # Create consistent SQLite snapshots before backup

@@ -19,7 +19,6 @@ in
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
-    ./zeroclaw.nix
     ./observability.nix
     ./backups.nix
     ./tailscale.nix

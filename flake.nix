@@ -24,11 +24,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    mcp-servers-nix = {
-      url = "github:natsukium/mcp-servers-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nixos-wsl = {
       url = "github:nix-community/NixOS-WSL";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,22 +32,6 @@
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # ZeroClaw — AI assistant deployed on miles.
-    # Non-flake input pinned to release tag. To update:
-    #   change the tag below, then `nix flake update zeroclaw-src`
-    zeroclaw-src = {
-      url = "github:zeroclaw-labs/zeroclaw/v0.6.1";
-      flake = false;
-    };
-
-    # Eliza configuration — skills, workspace files, and personality.
-    # Non-flake input (plain directory). Secrets are agenix-encrypted.
-    # To update: nix flake update eliza-config
-    eliza-config = {
-      url = "github:tskovlund/eliza-config";
-      flake = false;
     };
 
     # Personal identity (external). Default: stub with placeholder values.
@@ -68,11 +47,8 @@
       home-manager,
       agenix,
       nixvim,
-      mcp-servers-nix,
       nixos-wsl,
       disko,
-      zeroclaw-src,
-      eliza-config,
       personal,
       ...
     }:
@@ -120,12 +96,7 @@
           specialArgs = { inherit username; };
           modules = [
             ./hosts/darwin
-            {
-              nixpkgs.overlays = [
-                mcp-servers-nix.overlays.default
-                agenix.overlays.default
-              ];
-            }
+            { nixpkgs.overlays = [ agenix.overlays.default ]; }
             home-manager.darwinModules.home-manager
             {
               system.primaryUser = username;
@@ -158,10 +129,7 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             system = "x86_64-linux";
-            overlays = [
-              mcp-servers-nix.overlays.default
-              agenix.overlays.default
-            ];
+            overlays = [ agenix.overlays.default ];
             config.allowUnfreePredicate =
               pkg:
               builtins.elem (nixpkgs.lib.getName pkg) [
@@ -194,15 +162,10 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit username zeroclaw-src eliza-config; };
+          specialArgs = { inherit username; };
           modules = [
             ./hosts/nixos
-            {
-              nixpkgs.overlays = [
-                mcp-servers-nix.overlays.default
-                agenix.overlays.default
-              ];
-            }
+            { nixpkgs.overlays = [ agenix.overlays.default ]; }
             agenix.nixosModules.default
             {
               age.identityPaths = [ "/home/${username}/.config/agenix/age-key.txt" ];

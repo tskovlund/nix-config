@@ -177,4 +177,4 @@ An optional file at `~/.config/nix-config/local.nix` is imported by all targets 
 
 ## Secrets and SSH
 
-See the [Secrets and SSH section in CLAUDE.md](../CLAUDE.md#secrets-and-ssh) for details on the agenix architecture, SSH key naming conventions, and how to add new secrets.
+See the [Secrets and SSH section in AGENTS.md](../AGENTS.md#secrets-and-ssh) for details on the agenix architecture, SSH key naming conventions, and how to add new secrets.

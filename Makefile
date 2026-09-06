@@ -230,8 +230,6 @@ switch-nixos-wsl-base: .prefetch
 # Subsequent updates use these targets (builds on VPS via --build-host):
 
 deploy-miles: .prefetch
-	nix flake update eliza-config
-	git diff --quiet flake.lock || (git commit flake.lock -m "chore(deps): update eliza-config input" && git push)
 	nixos-rebuild switch --flake .#miles --target-host $(MILES_HOST) --build-host $(MILES_HOST) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG)
 
 # Post-deploy initialization (gh auth, Claude settings, manual step reminders)

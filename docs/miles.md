@@ -72,7 +72,6 @@ Additional hardening:
 | Caddy         | 80, 443, 2019 (localhost) | —                                           | Reverse proxy, HTTPS, Prometheus metrics                  |
 | Uptime Kuma   | 3001 (0.0.0.0)            | `status.skovlund.dev/status/rbb` (rbb only) | Service availability monitoring                           |
 | Ntfy          | 2586 (0.0.0.0)            | — (Tailscale: `http://miles:2586`)          | Push notifications                                        |
-| ZeroClaw      | 3000 (0.0.0.0)            | — (Tailscale: `http://miles:3000`)          | AI assistant + web dashboard (Telegram, OpenRouter)       |
 | Prometheus    | 9090 (localhost)          | —                                           | Metrics storage and scraping                              |
 | Grafana       | 3002 (0.0.0.0)            | — (Tailscale: `http://miles:3002`)          | Dashboards and alerting                                   |
 | Loki          | 3100 (localhost)          | —                                           | Log aggregation                                           |
@@ -118,8 +117,6 @@ ssh miles          # as thomas (full shell/tools)
 ssh root@miles     # as root (admin tasks)
 ssh miles-direct   # emergency: via public IP (only works if port 22 is re-enabled)
 ```
-
-`deploy-miles` automatically updates the `eliza-config` flake input (commits and pushes the lock change) before building, so Eliza's pushed skill changes are always included.
 
 ## Tailscale
 
@@ -169,71 +166,6 @@ To rebuild from scratch:
 9. Commit IP changes, push
 
 All state is either in the nix-config repo (declarative), encrypted in nix-config-personal (secrets), or backed up to Backblaze B2 (application data). See the Backups section for restore instructions.
-
-## ZeroClaw (AI assistant)
-
-ZeroClaw is the primary LLM gateway — provider routing, memory, and channel integrations.
-
-- **Version:** built from source (`zeroclaw-src` flake input)
-- **Config:** `hosts/miles/zeroclaw.nix` (NixOS module + package from source)
-- **Config repo:** `github:tskovlund/eliza-config` (public, agenix-encrypted non-flake input)
-- **Skills:** 10 deployed, agenix-encrypted (morning-briefing, pr-review, self-improvement, skill-management, docs, linear-operations, system-health, memory-management, delegation, notification-routing)
-- **Workspace files:** 5 deployed, agenix-encrypted (SOUL.md, IDENTITY.md, AGENTS.md, TOOLS.md, USER.md)
-- **Data:** `/var/lib/zeroclaw/.zeroclaw/` (SQLite memory DB, auth profiles, config)
-- **User:** `zeroclaw` system user
-- **Dashboard:** `http://miles:3000` (Tailscale only, requires pairing code from service logs)
-- **Memory:** max_history_messages=30, archive_after_days=2, purge_after_days=30
-- **Self-modification:** ZeroClaw can decrypt, edit, re-encrypt, and push skill/workspace changes via age key
-
-### Configuration
-
-Config.toml is declared as a Nix attrset in `zeroclaw.nix` and generated at deploy time. Secrets (API key, Telegram bot token, gateway pairing token) are agenix-encrypted in nix-config-personal and injected by the `zeroclaw-setup` oneshot service.
-
-To change config: edit the `zeroclaw-config` attrset in `zeroclaw.nix`, then `make deploy-miles`.
-
-To update secrets: `agenix -e secrets/zeroclaw-<name>.age` in nix-config-personal, then `make switch` (macOS) + `make deploy-miles`.
-
-### eliza-config (skills and workspace)
-
-The `eliza-config` repo is public on GitHub. All sensitive content (skills, workspace markdown) is agenix-encrypted at rest as `.age` files in `secrets/`. Git history was squashed before making the repo public.
-
-**Deployment chain:**
-
-1. nix-config imports eliza-config as a non-flake input (`github:tskovlund/eliza-config`)
-2. NixOS agenix module decrypts `.age` files to `/run/agenix/` at activation
-3. `zeroclaw-setup` oneshot copies decrypted files to workspace directories
-4. Age key is deployed to `/var/lib/zeroclaw/.config/agenix/age-key.txt` for self-modification
-
-**Self-modification flow:** ZeroClaw has `age` in PATH and can decrypt `.age` files, edit them, re-encrypt with `age -r <pubkey>`, commit, push, and touch a redeploy trigger. The `eliza-redeploy` systemd path unit watches for the trigger and hot-reloads changes.
-
-### Systemd sandbox
-
-The systemd unit provides the security boundary. Eliza can only write to `/var/lib/zeroclaw` (`StateDirectory`). Key constraints kept: `ProtectSystem=strict`, `ProtectHome`, `NoNewPrivileges`, `ProtectKernelModules`. ZeroClaw's internal sandbox is disabled (`backend = "none"`) to avoid double-jailing.
-
-Tools in PATH: git, gh, curl, wget, jq, yq-go, ripgrep, fd, nodejs, python3, age.
-
-### Common operations
-
-```sh
-# Check service status
-systemctl status zeroclaw
-
-# View logs
-journalctl -u zeroclaw -f
-
-# Restart after config changes
-systemctl restart zeroclaw
-
-# Run diagnostics
-sudo -u zeroclaw zeroclaw doctor
-```
-
-### Routing strategy
-
-ZeroClaw is the default gateway for LLM interactions. Direct API only when there's a clear reason.
-
-- **Through ZeroClaw:** Chat, research, website content, alerts, Cambr batch analysis
-- **Direct API:** Cambr strategy evaluation (latency-sensitive), CI/CD tasks, Claude Code
 
 ## Notifications
 
@@ -312,12 +244,11 @@ Config: `hosts/miles/backups.nix`
 
 | Directory                       | Content                                                          | SQLite snapshot?                 |
 | ------------------------------- | ---------------------------------------------------------------- | -------------------------------- |
-| `/var/lib/zeroclaw/`            | ZeroClaw workspace (memory, config, markdown files, cron)        | Yes (`brain.db`, `jobs.db`)      |
 | `/var/lib/private/uptime-kuma/` | Uptime Kuma monitors, notifications, uploads                     | Yes (`kuma.db`)                  |
 | `/var/lib/grafana/`             | Grafana config (mostly declarative, but includes manual changes) | Yes (`grafana.db`)               |
 | `/var/lib/private/ntfy-sh/`     | Ntfy user DB, cache                                              | Yes (`user.db`, `cache-file.db`) |
 
-**Not backed up** (declarative or transient): Prometheus data, Loki chunks, Caddy certs (auto-renewed), Nix store (reproducible from flake), ZeroClaw `open-skills/` git clone.
+**Not backed up** (declarative or transient): Prometheus data, Loki chunks, Caddy certs (auto-renewed), Nix store (reproducible from flake).
 
 ### SQLite safety
 
@@ -369,7 +300,7 @@ After rebuilding the server (see Disaster Recovery section):
 
 ```sh
 # 1. Stop services that own the data
-systemctl stop zeroclaw uptime-kuma grafana ntfy-sh
+systemctl stop uptime-kuma grafana ntfy-sh
 
 # 2. Restore from B2
 source /var/lib/restic/b2-env
@@ -377,24 +308,18 @@ restic -r b2:miles-backups --password-file /var/lib/restic/password \
   restore latest --target /tmp/restore
 
 # 3. Restore SQLite snapshots (crash-consistent copies)
-cp /tmp/restore/var/lib/restic/snapshots/zeroclaw-brain.db /var/lib/zeroclaw/.zeroclaw/workspace/memory/brain.db
-cp /tmp/restore/var/lib/restic/snapshots/zeroclaw-jobs.db /var/lib/zeroclaw/.zeroclaw/workspace/cron/jobs.db
 cp /tmp/restore/var/lib/restic/snapshots/grafana.db /var/lib/grafana/data/grafana.db
 cp /tmp/restore/var/lib/restic/snapshots/kuma.db /var/lib/private/uptime-kuma/kuma.db
 cp /tmp/restore/var/lib/restic/snapshots/ntfy-user.db /var/lib/private/ntfy-sh/user.db
 cp /tmp/restore/var/lib/restic/snapshots/ntfy-cache.db /var/lib/private/ntfy-sh/cache-file.db
 
-# 4. Restore non-DB files (configs, workspace markdown, uploads)
-cp -a /tmp/restore/var/lib/zeroclaw/.zeroclaw/ /var/lib/zeroclaw/.zeroclaw/
+# 4. Restore non-DB files (configs, uploads)
 cp -a /tmp/restore/var/lib/private/uptime-kuma/ /var/lib/private/uptime-kuma/
 cp -a /tmp/restore/var/lib/private/ntfy-sh/ /var/lib/private/ntfy-sh/
 
-# 5. Fix ownership
-chown -R zeroclaw:zeroclaw /var/lib/zeroclaw
+# 5. Restart services
+systemctl start uptime-kuma grafana ntfy-sh
 
-# 6. Restart services
-systemctl start zeroclaw uptime-kuma grafana ntfy-sh
-
-# 7. Clean up
+# 6. Clean up
 rm -rf /tmp/restore
 ```

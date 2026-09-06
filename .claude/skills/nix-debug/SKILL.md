@@ -64,7 +64,11 @@ nix flake lock --update-input <name>  # Update single input
 ### Input follows conflicts
 
 - **Cause:** An input's nixpkgs version conflicts with the pinned one
-- **Fix:** See "Follows override" in CLAUDE.md — temporarily pin or remove `follows`
+- **Fix:** All inputs follow the single `nixpkgs` in `flake.nix`. If an input (home-manager, nix-darwin, ...) breaks against the current nixpkgs-unstable:
+  1. Find a compatible commit in the input's repo
+  2. Temporarily pin it: `home-manager.url = "github:nix-community/home-manager/<commit-sha>";`
+  3. If the pin alone isn't enough, drop that input's `inputs.nixpkgs.follows = "nixpkgs"` so it uses its own nixpkgs
+  4. File an upstream issue or wait for the fix, then revert to the unpinned URL and `follows`
 
 ### Eval cache stale
 
