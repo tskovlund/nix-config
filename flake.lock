@@ -202,17 +202,17 @@
     },
     "nixpkgs-cuda": {
       "locked": {
-        "lastModified": 1789339863,
-        "narHash": "sha256-CNrL5hfolP9xUNUEnxNVKDNqhLu1Q8fJKUfAkVE7Zog=",
+        "lastModified": 1789956276,
+        "narHash": "sha256-0ANS6C65GgiCjjzOOun8CBl2JvksgYPG08xLOXz3V7Q=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d54851bf9380c6f294d61229ade43d6880bc0751",
+        "rev": "5dd61b69ba909cad8a218df81d74718463a12933",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d54851bf9380c6f294d61229ade43d6880bc0751",
+        "rev": "5dd61b69ba909cad8a218df81d74718463a12933",
         "type": "github"
       }
     },
