@@ -30,12 +30,12 @@
       "ente-auth"
 
       # Media
-      "tidal"
+      "spotify"
       "pocket-casts"
       "gimp"
       "audacity"
       "vlc"
-      "musescore"
+      "musescore" # Muse Hub has no cask — see docs/manual-setup.md
       "plex-media-server"
 
       # Gaming
@@ -49,7 +49,7 @@
       "tailscale-app"
 
       # Audio
-      "focusrite-control"
+      "focusrite-control-2"
 
       # Utilities
       "qbittorrent"
@@ -80,7 +80,7 @@
     "/Applications/Ente Auth.app"
     "/Applications/ProtonVPN.app"
     "/Applications/Tailscale.app"
-    "/Applications/TIDAL.app"
+    "/Applications/Spotify.app"
     "/System/Applications/Music.app"
     "/Applications/Pocket Casts.app"
     "/Applications/VLC.app"
@@ -99,7 +99,7 @@
     "/System/Applications/Photos.app"
     "/Applications/Zwift.app"
     "/Applications/MuseScore 4.app"
-    "/Applications/Focusrite Control.app"
+    "/Applications/Focusrite Control 2.app"
     "/System/Applications/Utilities/Audio MIDI Setup.app"
     "/Applications/Logic Pro.app"
     "/Applications/MainStage.app"

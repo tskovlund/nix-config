@@ -8,6 +8,8 @@ After running `bootstrap.sh` and `make bootstrap`, these steps remain manual:
   - Installed by nix-darwin, but iTerm2's font preference must be set manually (iTerm2 rewrites its plist)
 - **fn-toggle permission**: System Settings > Privacy & Security > Accessibility > fn-toggle.app
   - Needs one-time permission grant on first run
+- **Muse Hub** (personal machines): download from [muse-hub.com](https://www.muse-hub.com/)
+  - Companion to MuseScore for sounds and plugins; no Homebrew cask exists, so it is not managed by nix-darwin
 
 ## Linux / WSL
 
