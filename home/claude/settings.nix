@@ -32,6 +32,9 @@ let
     statusLine = {
       type = "command";
       command = "bash ~/.claude/statusline-command.sh";
+      # Re-run every second so the clock ticks while a tool call runs; the
+      # script itself costs a few milliseconds.
+      refreshInterval = 1;
     };
 
     permissions = {
