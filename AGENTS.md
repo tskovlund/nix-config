@@ -51,8 +51,9 @@ When adding new config, put it in base unless it's obviously personal. When in d
 
 Small changes go direct to main; structural work goes branch + PR.
 
-- Copilot auto-reviews every PR via the "Protect main" ruleset. Read its comments with
-  `gh api repos/tskovlund/nix-config/pulls/<N>/comments`, fix or decline each one with a reply, and repeat until clean — a PR isn't ready for Thomas until CI passes and no automated comment is unresolved.
+- No automated code review is configured. A PR is ready when CI passes: small,
+  self-verified changes (config, docs, single scripts) auto-merge with
+  `gh pr merge --auto --squash`; structural work waits for Thomas.
 - The pre-push hook runs `nix flake check` on every push, including direct-to-main. CI additionally runs required checks for both Linux and macOS on PRs. Both instantiate (but do not build) every target through the flake's `checks` output, so a broken module fails before `make switch`.
 - After merge: `git fetch --prune`, close related GitHub issues, comment the PR link on the Linear issue and move it to Done.
 - PR bodies follow `.github/PULL_REQUEST_TEMPLATE.md` (Summary / Test plan / Related issues). The test plan always includes `make check` and `make switch`.
