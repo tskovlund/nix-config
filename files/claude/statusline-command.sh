@@ -10,12 +10,12 @@ eval "$(
   jq -r '
     {
       cwd: .workspace.current_dir,
-      model: .model.display_name // "",
-      used_pct: .context_window.used_percentage // "",
-      cost: .cost.total_cost_usd // "",
-      lines_add: .cost.total_lines_added // "",
-      lines_del: .cost.total_lines_removed // "",
-      version: .version // ""
+      model: (.model.display_name // ""),
+      used_pct: (.context_window.used_percentage // ""),
+      cost: (.cost.total_cost_usd // ""),
+      lines_add: (.cost.total_lines_added // ""),
+      lines_del: (.cost.total_lines_removed // ""),
+      version: (.version // "")
     }
     | to_entries[]
     | "\(.key)=\(.value | @sh)"
