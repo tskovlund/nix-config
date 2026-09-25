@@ -65,7 +65,7 @@ Full inventory of what nix-config provides out of the box.
 ## Claude Code
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — AI coding assistant CLI
-- Custom statusline showing directory, git status, model, context usage, cost, and session info (aligned with starship prompt style)
+- Custom statusline showing directory, git status, model, effort level, fast mode, context usage, cost, 5-hour and 7-day rate limits, session name, and a live clock (aligned with starship prompt style)
 - `~/.claude/settings.json` reconciled from Nix on every switch (see below)
 
 ### Claude Code settings
