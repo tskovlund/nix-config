@@ -75,6 +75,36 @@ NIX_FLAGS=(--extra-experimental-features "nix-command flakes")
 # Also set NIX_CONFIG for tools like nixos-rebuild that don't take NIX_FLAGS directly
 export NIX_CONFIG="experimental-features = nix-command flakes"
 
+# The first switch from a stock NixOS-WSL install swaps dbus-broker for
+# dbus-daemon (hosts/wsl), which NixOS refuses to do on a live system. In that
+# case install the config as the boot generation and stop: after a restart the
+# switch goes through, and this script picks up where it left off.
+nixos_switch() {
+  local log
+  log=$(mktemp)
+  if sudo nixos-rebuild switch "$@" 2>&1 | tee "$log"; then
+    rm -f "$log"
+    return 0
+  fi
+  if ! grep -q "Pre-switch check 'switchInhibitors' failed" "$log"; then
+    rm -f "$log"
+    return 1
+  fi
+  rm -f "$log"
+  warn "This config changes a critical system component; NixOS applies that only on boot."
+  sudo nixos-rebuild boot "$@"
+  ok "Installed as the next boot generation."
+  echo ""
+  if is_wsl; then
+    echo "  Restart WSL from Windows, reopen it as the bootstrap user, then re-run this script:"
+    echo "    wsl --shutdown"
+    echo "    wsl -d ${WSL_DISTRO_NAME:-NixOS} -u $(whoami)"
+  else
+    echo "  Reboot, log in as $(whoami), then re-run this script."
+  fi
+  exit 0
+}
+
 # --- Pre-flight checks --------------------------------------------------------
 
 if [ "$(id -u)" -eq 0 ]; then
@@ -413,6 +443,16 @@ if is_macos; then
 
 elif is_nixos; then
   # NixOS: nixos-rebuild is already on PATH.
+
+  # The repo's system.stateVersion is a default for the original hosts. A
+  # machine installed from a newer NixOS must keep its install value.
+  install_state_version=$(sed -n 's/^ *system\.stateVersion *= *"\([0-9.]*\)".*/\1/p' /etc/nixos/configuration.nix 2>/dev/null | head -1)
+  if [ -n "$install_state_version" ] && [ "$install_state_version" != "25.05" ]; then
+    warn "This machine was installed with system.stateVersion = \"$install_state_version\"; the repo default is 25.05."
+    echo "  Keep the install value: put this in ~/.config/nix-config/local-system.nix"
+    echo "    { system.stateVersion = \"$install_state_version\"; }"
+    echo "  and switch with IMPURE=1 (make switch IMPURE=1)."
+  fi
   # The identity flake may define a different username than the current bootstrap
   # user (e.g. bootstrapping as "nixos" but the config creates "thomas"). When
   # that happens we need a two-phase build:
@@ -450,7 +490,7 @@ elif is_nixos; then
     BASE_FLAKE_TARGET="${FLAKE_TARGET}-base"
     info "Phase 1: Building base NixOS system (creating user $TARGET_USER)..."
     # shellcheck disable=SC2086
-    sudo nixos-rebuild switch --flake ".#${BASE_FLAKE_TARGET}" $OVERRIDE_FLAGS
+    nixos_switch --flake ".#${BASE_FLAKE_TARGET}" $OVERRIDE_FLAGS
 
     # Phase 2: migrate bootstrap files to the target user's home
     TARGET_HOME="/home/$TARGET_USER"
@@ -486,13 +526,13 @@ elif is_nixos; then
     NIX_CONFIG_DIR="$TARGET_HOME/repos/nix-config"
     info "Phase 3: Building personal NixOS system (with secrets)..."
     # shellcheck disable=SC2086
-    sudo nixos-rebuild switch --flake "${NIX_CONFIG_DIR}#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+    nixos_switch --flake "${NIX_CONFIG_DIR}#${FLAKE_TARGET}" $OVERRIDE_FLAGS
 
   elif [ "$NEEDS_MIGRATION" = true ]; then
     # Base profile with different user — single build (no secrets), then migrate config
     info "Building base NixOS system..."
     # shellcheck disable=SC2086
-    sudo nixos-rebuild switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+    nixos_switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
 
     TARGET_HOME="/home/$TARGET_USER"
     info "Migrating bootstrap files to $TARGET_USER..."
@@ -518,7 +558,7 @@ elif is_nixos; then
     # No migration needed — current user matches target user
     info "Building NixOS system..."
     # shellcheck disable=SC2086
-    sudo nixos-rebuild switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
+    nixos_switch --flake ".#${FLAKE_TARGET}" $OVERRIDE_FLAGS
   fi
 
 elif is_linux; then

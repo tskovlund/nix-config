@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 
 {
   imports = [
@@ -27,6 +27,9 @@
   # Enable zsh system-wide
   programs.zsh.enable = true;
 
+  # `make switch` is the entry point, and NixOS doesn't ship make.
+  environment.systemPackages = [ pkgs.gnumake ];
+
   # nix-ld runs foreign dynamically linked binaries on NixOS. Claude Code's
   # self-updated binary (~/.local/bin/claude) depends on it, as do most
   # vendor-downloaded tools (NuGet's Grpc.Tools protoc, VS Code server, ...).
@@ -35,5 +38,7 @@
   # State version for NixOS. Set once on first build, never change.
   # This doesn't affect which packages you get — it controls state format
   # migrations. Changing it can trigger irreversible data migrations.
-  system.stateVersion = "25.05";
+  # A default only: a machine installed from a newer NixOS keeps its install
+  # value, set in ~/.config/nix-config/local-system.nix.
+  system.stateVersion = lib.mkDefault "25.05";
 }
