@@ -82,7 +82,9 @@ endif
 # Runs a sudo rebuild with SSH fallback for GitHub URLs. Pipes output through
 # tee so the user sees real-time progress. If the build fails due to SSH auth
 # errors (root can't access user's SSH keys) and a github: fallback is
-# available, retries with the github: shorthand.
+# available, retries with the github: shorthand. If NixOS refuses to switch
+# live (switch inhibitors, e.g. the dbus implementation changing on the first
+# switch from a stock NixOS-WSL), installs a boot generation instead.
 # Usage: $(call sudo-rebuild,<rebuild-command>,<flake-target>)
 define sudo-rebuild
 @set -eo pipefail; _log=$$(mktemp); trap 'rm -f "$$_log"' EXIT; \
@@ -92,6 +94,11 @@ elif grep -qE "(Permission denied \(publickey\)|Host key verification failed)" "
   echo ""; \
   echo "==> SSH to GitHub failed under sudo — retrying with github: shorthand..."; \
   sudo $(1) --flake .#$(2) --no-write-lock-file $(_FALLBACK_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG); \
+elif grep -q "Pre-switch check 'switchInhibitors' failed" "$$_log"; then \
+  echo ""; \
+  echo "==> NixOS applies this change only on boot — installing a boot generation..."; \
+  sudo $(subst switch,boot,$(1)) --flake .#$(2) --no-write-lock-file $(OVERRIDE_FLAGS) $(IMPURE_FLAG) $(REFRESH_FLAG); \
+  echo "==> Done. Restart to activate it (WSL: run 'wsl --shutdown' in Windows, then reopen)."; \
 else \
   exit 1; \
 fi

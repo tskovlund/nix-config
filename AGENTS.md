@@ -101,7 +101,7 @@ The two Nix files are silently skipped without `--impure`; see `examples/` for s
 ## State versions — never change these
 
 - `system.stateVersion = 5` in `hosts/darwin/default.nix`
-- `system.stateVersion = "25.05"` in `hosts/nixos/default.nix`
+- `system.stateVersion = "25.05"` in `hosts/nixos/default.nix` — a `mkDefault`: a NixOS machine installed from a newer release keeps its install value in `~/.config/nix-config/local-system.nix` (bootstrap warns when they differ)
 - `home.stateVersion = "25.11"` in `home/default.nix`
 
 These are compatibility markers, not package selectors. Changing them can trigger irreversible data migrations.
