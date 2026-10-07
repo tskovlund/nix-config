@@ -77,4 +77,4 @@ Claude Code writes to `~/.claude/settings.json` itself (choosing "always allow",
 - `permissions.allow` and `permissions.deny` are treated as sets: entries you added interactively stay, declared entries that are missing get appended, and entries listed in `retired` are removed. That is how a permission for a removed MCP server disappears from every machine on its next switch.
 - If the merge result equals the current content nothing is written. A file that is not valid JSON is left untouched with a warning.
 
-To change a setting for all machines, edit `home/claude/settings.nix` and run `make switch`. To stop managing an entry, delete it from `settings`; to actively remove it from existing files, add it to `retired` for a while.
+To change a setting for all machines, edit `home/claude/settings.nix` and run `make switch`. Other modules extend the same `claude.settings` option: `home/personal.nix` adds the personal Notion and Linear plugins, so base targets don't get them. To stop managing an entry, delete it from `claude.settings`; to actively remove it from existing files, add it to `retired` for a while.

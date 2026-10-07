@@ -9,10 +9,11 @@
 #
 # Claude Code writes to this file itself ("always allow", /config, /model),
 # so it cannot be a read-only symlink into the Nix store. Instead an
-# activation step deep-merges the `settings` attrset below into whatever is
-# on disk with jq:
+# activation step deep-merges `claude.settings` into whatever is on disk with
+# jq. This module sets the base profile's values; other modules extend the
+# option (home/personal.nix adds the personal plugins).
 #
-#   - keys declared in `settings` are enforced (the Nix value wins)
+#   - keys declared in `claude.settings` are enforced (the Nix value wins)
 #   - keys Claude Code added on its own are left alone (e.g. `model`)
 #   - `permissions.allow` / `permissions.deny` are treated as sets: entries
 #     the user added stay, missing declared entries are appended, and
@@ -22,12 +23,7 @@
 # result equals the current content, and an unparseable file is left
 # untouched with a warning rather than clobbered.
 let
-  settings = {
-    enabledPlugins = {
-      "Notion@claude-plugins-official" = true;
-      "linear@claude-plugins-official" = true;
-    };
-
+  baseSettings = {
     # Statusline script deployed by home/claude/default.nix
     statusLine = {
       type = "command";
@@ -52,8 +48,6 @@ let
         "Bash(* --version)"
         "Bash(* --help)"
         "Read"
-        "mcp__plugin_linear_linear__*"
-        "mcp__plugin_Notion_notion__*"
       ];
       deny = [
         "Bash(curl *)"
@@ -89,7 +83,7 @@ let
     };
   };
 
-  settingsJson = pkgs.writeText "claude-settings-base.json" (builtins.toJSON settings);
+  settingsJson = pkgs.writeText "claude-settings-base.json" (builtins.toJSON config.claude.settings);
   retiredJson = pkgs.writeText "claude-settings-retired.json" (builtins.toJSON retired);
 
   mergeProgram = pkgs.writeText "claude-settings-merge.jq" ''
@@ -137,8 +131,18 @@ let
   '';
 in
 {
-  home.activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run mkdir -p "${config.home.homeDirectory}/.claude"
-    run ${reconcileScript} "${config.home.homeDirectory}/.claude/settings.json"
-  '';
+  options.claude.settings = lib.mkOption {
+    inherit (pkgs.formats.json { }) type;
+    default = { };
+    description = "Settings deep-merged into ~/.claude/settings.json on every switch.";
+  };
+
+  config = {
+    claude.settings = baseSettings;
+
+    home.activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run mkdir -p "${config.home.homeDirectory}/.claude"
+      run ${reconcileScript} "${config.home.homeDirectory}/.claude/settings.json"
+    '';
+  };
 }
