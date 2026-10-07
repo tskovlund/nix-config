@@ -5,7 +5,7 @@
 #
 # Sections, pipe-separated:
 #   workspace  — directory and git state
-#   session    — model, effort, fast mode, context, cost, lines, version
+#   session    — model, effort, fast mode, context, cost, duration, lines, version
 #   limits     — 5-hour and 7-day rate-limit windows (subscription only)
 #   trailer    — session name and clock
 #
@@ -24,6 +24,7 @@ eval "$(
       fast: (.fast_mode // false),
       used_pct: (.context_window.used_percentage // ""),
       cost: (.cost.total_cost_usd // ""),
+      duration_ms: (.cost.total_duration_ms // ""),
       lines_add: (.cost.total_lines_added // ""),
       lines_del: (.cost.total_lines_removed // ""),
       version: (.version // ""),
@@ -46,7 +47,7 @@ c_blue=$'\033[34m'       # git untracked
 c_red=$'\033[31m'        # git conflict state / lines removed / limits critical
 c_dim=$'\033[2m'         # separators, version, timestamp, effort, session name
 c_magenta=$'\033[35m'    # model name
-c_cyan=$'\033[36m'       # context usage
+c_cyan=$'\033[36m'       # context usage below 50%
 c_reset=$'\033[0m'
 
 # --- Directory (…/ truncation, matching starship truncation_length=3) ---
@@ -67,10 +68,10 @@ dir_parent="${short_dir%/*}/"
 dir_last="${short_dir##*/}"
 [ "$dir_parent" = "${short_dir}/" ] && dir_parent="" && dir_last="$short_dir"
 
-# --- Git status (starship-aligned: ↑↓ +!?$) ---
-# Uses git status --porcelain=v2 --branch to minimize subprocess overhead
+# --- Git status (starship-aligned: ↑↓ $ =+!?) ---
+# Uses git status --porcelain=v2 --branch --show-stash to minimize subprocess overhead
 git_info=""
-if git_status=$(git -C "$cwd" status --porcelain=v2 --branch 2>/dev/null); then
+if git_status=$(git -C "$cwd" status --porcelain=v2 --branch --show-stash 2>/dev/null); then
     # Parse branch name and ahead/behind from header lines
     branch=$(echo "$git_status" | sed -n 's/^# branch\.head //p')
     if [ "$branch" = "(detached)" ]; then
@@ -97,19 +98,19 @@ if git_status=$(git -C "$cwd" status --porcelain=v2 --branch 2>/dev/null); then
         fi
     fi
 
-    # Stash count (no porcelain equivalent)
-    stash_count=$(git -C "$cwd" stash list 2>/dev/null | wc -l | tr -d ' ')
-    [ "$stash_count" -gt 0 ] && git_info+=" ${c_green}\$${stash_count}"
+    # Stash count: "# stash <n>", only present when there are stashes
+    stash_count=$(echo "$git_status" | sed -n 's/^# stash //p')
+    [ -n "$stash_count" ] && git_info+=" ${c_green}\$${stash_count}"
 
     # Merge/rebase state from git dir
     git_dir=$(git -C "$cwd" rev-parse --absolute-git-dir 2>/dev/null)
     [ -f "$git_dir/MERGE_HEAD" ] && git_info+=" ${c_red}merge"
     { [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; } && git_info+=" ${c_red}rebase"
 
-    # Count staged/unstaged/untracked from porcelain output
+    # Count conflicted/staged/unstaged/untracked from porcelain output
     # Ordinary entries: "1 XY ..." where X=staged status, Y=unstaged status
-    # Untracked: "? path"
-    staged=0 unstaged=0 untracked=0
+    # Unmerged: "u ...", untracked: "? path"
+    conflicted=0 staged=0 unstaged=0 untracked=0
     while IFS= read -r line; do
         case "$line" in
             "1 "?[!.]*)  ((staged++)) ;;   # X is not '.'
@@ -119,9 +120,11 @@ if git_status=$(git -C "$cwd" status --porcelain=v2 --branch 2>/dev/null); then
             "1 ".[!.]*)  ((unstaged++)) ;; # Y is not '.'
             "2 ".[!.]*)  ((unstaged++)) ;; # renamed with unstaged changes
         esac
+        [[ "$line" == "u "* ]] && ((conflicted++))
         [[ "$line" == "? "* ]] && ((untracked++))
     done <<< "$git_status"
 
+    [ "$conflicted" -gt 0 ] && git_info+=" ${c_red}=${conflicted}"
     [ "$staged" -gt 0 ] && git_info+=" ${c_green}+${staged}"
     [ "$unstaged" -gt 0 ] && git_info+=" ${c_yellow}!${unstaged}"
     [ "$untracked" -gt 0 ] && git_info+=" ${c_blue}?${untracked}"
@@ -137,11 +140,26 @@ if [ -n "$model" ]; then
     [ -n "$effort" ] && claude_parts+=" ${c_dim}${effort}${c_reset}"
     [ "$fast" = "true" ] && claude_parts+=" ${c_yellow}fast${c_reset}"
 fi
-[ -n "$used_pct" ] && claude_parts+="${claude_parts:+${sep}}${c_cyan}ctx ${used_pct}%"
+# Context colour by pressure: cyan below 50%, yellow below 80%, red above.
+if [ -n "$used_pct" ]; then
+    ctx_color=$(awk -v p="$used_pct" -v c="$c_cyan" -v y="$c_yellow" -v r="$c_red" \
+        'BEGIN { if (p >= 80) printf "%s", r; else if (p >= 50) printf "%s", y; else printf "%s", c }')
+    claude_parts+="${claude_parts:+${sep}}${ctx_color}ctx ${used_pct}%"
+fi
 
 if [ -n "$cost" ] && awk -v c="$cost" 'BEGIN { exit !(c > 0) }'; then
     cost_fmt=$(printf '$%.2f' "$cost")
     claude_parts+="${claude_parts:+${sep}}${c_yellow}${cost_fmt}"
+fi
+
+# Session wall-clock time, from the first full minute: 12m, 1h05m
+if [ -n "$duration_ms" ]; then
+    minutes=$(awk -v ms="$duration_ms" 'BEGIN { printf "%d", ms / 60000 }')
+    if [ "$minutes" -ge 60 ]; then
+        claude_parts+="${claude_parts:+${sep}}${c_dim}$((minutes / 60))h$(printf '%02d' $((minutes % 60)))m"
+    elif [ "$minutes" -ge 1 ]; then
+        claude_parts+="${claude_parts:+${sep}}${c_dim}${minutes}m"
+    fi
 fi
 
 if [ -n "$lines_add" ] || [ -n "$lines_del" ]; then
