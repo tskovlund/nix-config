@@ -19,6 +19,10 @@
   # Creates shortcuts in the Windows Start Menu for apps installed in WSL
   wsl.startMenuLaunchers = true;
 
+  # WSL has no desktop keyring, so run a per-user ssh-agent. With AddKeysToAgent
+  # (home/ssh), a key's passphrase is asked once and kept until WSL shuts down.
+  programs.ssh.startAgent = true;
+
   # Automount Windows drives at /mnt
   # Enabled by default in nixos-wsl, but being explicit here
   wsl.wslConf.automount.enabled = true;
