@@ -297,6 +297,7 @@
         homeModules = personalModules ++ personalHomeModules;
         nixosModules = [
           ./hosts/nixos-wsl
+          ./hosts/nixos-wsl/ollama.nix # CUDA desktop only, not base (work) machines
           nixos-wsl.nixosModules.wsl
           { wsl.defaultUser = username; }
         ];
