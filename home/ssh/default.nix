@@ -20,6 +20,9 @@
     # Settings blocks use upstream OpenSSH directive names.
     settings."*" = {
       AddKeysToAgent = "yes";
+      # Some networks drop a connection that idles for ~15 s, e.g. a git push
+      # waiting on its pre-push hook. A keepalive every 10 s keeps it open.
+      ServerAliveInterval = 10;
     };
   };
 }
