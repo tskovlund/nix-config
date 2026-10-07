@@ -19,6 +19,7 @@ Follow the code standards in [CONVENTIONS.md](CONVENTIONS.md).
   - `hosts/nixos/default.nix` — general NixOS layer, reusable by all NixOS hosts (WSL, VPS, bare-metal)
   - `hosts/wsl/default.nix` — general WSL layer, reusable for any WSL distribution
   - `hosts/nixos-wsl/default.nix` — NixOS-WSL entry point. Imports the wsl layer; nixos layer is auto-imported by makeNixOS.
+  - `hosts/nixos-wsl/ollama.nix` — ollama-cuda for the personal `nixos-wsl` target only (needs an NVIDIA GPU); `nixos-wsl-base` doesn't import it.
   - `hosts/miles/` — Hetzner Cloud VPS (host naming convention: jazz legends). Split into `default.nix`, `disk-config.nix`, `observability.nix`, `backups.nix`, and `tailscale.nix`. See **docs/miles.md** for the operational runbook.
 - **home/**: User environment modules managed by home-manager. This is where most config lives. `home/claude/settings.nix` is the source of truth for `~/.claude/settings.json` (merged in, not symlinked — see docs/features.md).
 - **stubs/personal/**: Placeholder identity flake for CI. On real machines, `make switch` overrides this with the real personal flake via `~/.config/nix-config/personal-input`.
