@@ -1,4 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>tskovlund/.github"]
+  "extends": ["github>tskovlund/.github"],
+  "packageRules": [
+    {
+      "description": "nixpkgs-cuda is pinned by hand so a routine bump never triggers the hours-long ollama-cuda compile on the WSL host (see flake.nix); bump it deliberately",
+      "matchManagers": ["nix"],
+      "matchDepNames": ["nixpkgs-cuda"],
+      "enabled": false
+    }
+  ]
 }
