@@ -37,7 +37,7 @@
     # Pinned separately on purpose: ollama-cuda is unfree, never in
     # cache.nixos.org, and takes hours to compile on the WSL host. A routine
     # nixpkgs bump must not drag it along; bump this rev deliberately.
-    nixpkgs-cuda.url = "github:NixOS/nixpkgs/9d5b33185f57913a2e0fbfce36990af37bd40ae2";
+    nixpkgs-cuda.url = "github:NixOS/nixpkgs/afb4584a80bbf779ce0f691509ff902d188c2b3d";
 
     # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
