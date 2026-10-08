@@ -37,6 +37,7 @@
     # Pinned separately on purpose: ollama-cuda is unfree, never in
     # cache.nixos.org, and takes hours to compile on the WSL host. A routine
     # nixpkgs bump must not drag it along; bump this rev deliberately.
+    # Renovate ignores this input (renovate.json) so it cannot move it either.
     nixpkgs-cuda.url = "github:NixOS/nixpkgs/afb4584a80bbf779ce0f691509ff902d188c2b3d";
 
     # Personal identity (external). Default: stub with placeholder values.

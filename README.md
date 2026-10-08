@@ -97,7 +97,7 @@ All packages are pinned via `flake.lock`. Roll back with `git checkout flake.loc
 | nixpkgs-cuda (pinned rev)                                     | ollama-cuda for the personal WSL host, bumped deliberately (unfree, hours to build) |
 | personal (stub)                                               | Your identity flake — see [Personal identity](#personal-identity)                   |
 
-All inputs follow a single nixpkgs to avoid version drift, except `nixpkgs-cuda`, which is pinned so a routine bump never triggers the CUDA compile.
+All inputs follow a single nixpkgs to avoid version drift, except `nixpkgs-cuda`, which is pinned (and excluded from Renovate) so a routine bump never triggers the CUDA compile. The WSL host also caps Nix build parallelism so a deliberate bump cannot exhaust the VM.
 
 ## Documentation
 
