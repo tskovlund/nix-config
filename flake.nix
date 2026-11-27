@@ -34,12 +34,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Pinned separately on purpose: ollama-cuda is unfree, never in
-    # cache.nixos.org, and takes hours to compile on the WSL host. A routine
-    # nixpkgs bump must not drag it along; bump this rev deliberately.
-    # Renovate ignores this input (renovate.json) so it cannot move it either.
-    nixpkgs-cuda.url = "github:NixOS/nixpkgs/afb4584a80bbf779ce0f691509ff902d188c2b3d";
-
     # Personal identity (external). Default: stub with placeholder values.
     # Override with real identity on personal machines — see README.
     personal.url = "path:./stubs/personal";
@@ -55,7 +49,6 @@
       nixvim,
       nixos-wsl,
       disko,
-      nixpkgs-cuda,
       personal,
       ...
     }:
@@ -72,23 +65,8 @@
       inherit (identity) username;
 
       # Unfree packages allowed on every target. Defined once here and wired
-      # into all three builders so the list lives in one place. The CUDA /
-      # NVIDIA prefixes are for ollama-cuda (hosts/nixos-wsl/ollama.nix).
-      allowUnfreePredicate =
-        pkg:
-        let
-          name = nixpkgs.lib.getName pkg;
-          prefixes = [
-            "cuda"
-            "cudnn"
-            "libcu"
-            "libnpp"
-            "libnv"
-            "nccl"
-            "nvidia"
-          ];
-        in
-        builtins.elem name [ "claude-code" ] || builtins.any (p: nixpkgs.lib.hasPrefix p name) prefixes;
+      # into all three builders so the list lives in one place.
+      allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
 
       # nixpkgs settings shared by the nix-darwin and NixOS builders.
       nixpkgsModule = {
@@ -190,7 +168,7 @@
         }:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit username nixpkgs-cuda; };
+          specialArgs = { inherit username; };
           modules = [
             ./hosts/nixos
             nixpkgsModule
@@ -243,8 +221,7 @@
       # Helper: eval-only check. Instantiates the full derivation graph of a
       # target (every module is evaluated, so option and type errors surface)
       # without building anything: unsafeDiscardStringContext drops the
-      # dependency on the drv, so the closure (LSP servers, unfree CUDA
-      # packages, ...) is never realised. `nix flake check` instantiates
+      # dependency on the drv, so the closure (LSP servers, ...) is never realised. `nix flake check` instantiates
       # nixosConfigurations on its own, but not homeConfigurations or
       # darwinConfigurations, which is what these checks add.
       evalOnly =
@@ -298,7 +275,6 @@
         homeModules = personalModules ++ personalHomeModules;
         nixosModules = [
           ./hosts/nixos-wsl
-          ./hosts/nixos-wsl/ollama.nix # CUDA desktop only, not base (work) machines
           nixos-wsl.nixosModules.wsl
           { wsl.defaultUser = username; }
         ];
