@@ -16,16 +16,13 @@
   ];
 
   # Personal Notion and Linear workspaces, merged into ~/.claude/settings.json
-  # by home/claude/settings.nix.
+  # by home/claude/settings.nix. No allow rules: auto mode's classifier judges
+  # their tools like any other.
   claude.settings = {
     enabledPlugins = {
       "Notion@claude-plugins-official" = true;
       "linear@claude-plugins-official" = true;
     };
-    permissions.allow = [
-      "mcp__plugin_linear_linear__*"
-      "mcp__plugin_Notion_notion__*"
-    ];
   };
 
   # MCP Grafana Server — observability integration for Claude Code.
