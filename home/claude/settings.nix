@@ -33,27 +33,19 @@ let
       refreshInterval = 1;
     };
 
+    # Auto mode's classifier judges each action, so no allow rules: an allow
+    # rule skips the classifier, and a broad one such as `Bash(git *)` would
+    # pass a force-push unchecked. Deny rules apply before the classifier in
+    # every mode, so they keep the secrets out of reach.
+    #
+    # Trusted hosts for the classifier go in `autoMode.environment`. Work
+    # hosts don't belong in this public repo: add them to the machine's
+    # ~/.claude/settings.json, which this merge leaves alone.
     permissions = {
-      defaultMode = "acceptEdits";
-      allow = [
-        "Bash(nix *)"
-        "Bash(make *)"
-        "Bash(home-manager *)"
-        "Bash(darwin-rebuild *)"
-        "Bash(nixos-rebuild *)"
-        "Bash(git *)"
-        "Bash(gh *)"
-        "Bash(ls *)"
-        "Bash(which *)"
-        "Bash(* --version)"
-        "Bash(* --help)"
-        "Read"
-      ];
+      defaultMode = "auto";
       deny = [
-        "Bash(curl *)"
-        "Bash(wget *)"
-        "Read(./.env)"
-        "Read(./.env.*)"
+        "Read(**/.env)"
+        "Read(**/.env.*)"
         "Read(~/.aws/**)"
         "Read(~/.ssh/id_*)"
       ];
@@ -78,8 +70,41 @@ let
     permissions = {
       allow = [
         "mcp__memory__*" # memory MCP server removed in fe06dbb
+        # Auto mode by default: the classifier judges these instead.
+        "Bash(nix *)"
+        "Bash(make *)"
+        "Bash(home-manager *)"
+        "Bash(darwin-rebuild *)"
+        "Bash(nixos-rebuild *)"
+        "Bash(git *)"
+        "Bash(gh *)"
+        "Bash(ls *)"
+        "Bash(which *)"
+        "Bash(* --version)"
+        "Bash(* --help)"
+        "Read"
       ];
-      deny = [ ];
+      deny = [
+        # Blocked every request, even a read-only GET; the classifier judges them.
+        "Bash(curl *)"
+        "Bash(wget *)"
+        # Covered by Read(**/.env) and Read(**/.env.*).
+        "Read(./.env)"
+        "Read(./.env.*)"
+        "Read(**/.env.local)"
+        "Read(**/.env.*.local)"
+        "Read(**/.env.development)"
+        "Read(**/.env.production)"
+        "Read(**/.env.staging)"
+        "Read(**/.env.test)"
+        # Covered by Read(~/.ssh/id_*).
+        "Read(~/.ssh/id_rsa)"
+        "Read(~/.ssh/id_ecdsa)"
+        "Read(~/.ssh/id_ecdsa_sk)"
+        "Read(~/.ssh/id_ed25519)"
+        "Read(~/.ssh/id_ed25519_sk)"
+        "Read(~/.ssh/id_dsa)"
+      ];
     };
   };
 
