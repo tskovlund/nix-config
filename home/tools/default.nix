@@ -85,6 +85,7 @@
     typst # modern typesetting (LaTeX alternative)
     catimg # display images in terminal
     glow # terminal markdown renderer
+    python3 # scripts and agent hooks that call python3; nothing else declared it
 
     # Work SDKs (dotnet, azure-cli, ...) are machine-local: see examples/local.nix
 
