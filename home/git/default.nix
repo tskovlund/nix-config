@@ -20,6 +20,12 @@
       rerere.enabled = true;
       fetch.prune = true;
 
+      # HTTPS pushes to GitHub authenticate through gh's login, as
+      # `gh auth setup-git` would set up; declared here because this file is
+      # read-only, so that command can't write it.
+      credential."https://github.com".helper = "!${pkgs.gh}/bin/gh auth git-credential";
+      credential."https://gist.github.com".helper = "!${pkgs.gh}/bin/gh auth git-credential";
+
       alias = {
         flog = "log --graph --oneline --decorate";
         st = "status";
